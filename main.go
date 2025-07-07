@@ -1,12 +1,16 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 )
+
+//go:embed templates
+var templates embed.FS
 
 func main() {
 	if len(os.Args) <= 1 {
@@ -61,7 +65,7 @@ func run() {
 	}()
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFiles("templates/base.html")
+		tmpl, err := template.ParseFS(templates, "templates/base.html")
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte("Failed to parse HTML."))
