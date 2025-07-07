@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -54,7 +55,20 @@ Arguments:
 
 func run() {
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "hello")
+		tmpl, err := template.ParseFiles("templates/base.html")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Failed to parse HTML."))
+			return
+		}
+
+		_ = tmpl.ExecuteTemplate(w, "base", struct {
+			PageTitle string
+			Body      template.HTML
+		}{
+			PageTitle: "Ground - Home",
+			Body:      template.HTML("<h1>hello</h1>"),
+		})
 	})
 
 	port := ":3478"
