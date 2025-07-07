@@ -64,7 +64,8 @@ func run() {
 		}
 	}()
 
-	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	// root path only
+	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFS(
 			templates,
 			"templates/pages/base.html",
@@ -82,6 +83,26 @@ func run() {
 		}{
 			PageTitle: "Ground - Home",
 			Body:      template.HTML("<h1>hello</h1>"),
+		})
+	})
+
+	// catch all other paths
+	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		tmpl, err := template.ParseFS(
+			templates,
+			"templates/pages/base.html",
+			"templates/pages/bodies/404.html",
+		)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = w.Write([]byte("Failed to parse HTML."))
+			return
+		}
+
+		_ = tmpl.ExecuteTemplate(w, "base", struct {
+			PageTitle string
+		}{
+			PageTitle: "Ground - 404 Not Found",
 		})
 	})
 
