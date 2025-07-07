@@ -65,7 +65,11 @@ func run() {
 	}()
 
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFS(templates, "templates/base.html")
+		tmpl, err := template.ParseFS(
+			templates,
+			"templates/pages/base.html",
+			"templates/pages/bodies/home.html",
+		)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte("Failed to parse HTML."))
