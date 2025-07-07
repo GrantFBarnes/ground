@@ -65,46 +65,10 @@ func run() {
 	}()
 
 	// root path only
-	http.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFS(
-			templates,
-			"templates/pages/base.html",
-			"templates/pages/bodies/home.html",
-		)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Failed to parse HTML."))
-			return
-		}
-
-		_ = tmpl.ExecuteTemplate(w, "base", struct {
-			PageTitle string
-			Body      template.HTML
-		}{
-			PageTitle: "Ground - Home",
-			Body:      template.HTML("<h1>hello</h1>"),
-		})
-	})
+	http.HandleFunc("GET /{$}", getPageHome)
 
 	// catch all other paths
-	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFS(
-			templates,
-			"templates/pages/base.html",
-			"templates/pages/bodies/404.html",
-		)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Failed to parse HTML."))
-			return
-		}
-
-		_ = tmpl.ExecuteTemplate(w, "base", struct {
-			PageTitle string
-		}{
-			PageTitle: "Ground - 404 Not Found",
-		})
-	})
+	http.HandleFunc("GET /", getPage404)
 
 	port := ":3478"
 	log.Printf("server is running on http://localhost%s...\n", port)
@@ -112,4 +76,44 @@ func run() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func getPageHome(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/home.html",
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Failed to parse HTML."))
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle string
+		Body      template.HTML
+	}{
+		PageTitle: "Ground - Home",
+		Body:      template.HTML("<h1>hello</h1>"),
+	})
+}
+
+func getPage404(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/404.html",
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Failed to parse HTML."))
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle string
+	}{
+		PageTitle: "Ground - 404 Not Found",
+	})
 }
