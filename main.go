@@ -54,6 +54,12 @@ Arguments:
 }
 
 func run() {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println("panic occurred:", err)
+		}
+	}()
+
 	http.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("templates/base.html")
 		if err != nil {
