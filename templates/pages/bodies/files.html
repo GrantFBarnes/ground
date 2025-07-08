@@ -1,7 +1,23 @@
+
 {{define "body"}}
-<ul>
-{{range .FileNames}}
-    <li>{{.}}</li>
-{{end}}
-</ul>
+<table>
+    <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .FileRows}}
+        <tr>
+            {{if .IsDir}}
+            <td>d</td>
+            {{else}}
+            <td>-</td>
+            {{end}}
+            <td><a href="{{.Path}}">{{.Name}}</a></td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
 {{end}}

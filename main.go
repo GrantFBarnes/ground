@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -78,9 +79,15 @@ func run() {
 	}
 }
 
+type FileRow struct {
+	IsDir bool
+	Name  string
+	Path  string
+}
+
 func getPageFiles(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/files")
-	fileInfo, err := os.Stat(path)
+	dirPath := strings.TrimPrefix(r.URL.Path, "/files")
+	fileInfo, err := os.Stat(dirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("Failed read path."))
@@ -88,20 +95,29 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !fileInfo.IsDir() {
-		http.Redirect(w, r, "/file"+path, http.StatusSeeOther)
+		http.Redirect(w, r, path.Join("/file", dirPath), http.StatusSeeOther)
 		return
 	}
 
-	dirEntries, err := os.ReadDir(path)
+	dirEntries, err := os.ReadDir(dirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Failed read directory."))
 		return
 	}
 
-	var fileNames []string
+	var fileRows []FileRow
 	for _, entry := range dirEntries {
-		fileNames = append(fileNames, entry.Name())
+		row := FileRow{
+			IsDir: entry.IsDir(),
+			Name:  entry.Name(),
+		}
+		if row.IsDir {
+			row.Path = path.Join("/files", dirPath, row.Name)
+		} else {
+			row.Path = path.Join("/file", dirPath, row.Name)
+		}
+		fileRows = append(fileRows, row)
 	}
 
 	tmpl, err := template.ParseFS(
@@ -117,16 +133,16 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
-		FileNames []string
+		FileRows  []FileRow
 	}{
 		PageTitle: "Ground - Files",
-		FileNames: fileNames,
+		FileRows:  fileRows,
 	})
 }
 
 func getPageFile(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/file")
-	fileInfo, err := os.Stat(path)
+	filePath := strings.TrimPrefix(r.URL.Path, "/file")
+	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("Failed read path."))
@@ -134,11 +150,11 @@ func getPageFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if fileInfo.IsDir() {
-		http.Redirect(w, r, "/files"+path, http.StatusSeeOther)
+		http.Redirect(w, r, path.Join("/files", filePath), http.StatusSeeOther)
 		return
 	}
 
-	http.ServeFile(w, r, path)
+	http.ServeFile(w, r, filePath)
 }
 
 func getPageHome(w http.ResponseWriter, r *http.Request) {
