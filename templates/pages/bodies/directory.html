@@ -5,15 +5,15 @@
 <table>
     <thead>
         <tr>
+            <th></th>
             <th>Directories</th>
         </tr>
     </thead>
     <tbody>
         {{range .DirectoryRows}}
-        <tr>
-            <td>
-                <a href="{{.Path}}">{{.Name}}</a>
-            </td>
+        <tr class="clickable" onclick="location.assign({{.Path}})">
+            <td>&#128193;</td>
+            <td>{{.Name}}</td>
         </tr>
         {{end}}
     </tbody>

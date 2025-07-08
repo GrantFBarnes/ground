@@ -15,6 +15,9 @@ import (
 //go:embed templates
 var templates embed.FS
 
+//go:embed static
+var static embed.FS
+
 func main() {
 	if len(os.Args) <= 1 {
 		printErrorMessage("No arguments provided.")
@@ -66,6 +69,10 @@ func run() {
 			log.Println("panic occurred:", err)
 		}
 	}()
+
+	http.HandleFunc("GET /static/{fileType}/{fileName}", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, strings.TrimPrefix(r.URL.Path, "/"))
+	})
 
 	http.HandleFunc("GET /download/", downloadFile)
 	http.HandleFunc("GET /directory/", getPageDirectory)
