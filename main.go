@@ -107,6 +107,14 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fileRows []FileRow
+	if dirPath != "/" {
+		fileRows = append(fileRows, FileRow{
+			IsDir: true,
+			Name:  "..",
+			Path:  path.Join("/directory", dirPath, ".."),
+		})
+	}
+
 	for _, entry := range dirEntries {
 		row := FileRow{
 			IsDir: entry.IsDir(),
