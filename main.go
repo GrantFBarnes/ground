@@ -66,6 +66,7 @@ func run() {
 	}()
 
 	http.HandleFunc("GET /files/", getPageFiles)
+	http.HandleFunc("GET /file/", getPageFile)
 	http.HandleFunc("GET /{$}", getPageHome)
 	http.HandleFunc("GET /", getPage404)
 
@@ -78,11 +79,23 @@ func run() {
 }
 
 func getPageFiles(w http.ResponseWriter, r *http.Request) {
-	dirPath := strings.TrimPrefix(r.URL.Path, "/files")
-	dirEntries, err := os.ReadDir(dirPath)
+	path := strings.TrimPrefix(r.URL.Path, "/files")
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("Failed read path."))
+		return
+	}
+
+	if !fileInfo.IsDir() {
+		http.Redirect(w, r, "/file"+path, http.StatusSeeOther)
+		return
+	}
+
+	dirEntries, err := os.ReadDir(path)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Failed read file path."))
+		_, _ = w.Write([]byte("Failed read directory."))
 		return
 	}
 
@@ -109,6 +122,23 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 		PageTitle: "Ground - Files",
 		FileNames: fileNames,
 	})
+}
+
+func getPageFile(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/file")
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("Failed read path."))
+		return
+	}
+
+	if fileInfo.IsDir() {
+		http.Redirect(w, r, "/files"+path, http.StatusSeeOther)
+		return
+	}
+
+	http.ServeFile(w, r, path)
 }
 
 func getPageHome(w http.ResponseWriter, r *http.Request) {
