@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -66,8 +67,8 @@ func run() {
 		}
 	}()
 
+	http.HandleFunc("GET /download/", downloadFile)
 	http.HandleFunc("GET /directory/", getPageDirectory)
-	http.HandleFunc("GET /file/", getPageFile)
 	http.HandleFunc("GET /{$}", getPageHome)
 	http.HandleFunc("GET /", getPage404)
 
@@ -79,10 +80,25 @@ func run() {
 	}
 }
 
-type FileRow struct {
-	IsDir bool
-	Name  string
-	Path  string
+func downloadFile(w http.ResponseWriter, r *http.Request) {
+	filePath := strings.TrimPrefix(r.URL.Path, "/download")
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("Provided path not found."))
+		return
+	}
+
+	if fileInfo.IsDir() {
+		w.WriteHeader(http.StatusNotAcceptable)
+		_, _ = w.Write([]byte("Provided path is a directory."))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(fileInfo.Name()))
+
+	http.ServeFile(w, r, filePath)
 }
 
 func getPageDirectory(w http.ResponseWriter, r *http.Request) {
@@ -90,42 +106,52 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 	fileInfo, err := os.Stat(dirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("Failed read path."))
+		_, _ = w.Write([]byte("Provided path not found."))
 		return
 	}
 
 	if !fileInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/file", dirPath), http.StatusSeeOther)
+		w.WriteHeader(http.StatusNotAcceptable)
+		_, _ = w.Write([]byte("Provided path is not a directory."))
 		return
 	}
 
 	dirEntries, err := os.ReadDir(dirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Failed read directory."))
+		_, _ = w.Write([]byte("Failed read directory entries."))
 		return
 	}
 
-	var fileRows []FileRow
+	type rowData struct {
+		Name string
+		Path string
+	}
+
+	var directoryRows []rowData
+	var fileRows []rowData
+
 	if dirPath != "/" {
-		fileRows = append(fileRows, FileRow{
-			IsDir: true,
-			Name:  "..",
-			Path:  path.Join("/directory", dirPath, ".."),
+		directoryRows = append(directoryRows, rowData{
+			Name: "..",
+			Path: path.Join("/directory", dirPath, ".."),
 		})
 	}
 
 	for _, entry := range dirEntries {
-		row := FileRow{
-			IsDir: entry.IsDir(),
-			Name:  entry.Name(),
-		}
-		if row.IsDir {
-			row.Path = path.Join("/directory", dirPath, row.Name)
+		if entry.IsDir() {
+			row := rowData{
+				Name: entry.Name(),
+				Path: path.Join("/directory", dirPath, entry.Name()),
+			}
+			directoryRows = append(directoryRows, row)
 		} else {
-			row.Path = path.Join("/file", dirPath, row.Name)
+			row := rowData{
+				Name: entry.Name(),
+				Path: path.Join("/download", dirPath, entry.Name()),
+			}
+			fileRows = append(fileRows, row)
 		}
-		fileRows = append(fileRows, row)
 	}
 
 	tmpl, err := template.ParseFS(
@@ -140,29 +166,14 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle string
-		FileRows  []FileRow
+		PageTitle     string
+		DirectoryRows []rowData
+		FileRows      []rowData
 	}{
-		PageTitle: "Ground - Directory",
-		FileRows:  fileRows,
+		PageTitle:     "Ground - Directory",
+		DirectoryRows: directoryRows,
+		FileRows:      fileRows,
 	})
-}
-
-func getPageFile(w http.ResponseWriter, r *http.Request) {
-	filePath := strings.TrimPrefix(r.URL.Path, "/file")
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("Failed read path."))
-		return
-	}
-
-	if fileInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/directory", filePath), http.StatusSeeOther)
-		return
-	}
-
-	http.ServeFile(w, r, filePath)
 }
 
 func getPageHome(w http.ResponseWriter, r *http.Request) {

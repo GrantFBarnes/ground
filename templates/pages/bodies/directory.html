@@ -1,23 +1,43 @@
-
 {{define "body"}}
+
+{{$dirLen := len .DirectoryRows}}
+{{if gt $dirLen 0}}
 <table>
     <thead>
         <tr>
-            <th></th>
-            <th>Name</th>
+            <th>Directories</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .DirectoryRows}}
+        <tr>
+            <td>
+                <a href="{{.Path}}">{{.Name}}</a>
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}
+
+{{$fileLen := len .FileRows}}
+{{if gt $fileLen 0}}
+<table>
+    <thead>
+        <tr>
+            <th>Files</th>
         </tr>
     </thead>
     <tbody>
         {{range .FileRows}}
         <tr>
-            {{if .IsDir}}
-            <td>d</td>
-            {{else}}
-            <td>-</td>
-            {{end}}
-            <td><a href="{{.Path}}">{{.Name}}</a></td>
+            <td>
+                <a href="{{.Path}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
+            </td>
         </tr>
         {{end}}
     </tbody>
 </table>
+{{end}}
+
 {{end}}
