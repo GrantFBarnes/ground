@@ -66,7 +66,7 @@ func run() {
 		}
 	}()
 
-	http.HandleFunc("GET /files/", getPageFiles)
+	http.HandleFunc("GET /directory/", getPageDirectory)
 	http.HandleFunc("GET /file/", getPageFile)
 	http.HandleFunc("GET /{$}", getPageHome)
 	http.HandleFunc("GET /", getPage404)
@@ -85,8 +85,8 @@ type FileRow struct {
 	Path  string
 }
 
-func getPageFiles(w http.ResponseWriter, r *http.Request) {
-	dirPath := strings.TrimPrefix(r.URL.Path, "/files")
+func getPageDirectory(w http.ResponseWriter, r *http.Request) {
+	dirPath := strings.TrimPrefix(r.URL.Path, "/directory")
 	fileInfo, err := os.Stat(dirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -113,7 +113,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 			Name:  entry.Name(),
 		}
 		if row.IsDir {
-			row.Path = path.Join("/files", dirPath, row.Name)
+			row.Path = path.Join("/directory", dirPath, row.Name)
 		} else {
 			row.Path = path.Join("/file", dirPath, row.Name)
 		}
@@ -123,7 +123,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
-		"templates/pages/bodies/files.html",
+		"templates/pages/bodies/directory.html",
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -135,7 +135,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 		PageTitle string
 		FileRows  []FileRow
 	}{
-		PageTitle: "Ground - Files",
+		PageTitle: "Ground - Directory",
 		FileRows:  fileRows,
 	})
 }
@@ -150,7 +150,7 @@ func getPageFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if fileInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/files", filePath), http.StatusSeeOther)
+		http.Redirect(w, r, path.Join("/directory", filePath), http.StatusSeeOther)
 		return
 	}
 
