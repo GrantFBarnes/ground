@@ -71,7 +71,7 @@ func run() {
 	}()
 
 	http.HandleFunc("GET /static/{fileType}/{fileName}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, strings.TrimPrefix(r.URL.Path, "/"))
+		http.ServeFileFS(w, r, static, strings.TrimPrefix(r.URL.Path, "/"))
 	})
 
 	http.HandleFunc("GET /download/", downloadFile)
