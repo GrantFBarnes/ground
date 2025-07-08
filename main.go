@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 //go:embed templates
@@ -64,10 +65,8 @@ func run() {
 		}
 	}()
 
-	// root path only
+	http.HandleFunc("GET /files/", getPageFiles)
 	http.HandleFunc("GET /{$}", getPageHome)
-
-	// catch all other paths
 	http.HandleFunc("GET /", getPage404)
 
 	port := ":3478"
@@ -76,6 +75,40 @@ func run() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func getPageFiles(w http.ResponseWriter, r *http.Request) {
+	dirPath := strings.TrimPrefix(r.URL.Path, "/files")
+	dirEntries, err := os.ReadDir(dirPath)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("Failed read file path."))
+		return
+	}
+
+	var fileNames []string
+	for _, entry := range dirEntries {
+		fileNames = append(fileNames, entry.Name())
+	}
+
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/files.html",
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Failed to parse HTML."))
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle string
+		FileNames []string
+	}{
+		PageTitle: "Ground - Files",
+		FileNames: fileNames,
+	})
 }
 
 func getPageHome(w http.ResponseWriter, r *http.Request) {
