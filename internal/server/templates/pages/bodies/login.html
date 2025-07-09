@@ -1,4 +1,5 @@
 {{define "body"}}
+<div id="loader" class="loader" hidden></div>
 <h2>Login</h2>
 <form id="login-form">
     <label for="username">Username:</label>
@@ -9,16 +10,38 @@
     <br />
     <input type="password" id="password" name="password">
     <br />
+    <span id="error-message" class="error"></span>
     <br />
     <input type="submit" value="Login">
 </form>
 <script>
-    document.getElementById("login-form").addEventListener("submit", (event) => {
+    const loaderElement = document.getElementById("loader");
+    const formElement = document.getElementById("login-form");
+    const errorMessageElement = document.getElementById("error-message");
+
+    formElement.addEventListener("submit", (event) => {
         event.preventDefault();
-        const username = document.getElementById("username").value;
-        const password = document.getElementById("password").value;
-        callPostAPI("/api/login", JSON.stringify({ username, password }))
-            .then(data => console.log(data))
+        toggleLoading();
+        callPostAPI("/api/login", JSON.stringify({
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value,
+        }))
+            .then(data => {
+                if (data.status >= 200 && data.status < 300) {
+                    location.reload();
+                } else {
+                    errorMessageElement.innerHTML = data.data;
+                    toggleLoading();
+                }
+            })
     });
+
+    function toggleLoading() {
+        const wasLoading = loaderElement.hidden;
+        loaderElement.hidden = !wasLoading;
+        for (let i = 0; i < formElement.elements.length; i++) {
+            formElement.elements[i].disabled = wasLoading;
+        }
+    }
 </script>
 {{end}}

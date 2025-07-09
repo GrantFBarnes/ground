@@ -10,33 +10,6 @@ import (
 	"github.com/grantfbarnes/ground/internal/auth"
 )
 
-func download(w http.ResponseWriter, r *http.Request) {
-	if !auth.IsLoggedIn(r) {
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte("Not logged in."))
-		return
-	}
-
-	filePath := strings.TrimPrefix(r.URL.Path, "/api/download")
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("Provided path not found."))
-		return
-	}
-
-	if fileInfo.IsDir() {
-		w.WriteHeader(http.StatusNotAcceptable)
-		_, _ = w.Write([]byte("Provided path is a directory."))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(fileInfo.Name()))
-
-	http.ServeFile(w, r, filePath)
-}
-
 func login(w http.ResponseWriter, r *http.Request) {
 	type bodyStruct struct {
 		Username string `json:"username"`
@@ -75,4 +48,31 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("Login credentials valid."))
+}
+
+func download(w http.ResponseWriter, r *http.Request) {
+	if !auth.IsLoggedIn(r) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("Not logged in."))
+		return
+	}
+
+	filePath := strings.TrimPrefix(r.URL.Path, "/api/download")
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("Provided path not found."))
+		return
+	}
+
+	if fileInfo.IsDir() {
+		w.WriteHeader(http.StatusNotAcceptable)
+		_, _ = w.Write([]byte("Provided path is a directory."))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(fileInfo.Name()))
+
+	http.ServeFile(w, r, filePath)
 }
