@@ -36,8 +36,8 @@ func middlewareForPages(next http.Handler) http.Handler {
 	})
 }
 
-func getPageDirectory(w http.ResponseWriter, r *http.Request) {
-	dirPath := strings.TrimPrefix(r.URL.Path, "/directory")
+func getPageFiles(w http.ResponseWriter, r *http.Request) {
+	dirPath := strings.TrimPrefix(r.URL.Path, "/files")
 	fileInfo, err := os.Stat(dirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -69,7 +69,7 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 	if dirPath != "/" {
 		directoryRows = append(directoryRows, rowData{
 			Name: "..",
-			Path: path.Join("/directory", dirPath, ".."),
+			Path: path.Join("/files", dirPath, ".."),
 		})
 	}
 
@@ -77,7 +77,7 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 		if entry.IsDir() {
 			row := rowData{
 				Name: entry.Name(),
-				Path: path.Join("/directory", dirPath, entry.Name()),
+				Path: path.Join("/files", dirPath, entry.Name()),
 			}
 			directoryRows = append(directoryRows, row)
 		} else {
@@ -92,7 +92,7 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
-		"templates/pages/bodies/directory.html",
+		"templates/pages/bodies/files.html",
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -105,7 +105,7 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 		DirectoryRows []rowData
 		FileRows      []rowData
 	}{
-		PageTitle:     "Ground - Directory",
+		PageTitle:     "Ground - Files",
 		DirectoryRows: directoryRows,
 		FileRows:      fileRows,
 	})
@@ -144,10 +144,8 @@ func getPageHome(w http.ResponseWriter, r *http.Request) {
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
-		Body      template.HTML
 	}{
 		PageTitle: "Ground - Home",
-		Body:      template.HTML("<h1>hello</h1>"),
 	})
 }
 

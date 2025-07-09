@@ -32,7 +32,7 @@ func Run() {
 	// pages
 	http.Handle("GET /{$}", middlewareForPages(http.HandlerFunc(getPageHome)))
 	http.Handle("GET /login", middlewareForPages(http.HandlerFunc(getPageLogin)))
-	http.Handle("GET /directory/", middlewareForPages(http.HandlerFunc(getPageDirectory)))
+	http.Handle("GET /files/", middlewareForPages(http.HandlerFunc(getPageFiles)))
 	http.Handle("GET /", middlewareForPages(http.HandlerFunc(getPage404)))
 
 	ip, err := getLocalIPv4()
