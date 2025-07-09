@@ -7,12 +7,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 )
+
+const cookieNameUserToken string = "GROUND-USER-TOKEN"
+const cookieNameRedirectURL string = "GROUND-REDIRECT-URL"
 
 var secret []byte = []byte(os.Getenv("GROUND_SECRET"))
 
@@ -42,8 +46,77 @@ func loginIsValid(username string, password string) (bool, error) {
 	return true, nil
 }
 
+func getCookieUsername(r *http.Request) (string, error) {
+	token, err := getCookieValue(r, cookieNameUserToken)
+	if err != nil {
+		return "", errors.New("cookie not found")
+	}
+
+	username, err := getUsernameFromToken(token)
+	if err != nil {
+		return "", errors.New("user not logged in")
+	}
+
+	return username, nil
+}
+
+func setCookieUsername(w http.ResponseWriter, username string) {
+	token, expiry := getTokenFromUsername(username)
+	http.SetCookie(w, &http.Cookie{
+		Name:    cookieNameUserToken,
+		Value:   token,
+		Path:    "/",
+		Expires: expiry,
+	})
+}
+
+func removeCookieUsername(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    cookieNameUserToken,
+		Value:   "",
+		Path:    "/",
+		Expires: time.Unix(0, 0),
+	})
+}
+
+func getCookieRedirectURL(r *http.Request) string {
+	redirectPath, err := getCookieValue(r, cookieNameRedirectURL)
+	if err != nil {
+		return "/"
+	}
+	return redirectPath
+}
+
+func setCookieRedirectURL(w http.ResponseWriter, url string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    cookieNameRedirectURL,
+		Value:   url,
+		Path:    "/",
+		Expires: getExpiry(),
+	})
+}
+
+func getCookieValue(r *http.Request, cookieName string) (string, error) {
+	cookieFound := false
+	cookieValue := ""
+	for _, c := range r.Cookies() {
+		if c.Name != cookieName {
+			continue
+		}
+		cookieFound = true
+		cookieValue = c.Value
+		break
+	}
+
+	if !cookieFound {
+		return "", errors.New("cookie not found")
+	}
+
+	return cookieValue, nil
+}
+
 func getTokenFromUsername(username string) (string, time.Time) {
-	expiry := time.Now().Add(12 * time.Hour)
+	expiry := getExpiry()
 	value := fmt.Sprintf("%s %d", username, expiry.Unix())
 	valueBytes := []byte(value)
 	valueBytesEncoded := base64.URLEncoding.EncodeToString(valueBytes)
@@ -93,4 +166,8 @@ func getHashedBytes(bytes []byte) []byte {
 	hash := hmac.New(sha256.New, secret)
 	hash.Write(bytes)
 	return hash.Sum(nil)
+}
+
+func getExpiry() time.Time {
+	return time.Now().Add(12 * time.Hour)
 }
