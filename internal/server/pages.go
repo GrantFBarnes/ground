@@ -56,7 +56,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	dirEntries, err := os.ReadDir(fullDirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Failed read directory entries."))
+		_, _ = w.Write([]byte("Failed to read directory entries."))
 		return
 	}
 

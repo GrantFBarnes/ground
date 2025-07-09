@@ -39,10 +39,16 @@ func main() {
 }
 
 func healthCheck() error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil || homeDir != "/root" {
+		return errors.New("not running as root")
+	}
+
 	secret := os.Getenv("GROUND_SECRET")
 	if secret == "" {
 		return errors.New("no secret defined")
 	}
+
 	return nil
 }
 
