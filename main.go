@@ -1,11 +1,18 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 )
 
 func main() {
+	err := healthCheck()
+	if err != nil {
+		printErrorMessage(err.Error())
+		os.Exit(1)
+	}
+
 	if len(os.Args) <= 1 {
 		printErrorMessage("No arguments provided.")
 		os.Exit(1)
@@ -27,6 +34,14 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func healthCheck() error {
+	secret := os.Getenv("GROUND_SECRET")
+	if secret == "" {
+		return errors.New("no secret defined")
+	}
+	return nil
 }
 
 func printErrorMessage(msg string) {
