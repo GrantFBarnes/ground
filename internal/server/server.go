@@ -2,8 +2,11 @@ package server
 
 import (
 	"embed"
+	"errors"
 	"log"
+	"net"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -32,10 +35,34 @@ func Run() {
 	http.Handle("GET /directory/", middlewareForPages(http.HandlerFunc(getPageDirectory)))
 	http.Handle("GET /", middlewareForPages(http.HandlerFunc(getPage404)))
 
-	port := ":3478"
-	log.Printf("server is running on http://localhost%s...\n", port)
-	err := http.ListenAndServe(port, nil)
+	ip, err := getLocalIPv4()
 	if err != nil {
 		log.Fatalln(err)
 	}
+	port := ":3478"
+	log.Printf("server is running on http://%s%s...\n", ip, port)
+	err = http.ListenAndServe(port, nil)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func getLocalIPv4() (net.IP, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
+
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ip := range ips {
+		if ip.To4() != nil {
+			return ip.To4(), nil
+		}
+	}
+
+	return nil, errors.New("ip not found")
 }
