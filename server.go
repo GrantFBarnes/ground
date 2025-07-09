@@ -11,6 +11,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/grantfbarnes/ground/internal/auth"
 )
 
 type requestContextKey string
@@ -68,9 +70,9 @@ func middlewareForPages(next http.Handler) http.Handler {
 			LoggedIn:  false,
 		}
 
-		username, err := getCookieUsername(r)
+		username, err := auth.GetUsername(r)
 		if err != nil {
-			removeCookieUsername(w)
+			auth.RemoveUsername(w)
 		} else {
 			data.Username = username
 			data.LoggedIn = true
@@ -78,11 +80,11 @@ func middlewareForPages(next http.Handler) http.Handler {
 
 		if r.URL.Path == "/login" {
 			if data.LoggedIn {
-				http.Redirect(w, r, getCookieRedirectURL(r), http.StatusSeeOther)
+				http.Redirect(w, r, auth.GetRedirectUrl(r), http.StatusSeeOther)
 				return
 			}
 		} else if !data.LoggedIn {
-			setCookieRedirectURL(w, r.URL.Path)
+			auth.SetRedirectUrl(w, r.URL.Path)
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
@@ -99,7 +101,7 @@ func getBasePageData(r *http.Request) basePageData {
 
 func middlewareForAPIs(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, err := getCookieUsername(r)
+		username, err := auth.GetUsername(r)
 		if err == nil {
 			r = r.WithContext(context.WithValue(r.Context(), usernameRequestContextKey, username))
 		}
@@ -235,20 +237,13 @@ func checkLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valid, err := loginIsValid(body.Username, body.Password)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Failed to check login credentials."))
-		return
-	}
-
-	if !valid {
+	if !auth.CredentialsAreValid(body.Username, body.Password) {
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Invalid login credentials provided."))
 		return
 	}
 
-	setCookieUsername(w, body.Username)
+	auth.SetUsername(w, body.Username)
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("Login credentials valid."))

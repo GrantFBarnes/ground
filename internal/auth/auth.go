@@ -1,4 +1,4 @@
-package main
+package auth
 
 import (
 	"crypto/hmac"
@@ -20,12 +20,12 @@ const cookieNameRedirectURL string = "GROUND-REDIRECT-URL"
 
 var secret []byte = []byte(os.Getenv("GROUND_SECRET"))
 
-func loginIsValid(username string, password string) (bool, error) {
+func CredentialsAreValid(username string, password string) bool {
 	cmd := exec.Command("su", "-c", "exit", username)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	go func() {
@@ -35,18 +35,13 @@ func loginIsValid(username string, password string) (bool, error) {
 
 	err = cmd.Start()
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	err = cmd.Wait()
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return cmd.Wait() == nil
 }
 
-func getCookieUsername(r *http.Request) (string, error) {
+func GetUsername(r *http.Request) (string, error) {
 	token, err := getCookieValue(r, cookieNameUserToken)
 	if err != nil {
 		return "", errors.New("cookie not found")
@@ -60,7 +55,7 @@ func getCookieUsername(r *http.Request) (string, error) {
 	return username, nil
 }
 
-func setCookieUsername(w http.ResponseWriter, username string) {
+func SetUsername(w http.ResponseWriter, username string) {
 	token, expiry := getTokenFromUsername(username)
 	http.SetCookie(w, &http.Cookie{
 		Name:    cookieNameUserToken,
@@ -70,7 +65,7 @@ func setCookieUsername(w http.ResponseWriter, username string) {
 	})
 }
 
-func removeCookieUsername(w http.ResponseWriter) {
+func RemoveUsername(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    cookieNameUserToken,
 		Value:   "",
@@ -79,7 +74,7 @@ func removeCookieUsername(w http.ResponseWriter) {
 	})
 }
 
-func getCookieRedirectURL(r *http.Request) string {
+func GetRedirectUrl(r *http.Request) string {
 	redirectPath, err := getCookieValue(r, cookieNameRedirectURL)
 	if err != nil {
 		return "/"
@@ -87,7 +82,7 @@ func getCookieRedirectURL(r *http.Request) string {
 	return redirectPath
 }
 
-func setCookieRedirectURL(w http.ResponseWriter, url string) {
+func SetRedirectUrl(w http.ResponseWriter, url string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:    cookieNameRedirectURL,
 		Value:   url,
