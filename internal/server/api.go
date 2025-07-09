@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -51,14 +52,16 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func download(w http.ResponseWriter, r *http.Request) {
-	if !auth.IsLoggedIn(r) {
+	username, err := auth.GetUsername(r)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Not logged in."))
 		return
 	}
 
-	filePath := strings.TrimPrefix(r.URL.Path, "/api/download")
-	fileInfo, err := os.Stat(filePath)
+	homeFilePath := strings.TrimPrefix(r.URL.Path, "/api/download")
+	fullFilePath := path.Join("/home", username, homeFilePath)
+	fileInfo, err := os.Stat(fullFilePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("Provided path not found."))
@@ -74,5 +77,5 @@ func download(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(fileInfo.Name()))
 
-	http.ServeFile(w, r, filePath)
+	http.ServeFile(w, r, fullFilePath)
 }

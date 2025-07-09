@@ -37,8 +37,10 @@ func middlewareForPages(next http.Handler) http.Handler {
 }
 
 func getPageFiles(w http.ResponseWriter, r *http.Request) {
-	dirPath := strings.TrimPrefix(r.URL.Path, "/files")
-	fileInfo, err := os.Stat(dirPath)
+	username, _ := auth.GetUsername(r)
+	homeDirPath := strings.TrimPrefix(r.URL.Path, "/files")
+	fullDirPath := path.Join("/home", username, homeDirPath)
+	fileInfo, err := os.Stat(fullDirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("Provided path not found."))
@@ -51,7 +53,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dirEntries, err := os.ReadDir(dirPath)
+	dirEntries, err := os.ReadDir(fullDirPath)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Failed read directory entries."))
@@ -66,10 +68,10 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	var directoryRows []rowData
 	var fileRows []rowData
 
-	if dirPath != "/" {
+	if homeDirPath != "/" {
 		directoryRows = append(directoryRows, rowData{
 			Name: "..",
-			Path: path.Join("/files", dirPath, ".."),
+			Path: path.Join("/files", homeDirPath, ".."),
 		})
 	}
 
@@ -77,13 +79,13 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 		if entry.IsDir() {
 			row := rowData{
 				Name: entry.Name(),
-				Path: path.Join("/files", dirPath, entry.Name()),
+				Path: path.Join("/files", homeDirPath, entry.Name()),
 			}
 			directoryRows = append(directoryRows, row)
 		} else {
 			row := rowData{
 				Name: entry.Name(),
-				Path: path.Join("/api/download", dirPath, entry.Name()),
+				Path: path.Join("/api/download", homeDirPath, entry.Name()),
 			}
 			fileRows = append(fileRows, row)
 		}
