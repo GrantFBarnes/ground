@@ -1,6 +1,6 @@
 {{define "body"}}
 <h2>Login</h2>
-<form action="/login/check">
+<form id="login-form">
     <label for="username">Username:</label>
     <br />
     <input type="text" id="username" name="username">
@@ -12,4 +12,13 @@
     <br />
     <input type="submit" value="Login">
 </form>
+<script>
+    document.getElementById("login-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        callPostAPI("/login", JSON.stringify({ username, password }))
+            .then(data => console.log(data))
+    });
+</script>
 {{end}}

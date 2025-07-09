@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -30,7 +31,7 @@ func run() {
 
 	http.HandleFunc("GET /download/", downloadFile)
 	http.HandleFunc("GET /directory/", getPageDirectory)
-	http.HandleFunc("GET /login/check", checkLogin)
+	http.HandleFunc("POST /login", checkLogin)
 	http.HandleFunc("GET /login", getPageLogin)
 	http.HandleFunc("GET /{$}", getPageHome)
 	http.HandleFunc("GET /", getPage404)
@@ -140,36 +141,34 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkLogin(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	type bodyStruct struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	var body bodyStruct
+
+	defer r.Body.Close()
+
+	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Failed to parse form."))
+		_, _ = w.Write([]byte("Invalid body provided."))
 		return
 	}
 
-	var username string
-	var password string
-	for key, val := range r.Form {
-		if key == "username" {
-			username = val[0]
-		} else if key == "password" {
-			password = val[0]
-		}
-	}
-
-	if username == "" {
+	if body.Username == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("No username found."))
 		return
 	}
 
-	if password == "" {
+	if body.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("No password found."))
 		return
 	}
 
-	valid, err := loginIsValid(username, password)
+	valid, err := loginIsValid(body.Username, body.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("Failed to check login credentials."))
