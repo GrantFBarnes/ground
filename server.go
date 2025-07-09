@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"encoding/json"
 	"html/template"
@@ -11,6 +12,11 @@ import (
 	"strconv"
 	"strings"
 )
+
+type requestContextKey string
+
+const basePageDataRequestContextKey requestContextKey = "basePageDataRequestContextKey"
+const usernameRequestContextKey requestContextKey = "usernameRequestContextKey"
 
 //go:embed templates
 var templates embed.FS
@@ -25,16 +31,20 @@ func run() {
 		}
 	}()
 
+	// static files
 	http.HandleFunc("GET /static/{fileType}/{fileName}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFileFS(w, r, static, strings.TrimPrefix(r.URL.Path, "/"))
 	})
 
-	http.HandleFunc("GET /download/", downloadFile)
-	http.HandleFunc("GET /directory/", getPageDirectory)
-	http.HandleFunc("POST /login", checkLogin)
-	http.HandleFunc("GET /login", getPageLogin)
-	http.HandleFunc("GET /{$}", getPageHome)
-	http.HandleFunc("GET /", getPage404)
+	// pages
+	http.Handle("GET /{$}", middlewareForPages(http.HandlerFunc(getPageHome)))
+	http.Handle("GET /login", middlewareForPages(http.HandlerFunc(getPageLogin)))
+	http.Handle("GET /directory/", middlewareForPages(http.HandlerFunc(getPageDirectory)))
+	http.Handle("GET /", middlewareForPages(http.HandlerFunc(getPage404)))
+
+	// apis
+	http.Handle("POST /login", middlewareForAPIs(http.HandlerFunc(checkLogin)))
+	http.Handle("POST /download/", middlewareForAPIs(http.HandlerFunc(downloadFile)))
 
 	port := ":3478"
 	log.Printf("server is running on http://localhost%s...\n", port)
@@ -42,6 +52,63 @@ func run() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+}
+
+type basePageData struct {
+	PageTitle string
+	Username  string
+	LoggedIn  bool
+}
+
+func middlewareForPages(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		data := basePageData{
+			PageTitle: "Ground",
+			Username:  "",
+			LoggedIn:  false,
+		}
+
+		username, err := getCookieUsername(r)
+		if err != nil {
+			removeCookieUsername(w)
+		} else {
+			data.Username = username
+			data.LoggedIn = true
+		}
+
+		if r.URL.Path == "/login" {
+			if data.LoggedIn {
+				http.Redirect(w, r, getCookieRedirectURL(r), http.StatusSeeOther)
+				return
+			}
+		} else if !data.LoggedIn {
+			setCookieRedirectURL(w, r.URL.Path)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
+		r = r.WithContext(context.WithValue(r.Context(), basePageDataRequestContextKey, data))
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func getBasePageData(r *http.Request) basePageData {
+	return r.Context().Value(basePageDataRequestContextKey).(basePageData)
+}
+
+func middlewareForAPIs(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username, err := getCookieUsername(r)
+		if err == nil {
+			r = r.WithContext(context.WithValue(r.Context(), usernameRequestContextKey, username))
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func getUsername(r *http.Request) string {
+	return r.Context().Value(usernameRequestContextKey).(string)
 }
 
 func downloadFile(w http.ResponseWriter, r *http.Request) {
@@ -180,6 +247,8 @@ func checkLogin(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("Invalid login credentials provided."))
 		return
 	}
+
+	setCookieUsername(w, body.Username)
 
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("Login credentials valid."))
