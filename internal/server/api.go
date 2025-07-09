@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -11,24 +10,14 @@ import (
 	"github.com/grantfbarnes/ground/internal/auth"
 )
 
-const usernameRequestContextKey requestContextKey = "usernameRequestContextKey"
+func download(w http.ResponseWriter, r *http.Request) {
+	if !auth.IsLoggedIn(r) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("Not logged in."))
+		return
+	}
 
-func middlewareForAPIs(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, err := auth.GetUsername(r)
-		if err == nil {
-			r = r.WithContext(context.WithValue(r.Context(), usernameRequestContextKey, username))
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func getUsername(r *http.Request) string {
-	return r.Context().Value(usernameRequestContextKey).(string)
-}
-
-func downloadFile(w http.ResponseWriter, r *http.Request) {
-	filePath := strings.TrimPrefix(r.URL.Path, "/download")
+	filePath := strings.TrimPrefix(r.URL.Path, "/api/download")
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -48,7 +37,7 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filePath)
 }
 
-func checkLogin(w http.ResponseWriter, r *http.Request) {
+func login(w http.ResponseWriter, r *http.Request) {
 	type bodyStruct struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -66,13 +55,13 @@ func checkLogin(w http.ResponseWriter, r *http.Request) {
 
 	if body.Username == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("No username found."))
+		_, _ = w.Write([]byte("No username provided."))
 		return
 	}
 
 	if body.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("No password found."))
+		_, _ = w.Write([]byte("No password provided."))
 		return
 	}
 

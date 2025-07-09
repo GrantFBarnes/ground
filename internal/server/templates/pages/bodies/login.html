@@ -17,7 +17,7 @@
         event.preventDefault();
         const username = document.getElementById("username").value;
         const password = document.getElementById("password").value;
-        callPostAPI("/login", JSON.stringify({ username, password }))
+        callPostAPI("/api/login", JSON.stringify({ username, password }))
             .then(data => console.log(data))
     });
 </script>

@@ -41,6 +41,11 @@ func CredentialsAreValid(username string, password string) bool {
 	return cmd.Wait() == nil
 }
 
+func IsLoggedIn(r *http.Request) bool {
+	_, err := GetUsername(r)
+	return err == nil
+}
+
 func GetUsername(r *http.Request) (string, error) {
 	token, err := getCookieValue(r, cookieNameUserToken)
 	if err != nil {
