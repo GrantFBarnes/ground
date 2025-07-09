@@ -11,7 +11,7 @@
     </thead>
     <tbody>
         {{range .DirectoryRows}}
-        <tr class="clickable" onclick="location.assign({{.Path}})">
+        <tr class="clickable" onclick="location.assign('{{.Path}}')">
             <td>&#128193;</td>
             <td>{{.Name}}</td>
         </tr>
