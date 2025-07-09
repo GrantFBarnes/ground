@@ -39,8 +39,7 @@ func main() {
 }
 
 func healthCheck() error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil || homeDir != "/root" {
+	if os.Getuid() != 0 {
 		return errors.New("not running as root")
 	}
 
