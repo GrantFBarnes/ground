@@ -9,17 +9,34 @@ import (
 )
 
 func main() {
+	settings := getSettingsFromArguments()
+
+	if settings.help {
+		printHelp()
+		os.Exit(0)
+	}
+
+	if !settings.run {
+		printErrorMessage("nothing to run")
+		os.Exit(1)
+	}
+
 	err := healthCheck()
 	if err != nil {
 		printErrorMessage(err.Error())
 		os.Exit(1)
 	}
 
-	if len(os.Args) <= 1 {
-		printErrorMessage("No arguments provided.")
-		os.Exit(1)
-	}
+	server.Run()
+}
 
+type settings struct {
+	help bool
+	run  bool
+}
+
+func getSettingsFromArguments() settings {
+	args := settings{}
 	for i := 1; i < len(os.Args); i++ {
 		switch os.Args[i] {
 		case "help":
@@ -27,15 +44,12 @@ func main() {
 		case "--help":
 			fallthrough
 		case "-h":
-			printHelp()
-			os.Exit(0)
+			args.help = true
 		case "run":
-			server.Run()
-		default:
-			printErrorMessage(fmt.Sprintf("Invalid argument provided: %s", os.Args[i]))
-			os.Exit(1)
+			args.run = true
 		}
 	}
+	return args
 }
 
 func healthCheck() error {
