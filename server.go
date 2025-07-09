@@ -30,6 +30,8 @@ func run() {
 
 	http.HandleFunc("GET /download/", downloadFile)
 	http.HandleFunc("GET /directory/", getPageDirectory)
+	http.HandleFunc("GET /login/check", checkLogin)
+	http.HandleFunc("GET /login", getPageLogin)
 	http.HandleFunc("GET /{$}", getPageHome)
 	http.HandleFunc("GET /", getPage404)
 
@@ -134,6 +136,72 @@ func getPageDirectory(w http.ResponseWriter, r *http.Request) {
 		PageTitle:     "Ground - Directory",
 		DirectoryRows: directoryRows,
 		FileRows:      fileRows,
+	})
+}
+
+func checkLogin(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("Failed to parse form."))
+		return
+	}
+
+	var username string
+	var password string
+	for key, val := range r.Form {
+		if key == "username" {
+			username = val[0]
+		} else if key == "password" {
+			password = val[0]
+		}
+	}
+
+	if username == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("No username found."))
+		return
+	}
+
+	if password == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("No password found."))
+		return
+	}
+
+	valid, err := loginIsValid(username, password)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Failed to check login credentials."))
+		return
+	}
+
+	if !valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("Invalid login credentials provided."))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("Login credentials valid."))
+}
+
+func getPageLogin(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/login.html",
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte("Failed to parse HTML."))
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle string
+	}{
+		PageTitle: "Ground - Login",
 	})
 }
 
