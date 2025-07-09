@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/grantfbarnes/ground/internal/server"
 )
 
 func main() {
@@ -28,7 +30,7 @@ func main() {
 			printHelp()
 			os.Exit(0)
 		case "run":
-			run()
+			server.Run()
 		default:
 			printErrorMessage(fmt.Sprintf("Invalid argument provided: %s", os.Args[i]))
 			os.Exit(1)

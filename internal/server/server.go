@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -26,7 +26,7 @@ var templates embed.FS
 //go:embed static
 var static embed.FS
 
-func run() {
+func Run() {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println("panic occurred:", err)
