@@ -61,8 +61,9 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type rowData struct {
-		Name string
-		Path string
+		Name        string
+		ApiPath     string
+		SymLinkPath string
 	}
 
 	var directoryRows []rowData
@@ -70,22 +71,49 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 
 	if homeDirPath != "/" {
 		directoryRows = append(directoryRows, rowData{
-			Name: "..",
-			Path: path.Join("/files", homeDirPath, ".."),
+			Name:    "..",
+			ApiPath: path.Join("/files", homeDirPath, ".."),
 		})
 	}
 
 	for _, entry := range dirEntries {
+		linkPath, err := os.Readlink(path.Join(fullDirPath, entry.Name()))
+		if err == nil {
+			if !strings.HasPrefix(linkPath, "/") {
+				linkPath = path.Join(fullDirPath, linkPath)
+			}
+			linkInfo, err := os.Stat(linkPath)
+			if err == nil {
+				if linkInfo.IsDir() {
+					row := rowData{
+						Name:        entry.Name(),
+						ApiPath:     path.Join("/files", homeDirPath, entry.Name()),
+						SymLinkPath: linkPath,
+					}
+					directoryRows = append(directoryRows, row)
+					continue
+				} else {
+					row := rowData{
+						Name:        entry.Name(),
+						ApiPath:     path.Join("/api/download", homeDirPath, entry.Name()),
+						SymLinkPath: linkPath,
+					}
+					fileRows = append(fileRows, row)
+					continue
+				}
+			}
+		}
+
 		if entry.IsDir() {
 			row := rowData{
-				Name: entry.Name(),
-				Path: path.Join("/files", homeDirPath, entry.Name()),
+				Name:    entry.Name(),
+				ApiPath: path.Join("/files", homeDirPath, entry.Name()),
 			}
 			directoryRows = append(directoryRows, row)
 		} else {
 			row := rowData{
-				Name: entry.Name(),
-				Path: path.Join("/api/download", homeDirPath, entry.Name()),
+				Name:    entry.Name(),
+				ApiPath: path.Join("/api/download", homeDirPath, entry.Name()),
 			}
 			fileRows = append(fileRows, row)
 		}

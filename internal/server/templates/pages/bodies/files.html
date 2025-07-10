@@ -7,13 +7,15 @@
         <tr>
             <th></th>
             <th>Directories</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
         {{range .DirectoryRows}}
-        <tr class="clickable" onclick="location.assign('{{.Path}}')">
+        <tr class="clickable" onclick="location.assign('{{.ApiPath}}')">
             <td>&#128193;</td>
             <td>{{.Name}}</td>
+            <td>{{.SymLinkPath}}</td>
         </tr>
         {{end}}
     </tbody>
@@ -26,14 +28,16 @@
     <thead>
         <tr>
             <th>Files</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
         {{range .FileRows}}
         <tr>
             <td>
-                <a href="{{.Path}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
+                <a href="{{.ApiPath}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
             </td>
+            <td>{{.SymLinkPath}}</td>
         </tr>
         {{end}}
     </tbody>
