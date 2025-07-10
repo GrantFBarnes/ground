@@ -29,11 +29,11 @@ func Run() {
 	http.HandleFunc("POST /api/login", login)
 
 	// pages
-	http.Handle("GET /{$}", middlewareForPages(http.HandlerFunc(getPageHome)))
-	http.Handle("GET /login", middlewareForPages(http.HandlerFunc(getPageLogin)))
-	http.Handle("GET /files/", middlewareForPages(http.HandlerFunc(getPageFiles)))
-	http.Handle("GET /file/", middlewareForPages(http.HandlerFunc(getPageFile)))
-	http.Handle("GET /", middlewareForPages(http.HandlerFunc(getPage404)))
+	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))
+	http.Handle("GET /login", pageMiddleware(http.HandlerFunc(getLoginPage)))
+	http.Handle("GET /files/", pageMiddleware(http.HandlerFunc(getFilesPage)))
+	http.Handle("GET /file/", pageMiddleware(http.HandlerFunc(getFilePage)))
+	http.Handle("GET /", pageMiddleware(http.HandlerFunc(get404Page)))
 
 	ip, err := getLocalIPv4()
 	if err != nil {

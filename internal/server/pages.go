@@ -14,7 +14,7 @@ import (
 //go:embed templates
 var templates embed.FS
 
-func middlewareForPages(next http.Handler) http.Handler {
+func pageMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		loggedIn := auth.IsLoggedIn(r)
 		if !loggedIn {
@@ -36,14 +36,13 @@ func middlewareForPages(next http.Handler) http.Handler {
 	})
 }
 
-func getPageFiles(w http.ResponseWriter, r *http.Request) {
+func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	username, _ := auth.GetUsername(r)
 	homePath := strings.TrimPrefix(r.URL.Path, "/files")
 	fullPath := path.Join("/home", username, homePath)
 	dirInfo, err := os.Stat(fullPath)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("Provided path not found."))
+		getErrorPage(w, template.HTML("<p>Could not find provided path.</p>"))
 		return
 	}
 
@@ -54,8 +53,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 
 	dirEntries, err := os.ReadDir(fullPath)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Failed to read directory entries."))
+		getErrorPage(w, template.HTML("<p>Could not read directory.</p>"))
 		return
 	}
 
@@ -124,8 +122,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 		"templates/pages/bodies/files.html",
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Failed to parse HTML."))
+		getErrorPage(w, template.HTML("<p>Failed to generate HTML.</p>"))
 		return
 	}
 
@@ -140,14 +137,13 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getPageFile(w http.ResponseWriter, r *http.Request) {
+func getFilePage(w http.ResponseWriter, r *http.Request) {
 	username, _ := auth.GetUsername(r)
 	homePath := strings.TrimPrefix(r.URL.Path, "/file")
 	fullPath := path.Join("/home", username, homePath)
 	fileInfo, err := os.Stat(fullPath)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("Provided path not found."))
+		getErrorPage(w, template.HTML("<p>Could not find provided path.</p>"))
 		return
 	}
 
@@ -159,15 +155,14 @@ func getPageFile(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, fullPath)
 }
 
-func getPageLogin(w http.ResponseWriter, r *http.Request) {
+func getLoginPage(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
 		"templates/pages/bodies/login.html",
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Failed to parse HTML."))
+		getErrorPage(w, template.HTML("<p>Failed to generate HTML.</p>"))
 		return
 	}
 
@@ -178,15 +173,14 @@ func getPageLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getPageHome(w http.ResponseWriter, r *http.Request) {
+func getHomePage(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
 		"templates/pages/bodies/home.html",
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Failed to parse HTML."))
+		getErrorPage(w, template.HTML("<p>Failed to generate HTML.</p>"))
 		return
 	}
 
@@ -197,21 +191,27 @@ func getPageHome(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getPage404(w http.ResponseWriter, r *http.Request) {
+func get404Page(w http.ResponseWriter, r *http.Request) {
+	getErrorPage(w, template.HTML("<p>404 - Path Not Found</p>"))
+}
+
+func getErrorPage(w http.ResponseWriter, errorHtml template.HTML) {
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
-		"templates/pages/bodies/404.html",
+		"templates/pages/bodies/error.html",
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Failed to parse HTML."))
+		_, _ = w.Write([]byte("Failed to generate HTML."))
 		return
 	}
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
+		Html      template.HTML
 	}{
-		PageTitle: "Ground - 404 Not Found",
+		PageTitle: "Ground - Error",
+		Html:      errorHtml,
 	})
 }
