@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"os/user"
 	"path"
 
 	"github.com/grantfbarnes/ground/internal/auth"
@@ -37,10 +38,17 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = user.Lookup(body.Username)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("User does not exist."))
+		return
+	}
+
 	_, err = os.Stat(path.Join("/home", body.Username))
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("No home directory found for username."))
+		_, _ = w.Write([]byte("User has no home."))
 		return
 	}
 
