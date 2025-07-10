@@ -10,8 +10,10 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"os/user"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -27,10 +29,26 @@ func getRandomBytes() []byte {
 }
 
 func CredentialsAreValid(username string, password string) bool {
+	user, err := user.Lookup(username)
+	if err != nil {
+		return false
+	}
+
+	uid, err := strconv.Atoi(user.Uid)
+	if err != nil {
+		return false
+	}
+
+	if syscall.Setuid(uid) != nil {
+		syscall.Setuid(0)
+		return false
+	}
+
 	cmd := exec.Command("su", "-c", "exit", username)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
+		syscall.Setuid(0)
 		return false
 	}
 
@@ -41,10 +59,14 @@ func CredentialsAreValid(username string, password string) bool {
 
 	err = cmd.Start()
 	if err != nil {
+		syscall.Setuid(0)
 		return false
 	}
 
-	return cmd.Wait() == nil
+	err = cmd.Wait()
+
+	syscall.Setuid(0)
+	return err == nil
 }
 
 func IsLoggedIn(r *http.Request) bool {
