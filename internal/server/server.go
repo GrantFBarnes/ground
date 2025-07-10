@@ -27,12 +27,12 @@ func Run() {
 
 	// apis
 	http.HandleFunc("POST /api/login", login)
-	http.HandleFunc("GET /api/download/", download)
 
 	// pages
 	http.Handle("GET /{$}", middlewareForPages(http.HandlerFunc(getPageHome)))
 	http.Handle("GET /login", middlewareForPages(http.HandlerFunc(getPageLogin)))
 	http.Handle("GET /files/", middlewareForPages(http.HandlerFunc(getPageFiles)))
+	http.Handle("GET /file/", middlewareForPages(http.HandlerFunc(getPageFile)))
 	http.Handle("GET /", middlewareForPages(http.HandlerFunc(getPage404)))
 
 	ip, err := getLocalIPv4()

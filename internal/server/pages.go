@@ -38,22 +38,21 @@ func middlewareForPages(next http.Handler) http.Handler {
 
 func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	username, _ := auth.GetUsername(r)
-	homeDirPath := strings.TrimPrefix(r.URL.Path, "/files")
-	fullDirPath := path.Join("/home", username, homeDirPath)
-	fileInfo, err := os.Stat(fullDirPath)
+	homePath := strings.TrimPrefix(r.URL.Path, "/files")
+	fullPath := path.Join("/home", username, homePath)
+	dirInfo, err := os.Stat(fullPath)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write([]byte("Provided path not found."))
 		return
 	}
 
-	if !fileInfo.IsDir() {
-		w.WriteHeader(http.StatusNotAcceptable)
-		_, _ = w.Write([]byte("Provided path is not a directory."))
+	if !dirInfo.IsDir() {
+		http.Redirect(w, r, path.Join("/file", homePath), http.StatusSeeOther)
 		return
 	}
 
-	dirEntries, err := os.ReadDir(fullDirPath)
+	dirEntries, err := os.ReadDir(fullPath)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Failed to read directory entries."))
@@ -69,25 +68,25 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 	var directoryRows []rowData
 	var fileRows []rowData
 
-	if homeDirPath != "/" {
+	if homePath != "/" {
 		directoryRows = append(directoryRows, rowData{
 			Name:    "..",
-			ApiPath: path.Join("/files", homeDirPath, ".."),
+			ApiPath: path.Join("/files", homePath, ".."),
 		})
 	}
 
 	for _, entry := range dirEntries {
-		linkPath, err := os.Readlink(path.Join(fullDirPath, entry.Name()))
+		linkPath, err := os.Readlink(path.Join(fullPath, entry.Name()))
 		if err == nil {
 			if !strings.HasPrefix(linkPath, "/") {
-				linkPath = path.Join(fullDirPath, linkPath)
+				linkPath = path.Join(fullPath, linkPath)
 			}
 			linkInfo, err := os.Stat(linkPath)
 			if err == nil {
 				if linkInfo.IsDir() {
 					row := rowData{
 						Name:        entry.Name(),
-						ApiPath:     path.Join("/files", homeDirPath, entry.Name()),
+						ApiPath:     path.Join("/files", homePath, entry.Name()),
 						SymLinkPath: linkPath,
 					}
 					directoryRows = append(directoryRows, row)
@@ -95,7 +94,7 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 				} else {
 					row := rowData{
 						Name:        entry.Name(),
-						ApiPath:     path.Join("/api/download", homeDirPath, entry.Name()),
+						ApiPath:     path.Join("/file", homePath, entry.Name()),
 						SymLinkPath: linkPath,
 					}
 					fileRows = append(fileRows, row)
@@ -107,13 +106,13 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 		if entry.IsDir() {
 			row := rowData{
 				Name:    entry.Name(),
-				ApiPath: path.Join("/files", homeDirPath, entry.Name()),
+				ApiPath: path.Join("/files", homePath, entry.Name()),
 			}
 			directoryRows = append(directoryRows, row)
 		} else {
 			row := rowData{
 				Name:    entry.Name(),
-				ApiPath: path.Join("/api/download", homeDirPath, entry.Name()),
+				ApiPath: path.Join("/file", homePath, entry.Name()),
 			}
 			fileRows = append(fileRows, row)
 		}
@@ -139,6 +138,25 @@ func getPageFiles(w http.ResponseWriter, r *http.Request) {
 		DirectoryRows: directoryRows,
 		FileRows:      fileRows,
 	})
+}
+
+func getPageFile(w http.ResponseWriter, r *http.Request) {
+	username, _ := auth.GetUsername(r)
+	homePath := strings.TrimPrefix(r.URL.Path, "/file")
+	fullPath := path.Join("/home", username, homePath)
+	fileInfo, err := os.Stat(fullPath)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("Provided path not found."))
+		return
+	}
+
+	if fileInfo.IsDir() {
+		http.Redirect(w, r, path.Join("/files", homePath), http.StatusSeeOther)
+		return
+	}
+
+	http.ServeFile(w, r, fullPath)
 }
 
 func getPageLogin(w http.ResponseWriter, r *http.Request) {

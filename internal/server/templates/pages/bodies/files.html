@@ -34,9 +34,7 @@
     <tbody>
         {{range .FileRows}}
         <tr>
-            <td>
-                <a href="{{.ApiPath}}" target="_blank" rel="noopener noreferrer">{{.Name}}</a>
-            </td>
+            <td><a href="{{.ApiPath}}">{{.Name}}</a></td>
             <td>{{.SymLinkPath}}</td>
         </tr>
         {{end}}

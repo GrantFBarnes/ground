@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strconv"
-	"strings"
 
 	"github.com/grantfbarnes/ground/internal/auth"
 )
@@ -39,43 +37,19 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = os.Stat(path.Join("/home", body.Username))
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("No home directory found for username."))
+		return
+	}
+
 	if !auth.CredentialsAreValid(body.Username, body.Password) {
 		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte("Invalid login credentials provided."))
+		_, _ = w.Write([]byte("Invalid credentials provided."))
 		return
 	}
 
 	auth.SetUsername(w, body.Username)
-
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte("Login credentials valid."))
-}
-
-func download(w http.ResponseWriter, r *http.Request) {
-	username, err := auth.GetUsername(r)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte("Not logged in."))
-		return
-	}
-
-	homeFilePath := strings.TrimPrefix(r.URL.Path, "/api/download")
-	fullFilePath := path.Join("/home", username, homeFilePath)
-	fileInfo, err := os.Stat(fullFilePath)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("Provided path not found."))
-		return
-	}
-
-	if fileInfo.IsDir() {
-		w.WriteHeader(http.StatusNotAcceptable)
-		_, _ = w.Write([]byte("Provided path is a directory."))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Content-Disposition", "attachment; filename="+strconv.Quote(fileInfo.Name()))
-
-	http.ServeFile(w, r, fullFilePath)
 }
