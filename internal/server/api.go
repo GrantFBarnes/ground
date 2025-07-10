@@ -58,6 +58,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	auth.RemoveUsername(w)
 	auth.SetUsername(w, body.Username)
+	w.WriteHeader(http.StatusOK)
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	auth.RemoveUsername(w)
 	w.WriteHeader(http.StatusOK)
 }

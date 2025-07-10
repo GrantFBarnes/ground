@@ -27,6 +27,7 @@ func Run() {
 
 	// apis
 	http.HandleFunc("POST /api/login", login)
+	http.HandleFunc("POST /api/logout", logout)
 
 	// pages
 	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))
