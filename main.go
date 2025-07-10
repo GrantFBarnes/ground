@@ -57,11 +57,6 @@ func healthCheck() error {
 		return errors.New("not running as root")
 	}
 
-	secret := os.Getenv("GROUND_SECRET")
-	if secret == "" {
-		return errors.New("no secret defined")
-	}
-
 	return nil
 }
 

@@ -2,13 +2,13 @@ package auth
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -18,7 +18,13 @@ import (
 const cookieNameUserToken string = "GROUND-USER-TOKEN"
 const cookieNameRedirectURL string = "GROUND-REDIRECT-URL"
 
-var secret []byte = []byte(os.Getenv("GROUND_SECRET"))
+var secret []byte = getRandomBytes()
+
+func getRandomBytes() []byte {
+	bytes := make([]byte, 32)
+	rand.Read(bytes)
+	return bytes
+}
 
 func CredentialsAreValid(username string, password string) bool {
 	cmd := exec.Command("su", "-c", "exit", username)
