@@ -48,7 +48,7 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	fullPath := path.Join("/home", username, homePath)
 	dirInfo, err := os.Stat(fullPath)
 	if err != nil {
-		getErrorPage(w, r, template.HTML("<p>Could not find provided path.</p>"))
+		getProblemPage(w, r, "the requested file path could not be found in your home directory")
 		return
 	}
 
@@ -59,7 +59,7 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 
 	dirEntries, err := os.ReadDir(fullPath)
 	if err != nil {
-		getErrorPage(w, r, template.HTML("<p>Could not read directory.</p>"))
+		getProblemPage(w, r, "entries in the requested directory could not be read")
 		return
 	}
 
@@ -128,7 +128,7 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		"templates/pages/bodies/files.html",
 	)
 	if err != nil {
-		getErrorPage(w, r, template.HTML("<p>Failed to generate HTML.</p>"))
+		getProblemPage(w, r, "failed to generate html for the requested page")
 		return
 	}
 
@@ -151,7 +151,7 @@ func getFilePage(w http.ResponseWriter, r *http.Request) {
 	fullPath := path.Join("/home", username, homePath)
 	fileInfo, err := os.Stat(fullPath)
 	if err != nil {
-		getErrorPage(w, r, template.HTML("<p>Could not find provided path.</p>"))
+		getProblemPage(w, r, "the requested file path could not be found in your home directory")
 		return
 	}
 
@@ -170,7 +170,7 @@ func getLoginPage(w http.ResponseWriter, r *http.Request) {
 		"templates/pages/bodies/login.html",
 	)
 	if err != nil {
-		getErrorPage(w, r, template.HTML("<p>Failed to generate HTML.</p>"))
+		getProblemPage(w, r, "failed to generate html for the requested page")
 		return
 	}
 
@@ -192,7 +192,7 @@ func getHomePage(w http.ResponseWriter, r *http.Request) {
 		"templates/pages/bodies/home.html",
 	)
 	if err != nil {
-		getErrorPage(w, r, template.HTML("<p>Failed to generate HTML.</p>"))
+		getProblemPage(w, r, "failed to generate html for the requested page")
 		return
 	}
 
@@ -206,16 +206,16 @@ func getHomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func get404Page(w http.ResponseWriter, r *http.Request) {
-	getErrorPage(w, r, template.HTML("<p>404 - Path Not Found</p>"))
+	getProblemPage(w, r, "the requested url path is not valid")
 }
 
-func getErrorPage(w http.ResponseWriter, r *http.Request, errorHtml template.HTML) {
+func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage string) {
 	username := r.Context().Value(usernameContextKey).(string)
 
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
-		"templates/pages/bodies/error.html",
+		"templates/pages/bodies/problem.html",
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -224,12 +224,12 @@ func getErrorPage(w http.ResponseWriter, r *http.Request, errorHtml template.HTM
 	}
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle string
-		Username  string
-		Html      template.HTML
+		PageTitle      string
+		Username       string
+		ProblemMessage string
 	}{
-		PageTitle: "Ground - Error",
-		Username:  username,
-		Html:      errorHtml,
+		PageTitle:      "Ground - Error",
+		Username:       username,
+		ProblemMessage: problemMessage,
 	})
 }
