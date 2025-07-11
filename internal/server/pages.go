@@ -64,23 +64,29 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type rowData struct {
+		IsDir       bool
 		Name        string
-		ApiPath     string
+		Path        string
 		SymLinkPath string
 	}
 
-	var directoryRows []rowData
-	var fileRows []rowData
+	var rows []rowData
 
 	if homePath != "/" {
-		directoryRows = append(directoryRows, rowData{
-			Name:    "..",
-			ApiPath: path.Join("/files", homePath, ".."),
+		rows = append(rows, rowData{
+			IsDir: true,
+			Name:  "..",
+			Path:  path.Join(homePath, ".."),
 		})
 	}
 
 	for _, entry := range dirEntries {
-		linkPath, err := os.Readlink(path.Join(fullPath, entry.Name()))
+		row := rowData{
+			Name: entry.Name(),
+			Path: path.Join(homePath, entry.Name()),
+		}
+
+		linkPath, err := os.Readlink(path.Join(fullPath, row.Name))
 		if err == nil {
 			if !strings.HasPrefix(linkPath, "/") {
 				linkPath = path.Join(fullPath, linkPath)
@@ -88,38 +94,17 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 			linkInfo, err := os.Stat(linkPath)
 			if err == nil {
 				if linkInfo.IsDir() {
-					row := rowData{
-						Name:        entry.Name(),
-						ApiPath:     path.Join("/files", homePath, entry.Name()),
-						SymLinkPath: linkPath,
-					}
-					directoryRows = append(directoryRows, row)
-					continue
-				} else {
-					row := rowData{
-						Name:        entry.Name(),
-						ApiPath:     path.Join("/file", homePath, entry.Name()),
-						SymLinkPath: linkPath,
-					}
-					fileRows = append(fileRows, row)
-					continue
+					row.IsDir = true
 				}
+				row.SymLinkPath = linkPath
 			}
 		}
 
 		if entry.IsDir() {
-			row := rowData{
-				Name:    entry.Name(),
-				ApiPath: path.Join("/files", homePath, entry.Name()),
-			}
-			directoryRows = append(directoryRows, row)
-		} else {
-			row := rowData{
-				Name:    entry.Name(),
-				ApiPath: path.Join("/file", homePath, entry.Name()),
-			}
-			fileRows = append(fileRows, row)
+			row.IsDir = true
 		}
+
+		rows = append(rows, row)
 	}
 
 	tmpl, err := template.ParseFS(
@@ -133,15 +118,13 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle     string
-		Username      string
-		DirectoryRows []rowData
-		FileRows      []rowData
+		PageTitle string
+		Username  string
+		Rows      []rowData
 	}{
-		PageTitle:     "Ground - Files",
-		Username:      username,
-		DirectoryRows: directoryRows,
-		FileRows:      fileRows,
+		PageTitle: "Ground - Files",
+		Username:  username,
+		Rows:      rows,
 	})
 }
 

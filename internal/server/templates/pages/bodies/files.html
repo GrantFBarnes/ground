@@ -1,45 +1,18 @@
 {{define "body"}}
-
-{{$dirLen := len .DirectoryRows}}
-{{if gt $dirLen 0}}
 <table>
-    <thead>
-        <tr>
-            <th></th>
-            <th>Directories</th>
-            <th></th>
-        </tr>
-    </thead>
     <tbody>
-        {{range .DirectoryRows}}
-        <tr class="clickable" onclick="location.assign('{{.ApiPath}}')">
+        {{range .Rows}}
+        <tr>
+            {{if .IsDir}}
             <td>&#128193;</td>
-            <td>{{.Name}}</td>
+            <td><a href="/files{{.Path}}">{{.Name}}</a></td>
+            {{else}}
+            <td></td>
+            <td><a href="/file{{.Path}}">{{.Name}}</a></td>
+            {{end}}
             <td>{{.SymLinkPath}}</td>
         </tr>
         {{end}}
     </tbody>
 </table>
-{{end}}
-
-{{$fileLen := len .FileRows}}
-{{if gt $fileLen 0}}
-<table>
-    <thead>
-        <tr>
-            <th>Files</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {{range .FileRows}}
-        <tr>
-            <td><a href="{{.ApiPath}}">{{.Name}}</a></td>
-            <td>{{.SymLinkPath}}</td>
-        </tr>
-        {{end}}
-    </tbody>
-</table>
-{{end}}
-
 {{end}}
