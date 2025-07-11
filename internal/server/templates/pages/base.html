@@ -11,7 +11,12 @@
 </head>
 
 <body>
-    {{template "body" .}}
+    <div id="top-bar">
+        {{if ne .Username ""}}{{.Username}}@{{end}}ground
+    </div>
+    <div id="bottom-view">
+        <div id="content">{{template "body" .}}</div>
+    </div>
 </body>
 
 </html>

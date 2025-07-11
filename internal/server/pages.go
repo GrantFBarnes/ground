@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"embed"
 	"html/template"
 	"net/http"
@@ -11,12 +12,17 @@ import (
 	"github.com/grantfbarnes/ground/internal/auth"
 )
 
+type contextKey string
+
+const usernameContextKey contextKey = "username"
+
 //go:embed templates
 var templates embed.FS
 
 func pageMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		loggedIn := auth.IsLoggedIn(r)
+		username, err := auth.GetUsername(r)
+		loggedIn := err == nil
 		if !loggedIn {
 			auth.RemoveUsername(w)
 		}
@@ -32,12 +38,12 @@ func pageMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), usernameContextKey, username)))
 	})
 }
 
 func getFilesPage(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.GetUsername(r)
+	username := r.Context().Value(usernameContextKey).(string)
 	homePath := strings.TrimPrefix(r.URL.Path, "/files")
 	fullPath := path.Join("/home", username, homePath)
 	dirInfo, err := os.Stat(fullPath)
@@ -128,17 +134,19 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle     string
+		Username      string
 		DirectoryRows []rowData
 		FileRows      []rowData
 	}{
 		PageTitle:     "Ground - Files",
+		Username:      username,
 		DirectoryRows: directoryRows,
 		FileRows:      fileRows,
 	})
 }
 
 func getFilePage(w http.ResponseWriter, r *http.Request) {
-	username, _ := auth.GetUsername(r)
+	username := r.Context().Value(usernameContextKey).(string)
 	homePath := strings.TrimPrefix(r.URL.Path, "/file")
 	fullPath := path.Join("/home", username, homePath)
 	fileInfo, err := os.Stat(fullPath)
@@ -168,12 +176,15 @@ func getLoginPage(w http.ResponseWriter, r *http.Request) {
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
+		Username  string
 	}{
 		PageTitle: "Ground - Login",
 	})
 }
 
 func getHomePage(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(usernameContextKey).(string)
+
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
@@ -186,8 +197,10 @@ func getHomePage(w http.ResponseWriter, r *http.Request) {
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
+		Username  string
 	}{
 		PageTitle: "Ground - Home",
+		Username:  username,
 	})
 }
 
@@ -209,6 +222,7 @@ func getErrorPage(w http.ResponseWriter, errorHtml template.HTML) {
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
+		Username  string
 		Html      template.HTML
 	}{
 		PageTitle: "Ground - Error",
