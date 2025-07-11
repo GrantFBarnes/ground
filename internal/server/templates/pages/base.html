@@ -12,7 +12,18 @@
 
 <body>
     <div id="top-bar">
-        {{if ne .Username ""}}{{.Username}}@{{end}}ground
+        <div style="text-align: left;">
+            {{if ne .Username ""}}
+            <span>{{.Username}}@ground</span>
+            {{else}}
+            <span>ground</span>
+            {{end}}
+        </div>
+        <div style="text-align: right;">
+            {{if ne .Username ""}}
+            <span class="clickable" onclick="logout()">logout</span>
+            {{end}}
+        </div>
     </div>
     <div id="bottom-view">
         <div id="content">{{template "body" .}}</div>

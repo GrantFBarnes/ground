@@ -7,3 +7,9 @@ async function callPostAPI(url, body) {
         return { status: "error", data: error };
     }
 }
+
+function logout() {
+    if (confirm("Are you sure you want to logout?")) {
+        callPostAPI("/api/logout", null).then(() => location.reload());
+    }
+}
