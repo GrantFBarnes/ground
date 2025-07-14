@@ -21,40 +21,34 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Invalid body provided."))
+		http.Error(w, "Invalid body provided.", http.StatusBadRequest)
 		return
 	}
 
 	if body.Username == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("No username provided."))
+		http.Error(w, "No username provided.", http.StatusBadRequest)
 		return
 	}
 
 	if body.Password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("No password provided."))
+		http.Error(w, "No password provided.", http.StatusBadRequest)
 		return
 	}
 
 	_, err = user.Lookup(body.Username)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("User does not exist."))
+		http.Error(w, "User does not exist.", http.StatusBadRequest)
 		return
 	}
 
 	_, err = os.Stat(path.Join("/home", body.Username))
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte("User has no home."))
+		http.Error(w, "User has no home.", http.StatusNotFound)
 		return
 	}
 
 	if !auth.CredentialsAreValid(body.Username, body.Password) {
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte("Invalid credentials provided."))
+		http.Error(w, "Invalid credentials provided.", http.StatusUnauthorized)
 		return
 	}
 

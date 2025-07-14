@@ -201,8 +201,7 @@ func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage strin
 		"templates/pages/bodies/problem.html",
 	)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Failed to generate HTML."))
+		http.Error(w, "Failed to generate HTML.", http.StatusInternalServerError)
 		return
 	}
 
