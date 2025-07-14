@@ -11,6 +11,7 @@
             <td><a href="/file{{.Path}}">{{.Name}}</a></td>
             {{end}}
             <td>{{.SymLinkPath}}</td>
+            <td><a href="/api/download{{.Path}}" download>Download</a></td>
         </tr>
         {{end}}
     </tbody>

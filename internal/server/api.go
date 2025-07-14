@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"strings"
 
 	"github.com/grantfbarnes/ground/internal/auth"
 )
@@ -60,4 +61,31 @@ func login(w http.ResponseWriter, r *http.Request) {
 func logout(w http.ResponseWriter, r *http.Request) {
 	auth.RemoveUsername(w)
 	w.WriteHeader(http.StatusOK)
+}
+
+func download(w http.ResponseWriter, r *http.Request) {
+	username, err := auth.GetUsername(r)
+	if err != nil {
+		http.Error(w, "No login credentials found.", http.StatusUnauthorized)
+		return
+	}
+
+	homePath := strings.TrimPrefix(r.URL.Path, "/api/download")
+	fullPath := path.Join("/home", username, homePath)
+	fileInfo, err := os.Stat(fullPath)
+	if err != nil {
+		http.Error(w, "File not found.", http.StatusNotFound)
+		return
+	}
+
+	if fileInfo.IsDir() {
+		http.Error(w, "Cannot download a directory.", http.StatusNotAcceptable)
+		return
+	}
+
+	_, fileName := path.Split(homePath)
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	http.ServeFile(w, r, fullPath)
 }
