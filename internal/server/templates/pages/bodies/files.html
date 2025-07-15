@@ -6,14 +6,27 @@
             {{if .IsDir}}
             <td>&#128193;</td>
             <td><a href="/files{{.Path}}">{{.Name}}</a></td>
+            <td><button onclick="compressDirectory('{{.Path}}')">Compress</button></td>
             {{else}}
             <td></td>
             <td><a href="/file{{.Path}}">{{.Name}}</a></td>
+            <td><a href="/api/download{{.Path}}" download>Download</a></td>
             {{end}}
             <td>{{.SymLinkPath}}</td>
-            <td><a href="/api/download{{.Path}}" download>Download</a></td>
         </tr>
         {{end}}
     </tbody>
 </table>
+<script>
+    function compressDirectory(filePath) {
+        toggleLoader();
+        fetch("/api/compress" + filePath, { method: "POST" }).then((response) => {
+            if (response.status >= 200 && response.status < 300) {
+                location.reload();
+            } else {
+                toggleLoader();
+            }
+        });
+    }
+</script>
 {{end}}

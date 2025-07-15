@@ -64,7 +64,44 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func download(w http.ResponseWriter, r *http.Request) {
+func compressDirectory(w http.ResponseWriter, r *http.Request) {
+	username, err := auth.GetUsername(r)
+	if err != nil {
+		http.Error(w, "No login credentials found.", http.StatusUnauthorized)
+		return
+	}
+
+	homePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
+	fullPath := path.Join("/home", username, homePath)
+	fileInfo, err := os.Stat(fullPath)
+	if err != nil {
+		http.Error(w, "Path not found.", http.StatusNotFound)
+		return
+	}
+
+	if !fileInfo.IsDir() {
+		http.Error(w, "Path is not a directory.", http.StatusNotAcceptable)
+		return
+	}
+
+	fileName := fullPath + ".tar.gz"
+	_, err = os.Stat(fileName)
+	if err == nil {
+		http.Error(w, "File already exists.", http.StatusNotAcceptable)
+		return
+	}
+
+	cmd := exec.Command("su", "-c", "tar -zcf "+fileName+" --directory="+fullPath+" .", username)
+	err = cmd.Run()
+	if err != nil {
+		http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func downloadFile(w http.ResponseWriter, r *http.Request) {
 	username, err := auth.GetUsername(r)
 	if err != nil {
 		http.Error(w, "No login credentials found.", http.StatusUnauthorized)
@@ -75,34 +112,16 @@ func download(w http.ResponseWriter, r *http.Request) {
 	fullPath := path.Join("/home", username, homePath)
 	fileInfo, err := os.Stat(fullPath)
 	if err != nil {
-		http.Error(w, "File not found.", http.StatusNotFound)
+		http.Error(w, "Path not found.", http.StatusNotFound)
 		return
 	}
 
-	parentPath, fileName := path.Split(fullPath)
-
 	if fileInfo.IsDir() {
-		tarPath := path.Join(parentPath, "ground-tmp.tar.gz")
-
-		defer os.Remove(tarPath)
-		cmd := exec.Command("su", "-c", "tar -zcf "+tarPath+" --directory="+fullPath+" .", username)
-
-		err = cmd.Start()
-		if err != nil {
-			http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
-			return
-		}
-
-		err = cmd.Wait()
-		if err != nil {
-			http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
-			return
-		}
-
-		fullPath = tarPath
-		fileName += ".tar.gz"
+		http.Error(w, "Path is not a file.", http.StatusNotFound)
+		return
 	}
 
+	_, fileName := path.Split(fullPath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Type", "application/octet-stream")
 
