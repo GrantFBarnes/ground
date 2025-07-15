@@ -96,6 +96,7 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 				if linkInfo.IsDir() {
 					row.IsDir = true
 				}
+				linkPath = strings.TrimPrefix(linkPath, fullPath)
 				row.SymLinkPath = linkPath
 			}
 		}
