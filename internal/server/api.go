@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/user"
 	"path"
 	"strings"
@@ -78,12 +79,30 @@ func download(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	parentPath, fileName := path.Split(fullPath)
+
 	if fileInfo.IsDir() {
-		http.Error(w, "Cannot download a directory.", http.StatusNotAcceptable)
-		return
+		tarPath := path.Join(parentPath, "ground-tmp.tar.gz")
+
+		defer os.Remove(tarPath)
+		cmd := exec.Command("su", "-c", "tar -zcf "+tarPath+" --directory="+fullPath+" .", username)
+
+		err = cmd.Start()
+		if err != nil {
+			http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
+			return
+		}
+
+		err = cmd.Wait()
+		if err != nil {
+			http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
+			return
+		}
+
+		fullPath = tarPath
+		fileName += ".tar.gz"
 	}
 
-	_, fileName := path.Split(homePath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Type", "application/octet-stream")
 
