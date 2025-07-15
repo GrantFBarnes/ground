@@ -63,17 +63,36 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	type rowData struct {
+	type filePathBreadcrumb struct {
+		Name string
+		Path string
+	}
+
+	var filePathBreadcrumbs []filePathBreadcrumb
+	breadcrumbPath := "/"
+	for breadcrumbDir := range strings.SplitSeq(homePath, "/") {
+		if breadcrumbDir == "" {
+			continue
+		}
+
+		breadcrumbPath = path.Join(breadcrumbPath, breadcrumbDir)
+		filePathBreadcrumbs = append(filePathBreadcrumbs, filePathBreadcrumb{
+			Name: breadcrumbDir,
+			Path: breadcrumbPath,
+		})
+	}
+
+	type directoryEntryData struct {
 		IsDir       bool
 		Name        string
 		Path        string
 		SymLinkPath string
 	}
 
-	var rows []rowData
+	var directoryEntries []directoryEntryData
 
 	if homePath != "/" {
-		rows = append(rows, rowData{
+		directoryEntries = append(directoryEntries, directoryEntryData{
 			IsDir: true,
 			Name:  "..",
 			Path:  path.Join(homePath, ".."),
@@ -81,12 +100,12 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, entry := range dirEntries {
-		row := rowData{
+		directoryEntry := directoryEntryData{
 			Name: entry.Name(),
 			Path: path.Join(homePath, entry.Name()),
 		}
 
-		linkPath, err := os.Readlink(path.Join(fullPath, row.Name))
+		linkPath, err := os.Readlink(path.Join(fullPath, directoryEntry.Name))
 		if err == nil {
 			if !strings.HasPrefix(linkPath, "/") {
 				linkPath = path.Join(fullPath, linkPath)
@@ -94,18 +113,18 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 			linkInfo, err := os.Stat(linkPath)
 			if err == nil {
 				if linkInfo.IsDir() {
-					row.IsDir = true
+					directoryEntry.IsDir = true
 				}
 				linkPath = strings.TrimPrefix(linkPath, fullPath)
-				row.SymLinkPath = linkPath
+				directoryEntry.SymLinkPath = linkPath
 			}
 		}
 
 		if entry.IsDir() {
-			row.IsDir = true
+			directoryEntry.IsDir = true
 		}
 
-		rows = append(rows, row)
+		directoryEntries = append(directoryEntries, directoryEntry)
 	}
 
 	tmpl, err := template.ParseFS(
@@ -119,13 +138,15 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle string
-		Username  string
-		Rows      []rowData
+		PageTitle           string
+		Username            string
+		FilePathBreadcrumbs []filePathBreadcrumb
+		DirectoryEntries    []directoryEntryData
 	}{
-		PageTitle: "Ground - Files",
-		Username:  username,
-		Rows:      rows,
+		PageTitle:           "Ground - Files",
+		Username:            username,
+		FilePathBreadcrumbs: filePathBreadcrumbs,
+		DirectoryEntries:    directoryEntries,
 	})
 }
 

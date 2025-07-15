@@ -1,7 +1,13 @@
 {{define "body"}}
+<div>
+    {{range .FilePathBreadcrumbs}}
+    <span>/</span>
+    <span><a href="/files{{.Path}}">{{.Name}}</a></span>
+    {{end}}
+</div>
 <table>
     <tbody>
-        {{range .Rows}}
+        {{range .DirectoryEntries}}
         <tr>
             {{if .IsDir}}
             <td>&#128193;</td>
