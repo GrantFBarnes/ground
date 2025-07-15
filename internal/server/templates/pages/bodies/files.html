@@ -19,12 +19,13 @@
 </table>
 <script>
     function compressDirectory(filePath) {
-        toggleLoader();
+        toggleLoading();
         fetch("/api/compress" + filePath, { method: "POST" }).then((response) => {
             if (response.status >= 200 && response.status < 300) {
                 location.reload();
             } else {
-                toggleLoader();
+                response.text().then((text) => displayNotification(text));
+                toggleLoading();
             }
         });
     }
