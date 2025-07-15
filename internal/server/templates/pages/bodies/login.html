@@ -20,18 +20,20 @@
     formElement.addEventListener("submit", (event) => {
         event.preventDefault();
         toggleLoading();
-        callPostAPI("/api/login", JSON.stringify({
-            username: document.getElementById("username").value,
-            password: document.getElementById("password").value,
-        }))
-            .then(data => {
-                if (data.status >= 200 && data.status < 300) {
-                    location.reload();
-                } else {
-                    errorMessageElement.innerHTML = data.data;
-                    toggleLoading();
-                }
-            })
+        fetch("/api/login", {
+            method: "POST",
+            body: JSON.stringify({
+                username: document.getElementById("username").value,
+                password: document.getElementById("password").value,
+            }),
+        }).then((response) => {
+            if (response.status >= 200 && response.status < 300) {
+                location.reload();
+            } else {
+                response.text().then((text) => errorMessageElement.innerHTML = text)
+                toggleLoading();
+            }
+        });
     });
 
     function toggleLoading() {
