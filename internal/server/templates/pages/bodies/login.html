@@ -1,5 +1,4 @@
 {{define "body"}}
-<div id="loader" class="loader" hidden></div>
 <h2>Login</h2>
 <form id="login-form">
     <label for="username">Username:</label>
@@ -15,7 +14,6 @@
     <input type="submit" value="Login">
 </form>
 <script>
-    const loaderElement = document.getElementById("loader");
     const formElement = document.getElementById("login-form");
     const errorMessageElement = document.getElementById("error-message");
 
@@ -37,10 +35,10 @@
     });
 
     function toggleLoading() {
-        const wasLoading = loaderElement.hidden;
-        loaderElement.hidden = !wasLoading;
+        toggleLoader();
+        const currentlyLoading = document.getElementById("loader") != null;
         for (let i = 0; i < formElement.elements.length; i++) {
-            formElement.elements[i].disabled = wasLoading;
+            formElement.elements[i].disabled = currentlyLoading;
         }
     }
 </script>

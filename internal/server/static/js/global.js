@@ -1,3 +1,9 @@
+function logout() {
+    if (confirm("Are you sure you want to logout?")) {
+        callPostAPI("/api/logout", null).then(() => location.reload());
+    }
+}
+
 async function callPostAPI(url, body) {
     try {
         const response = await fetch(url, { method: "POST", body: body });
@@ -8,8 +14,14 @@ async function callPostAPI(url, body) {
     }
 }
 
-function logout() {
-    if (confirm("Are you sure you want to logout?")) {
-        callPostAPI("/api/logout", null).then(() => location.reload());
+function toggleLoader() {
+    const loaderElement = document.getElementById("loader");
+    if (loaderElement) {
+        loaderElement.remove();
+    } else {
+        const newLoaderElement = document.createElement("div");
+        newLoaderElement.id = "loader";
+        newLoaderElement.className = "loader";
+        document.body.appendChild(newLoaderElement);
     }
 }
