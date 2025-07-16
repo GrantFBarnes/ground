@@ -82,6 +82,10 @@ td {
     cursor: pointer;
 }
 
+.muted {
+    opacity: 0.5;
+}
+
 @-webkit-keyframes spin {
     0% {
         -webkit-transform: rotate(0deg);

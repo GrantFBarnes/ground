@@ -38,31 +38,6 @@ body {
     background: var(--color-bg0);
 }
 
-#overlay {
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-#loading-wheel {
-    border-color: var(--color-blue1);
-    border-top-color: var(--color-blue0);
-}
-
-#top-bar {
-    background-color: var(--color-bg1);
-}
-
-#notification {
-    background-color: var(--color-red0)
-}
-
-.action-group {
-    background-color: var(--color-bg2)
-}
-
-.action-group div:hover {
-    background-color: var(--color-bg3)
-}
-
 a {
     color: var(--color-blue0);
 }
@@ -94,4 +69,33 @@ input[type="submit"]:hover {
 
 tbody>tr:hover {
     background-color: var(--color-bg1);
+}
+
+#overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#loading-wheel {
+    border-color: var(--color-blue1);
+    border-top-color: var(--color-blue0);
+}
+
+#top-bar {
+    background-color: var(--color-bg1);
+}
+
+#notification {
+    background-color: var(--color-red0)
+}
+
+.muted {
+    color: var(--color-fg4);
+}
+
+.action-group {
+    background-color: var(--color-bg2)
+}
+
+.action-group div:hover {
+    background-color: var(--color-bg3)
 }
