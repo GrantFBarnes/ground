@@ -1,0 +1,97 @@
+:root {
+    --color-fg0: #fbf1c7;
+    --color-fg1: #ebdbb2;
+    --color-fg2: #d5c4a1;
+    --color-fg3: #bdae93;
+    --color-fg4: #a89984;
+
+    --color-bg0: #282828;
+    --color-bg1: #3c3836;
+    --color-bg2: #504945;
+    --color-bg3: #665c54;
+    --color-bg4: #7c6f64;
+
+    --color-red0: #cc241d;
+    --color-red1: #fb4934;
+
+    --color-green0: #98971a;
+    --color-green1: #b8bb26;
+
+    --color-blue0: #458588;
+    --color-blue1: #83a598;
+
+    --color-orange0: #d65d0e;
+    --color-orange1: #fe8019;
+
+    --color-yellow0: #d79921;
+    --color-yellow1: #fabd2f;
+
+    --color-purple0: #b16286;
+    --color-purple1: #d3869b;
+
+    --color-aqua0: #689d6a;
+    --color-aqua1: #8ec07c;
+}
+
+body {
+    color: var(--color-fg0);
+    background: var(--color-bg0);
+}
+
+#overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#loading-wheel {
+    border-color: var(--color-blue1);
+    border-top-color: var(--color-blue0);
+}
+
+#top-bar {
+    background-color: var(--color-bg1);
+}
+
+#notification {
+    background-color: var(--color-red0)
+}
+
+.action-group {
+    background-color: var(--color-bg2)
+}
+
+.action-group div:hover {
+    background-color: var(--color-bg3)
+}
+
+a {
+    color: var(--color-blue0);
+}
+
+a:visited {
+    color: var(--color-blue1);
+}
+
+button {
+    background-color: var(--color-bg1);
+}
+
+button:hover {
+    background-color: var(--color-bg2);
+}
+
+input {
+    color: var(--color-fg0);
+    background: var(--color-bg0);
+}
+
+input[type="submit"] {
+    background-color: var(--color-bg1);
+}
+
+input[type="submit"]:hover {
+    background-color: var(--color-bg2);
+}
+
+tbody>tr:hover {
+    background-color: var(--color-bg1);
+}
