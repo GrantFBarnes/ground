@@ -37,6 +37,15 @@
 
 <br />
 
+<div style="float: right;">
+    <form id="upload-form">
+        <input id="file-upload" type="file" multiple required />
+        <button type="submit">Upload</button>
+    </form>
+</div>
+
+<br />
+
 <div class="table-container">
     <table>
         <thead>
@@ -77,6 +86,33 @@
     </table>
 </div>
 <script>
+    const formElement = document.getElementById("upload-form");
+
+    formElement.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const fileUploadElement = document.getElementById("file-upload");
+        if (!fileUploadElement) {
+            displayNotification("Failed to find files.");
+            return;
+        }
+
+        const formData = new FormData();
+        for (let i in fileUploadElement.files) {
+            formData.append("file" + i, fileUploadElement.files[i]);
+        }
+
+        toggleLoading();
+        fetch("/api/upload{{.Path}}", { method: "POST", body: formData }).then((response) => {
+            if (response.status >= 200 && response.status < 300) {
+                location.reload();
+            } else {
+                response.text().then((text) => displayNotification(text));
+                toggleLoading();
+            }
+        });
+    });
+
     function compressDirectory(filePath) {
         toggleLoading();
         fetch("/api/compress" + filePath, { method: "POST" }).then((response) => {

@@ -29,6 +29,7 @@ func Run() {
 	http.HandleFunc("POST /api/login", login)
 	http.HandleFunc("POST /api/logout", logout)
 	http.HandleFunc("POST /api/compress/", compressDirectory)
+	http.HandleFunc("POST /api/upload/", uploadFiles)
 	http.HandleFunc("GET /api/download/", downloadFile)
 
 	// pages

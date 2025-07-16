@@ -2,15 +2,21 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
 	"path"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/grantfbarnes/ground/internal/auth"
 )
+
+var fileCopyNameRegex = regexp.MustCompile(`(.*)\(([0-9]+)\)$`)
 
 func login(w http.ResponseWriter, r *http.Request) {
 	type bodyStruct struct {
@@ -72,26 +78,29 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	homePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
-	fullPath := path.Join("/home", username, homePath)
-	fileInfo, err := os.Stat(fullPath)
+	rootPath := path.Join("/home", username, homePath)
+	pathInfo, err := os.Stat(rootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusNotFound)
 		return
 	}
 
-	if !fileInfo.IsDir() {
+	if !pathInfo.IsDir() {
 		http.Error(w, "Path is not a directory.", http.StatusNotAcceptable)
 		return
 	}
 
-	fileName := fullPath + ".tar.gz"
-	_, err = os.Stat(fileName)
+	parentDirName, dirName := path.Split(rootPath)
+	fileName := getAvailableFileName(parentDirName, dirName+".tar.gz")
+	filePath := path.Join(parentDirName, fileName)
+
+	_, err = os.Stat(filePath)
 	if err == nil {
 		http.Error(w, "File already exists.", http.StatusNotAcceptable)
 		return
 	}
 
-	cmd := exec.Command("su", "-c", "tar -zcf "+fileName+" --directory="+fullPath+" .", username)
+	cmd := exec.Command("su", "-c", "tar -zcf '"+filePath+"' --directory="+rootPath+" .", username)
 	err = cmd.Run()
 	if err != nil {
 		http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
@@ -99,6 +108,125 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func uploadFiles(w http.ResponseWriter, r *http.Request) {
+	username, err := auth.GetUsername(r)
+	if err != nil {
+		http.Error(w, "No login credentials found.", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := user.Lookup(username)
+	if err != nil {
+		http.Error(w, "Failed to lookup user.", http.StatusInternalServerError)
+		return
+	}
+
+	homePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
+	rootPath := path.Join("/home", username, homePath)
+	pathInfo, err := os.Stat(rootPath)
+	if err != nil {
+		http.Error(w, "Path not found.", http.StatusNotFound)
+		return
+	}
+
+	if !pathInfo.IsDir() {
+		http.Error(w, "Path is not a directory.", http.StatusNotAcceptable)
+		return
+	}
+
+	fileIndex := 0
+	for {
+		fileKey := fmt.Sprintf("file%d", fileIndex)
+		formFile, formFileHandler, err := r.FormFile(fileKey)
+		if err != nil {
+			break
+		}
+		defer formFile.Close()
+
+		fileName := getAvailableFileName(rootPath, formFileHandler.Filename)
+		filePath := path.Join(rootPath, fileName)
+
+		osFile, err := os.Create(filePath)
+		if err != nil {
+			http.Error(w, "Failed to create file.", http.StatusInternalServerError)
+			return
+		}
+		defer osFile.Close()
+
+		_, err = io.Copy(osFile, formFile)
+		if err != nil {
+			http.Error(w, "Failed to write to file.", http.StatusInternalServerError)
+			return
+		}
+
+		uid, _ := strconv.Atoi(user.Uid)
+		gid, _ := strconv.Atoi(user.Gid)
+		err = os.Chown(filePath, uid, gid)
+		if err != nil {
+			http.Error(w, "Failed to change ownership of file.", http.StatusInternalServerError)
+			return
+		}
+
+		fileIndex += 1
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func getAvailableFileName(fileDirPath string, fileName string) string {
+	for {
+		filePath := path.Join(fileDirPath, fileName)
+		_, err := os.Stat(filePath)
+		if err != nil {
+			break
+		}
+
+		fileNameNoExt, fileExt := getFileExtension(fileName)
+
+		if fileCopyNameRegex.MatchString(fileNameNoExt) {
+			fileName = fileCopyNameRegex.ReplaceAllStringFunc(fileNameNoExt, func(s string) string {
+				matches := fileCopyNameRegex.FindStringSubmatch(s)
+				if len(matches) != 3 {
+					return s
+				}
+
+				coreFileName := matches[1]
+				fileNameCopyNumber := matches[2]
+				copyNumber, err := strconv.Atoi(fileNameCopyNumber)
+				if err != nil {
+					return s
+				}
+
+				return fmt.Sprintf("%s(%d)%s", coreFileName, copyNumber+1, fileExt)
+			})
+		} else {
+			fileName = fmt.Sprintf("%s(1)%s", fileNameNoExt, fileExt)
+		}
+
+	}
+
+	return fileName
+}
+
+func getFileExtension(fileName string) (coreFileName, fileExtension string) {
+	split := strings.Split(fileName, ".")
+	if strings.HasPrefix(fileName, ".") {
+		split = strings.Split(fileName[1:], ".")
+	}
+
+	if len(split) == 0 {
+		return "", ""
+	}
+
+	coreFileName = split[0]
+	fileExtension = strings.Join(split[1:], ".")
+	if fileExtension != "" {
+		fileExtension = "." + fileExtension
+	}
+
+	return coreFileName, fileExtension
 }
 
 func downloadFile(w http.ResponseWriter, r *http.Request) {
@@ -109,21 +237,21 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	homePath := strings.TrimPrefix(r.URL.Path, "/api/download")
-	fullPath := path.Join("/home", username, homePath)
-	fileInfo, err := os.Stat(fullPath)
+	rootPath := path.Join("/home", username, homePath)
+	pathInfo, err := os.Stat(rootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusNotFound)
 		return
 	}
 
-	if fileInfo.IsDir() {
+	if pathInfo.IsDir() {
 		http.Error(w, "Path is not a file.", http.StatusNotFound)
 		return
 	}
 
-	_, fileName := path.Split(fullPath)
+	_, fileName := path.Split(rootPath)
 	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
 	w.Header().Set("Content-Type", "application/octet-stream")
 
-	http.ServeFile(w, r, fullPath)
+	http.ServeFile(w, r, rootPath)
 }

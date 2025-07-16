@@ -47,6 +47,7 @@ a:visited {
 }
 
 button {
+    color: var(--color-fg0);
     background-color: var(--color-bg1);
 }
 
@@ -57,6 +58,11 @@ button:hover {
 input {
     color: var(--color-fg0);
     background: var(--color-bg0);
+}
+
+input::file-selector-button {
+    color: var(--color-fg0);
+    background-color: var(--color-bg1);
 }
 
 input[type="submit"] {
