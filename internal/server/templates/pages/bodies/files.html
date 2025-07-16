@@ -37,43 +37,45 @@
 
 <br />
 
-<table>
-    <thead>
-        <tr>
-            <th></th>
-            <th style="text-align: left;">name</th>
-            <th></th>
-            <th style="text-align: right;">size</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {{range .DirectoryEntries}}
-        <tr class="clickable" ondblclick="window.location.href='{{.UrlPath}}'">
-            <td class="single-icon-cell">
-                {{if .IsDir}}
-                &#128448;
-                {{else}}
-                &#128459;
-                {{end}}
-            </td>
-            <td>{{.Name}}</td>
-            <td class="muted">{{.SymLinkPath}}</td>
-            <td style="text-align: right;">{{.HumanSize}}</td>
-            <td class="single-icon-cell action-group-container">
-                <span>&#8942;</span>
-                <div class="action-group">
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th style="text-align: left;">name</th>
+                <th></th>
+                <th style="text-align: right;">size</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .DirectoryEntries}}
+            <tr class="clickable" ondblclick="window.location.href='{{.UrlPath}}'">
+                <td class="single-icon-cell">
                     {{if .IsDir}}
-                    <div onclick="compressDirectory('{{.Path}}')">Compress</div>
+                    &#128448;
                     {{else}}
-                    <div onclick="downloadFile('{{.Path}}')">Download</div>
+                    &#128459;
                     {{end}}
-                </div>
-            </td>
-        </tr>
-        {{end}}
-    </tbody>
-</table>
+                </td>
+                <td>{{.Name}}</td>
+                <td class="muted">{{.SymLinkPath}}</td>
+                <td style="text-align: right;">{{.HumanSize}}</td>
+                <td class="single-icon-cell action-group-container">
+                    <span>&#8942;</span>
+                    <div class="action-group">
+                        {{if .IsDir}}
+                        <div onclick="compressDirectory('{{.Path}}')">Compress</div>
+                        {{else}}
+                        <div onclick="downloadFile('{{.Path}}')">Download</div>
+                        {{end}}
+                    </div>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
 <script>
     function compressDirectory(filePath) {
         toggleLoading();

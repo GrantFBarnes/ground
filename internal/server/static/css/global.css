@@ -14,9 +14,13 @@ body {
     font-family: monospace;
 }
 
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
 table {
     border-collapse: collapse;
-    overflow: auto;
     width: 100%;
 }
 
