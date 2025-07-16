@@ -1,10 +1,13 @@
 {{define "body"}}
 <style>
+    .single-icon-cell {
+        text-align: center;
+        width: 2em;
+    }
+
     .action-group-container {
         position: relative;
         cursor: context-menu;
-        text-align: center;
-        width: 2em;
     }
 
     .action-group {
@@ -31,15 +34,33 @@
     <span><a href="/files{{.Path}}">{{.Name}}</a></span>
     {{end}}
 </div>
+
+<br />
+
 <table>
+    <thead>
+        <tr>
+            <th></th>
+            <th style="text-align: left;">name</th>
+            <th></th>
+            <th style="text-align: right;">size</th>
+            <th></th>
+        </tr>
+    </thead>
     <tbody>
         {{range .DirectoryEntries}}
         <tr class="clickable" ondblclick="window.location.href='{{.UrlPath}}'">
-            {{if .IsDir}}<td>&#128448;</td> {{else}}<td>&#128459;</td>{{end}}
+            <td class="single-icon-cell">
+                {{if .IsDir}}
+                &#128448;
+                {{else}}
+                &#128459;
+                {{end}}
+            </td>
             <td>{{.Name}}</td>
             <td class="muted">{{.SymLinkPath}}</td>
             <td style="text-align: right;">{{.HumanSize}}</td>
-            <td class="action-group-container">
+            <td class="single-icon-cell action-group-container">
                 <span>&#8942;</span>
                 <div class="action-group">
                     {{if .IsDir}}
