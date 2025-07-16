@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/grantfbarnes/ground/internal/auth"
@@ -148,6 +149,22 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 
 		directoryEntries = append(directoryEntries, directoryEntry)
 	}
+
+	sort.Slice(directoryEntries, func(i, j int) bool {
+		a, b := directoryEntries[i], directoryEntries[j]
+
+		if a.IsDir != b.IsDir {
+			return a.IsDir
+		}
+
+		aDot := strings.HasPrefix(a.Name, ".")
+		bDot := strings.HasPrefix(b.Name, ".")
+		if aDot != bDot {
+			return bDot
+		}
+
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
 
 	tmpl, err := template.ParseFS(
 		templates,
