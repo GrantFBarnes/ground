@@ -1,4 +1,33 @@
 {{define "body"}}
+<style>
+    .action-group-container {
+        position: relative;
+        cursor: context-menu;
+        text-align: center;
+        width: 2em;
+    }
+
+    .action-group {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: #f9f9f9;
+        z-index: 1;
+    }
+
+    .action-group-container:hover .action-group {
+        display: block;
+    }
+
+    .action-group div {
+        cursor: pointer;
+        padding: 10px;
+    }
+
+    .action-group div:hover {
+        background-color: #f1f1f1;
+    }
+</style>
 <div>
     {{range .FilePathBreadcrumbs}}
     <span>/</span>
@@ -12,13 +41,21 @@
             {{if .IsDir}}
             <td>&#128193;</td>
             <td><a href="/files{{.Path}}">{{.Name}}</a></td>
-            <td><button onclick="compressDirectory('{{.Path}}')">Compress</button></td>
             {{else}}
             <td></td>
             <td><a href="/file{{.Path}}">{{.Name}}</a></td>
-            <td><a href="/api/download{{.Path}}" download>Download</a></td>
             {{end}}
             <td>{{.SymLinkPath}}</td>
+            <td class="action-group-container">
+                <span>&#8942;</span>
+                <div class="action-group">
+                    {{if .IsDir}}
+                    <div onclick="compressDirectory('{{.Path}}')">Compress</div>
+                    {{else}}
+                    <div onclick="downloadFile('{{.Path}}')">Download</div>
+                    {{end}}
+                </div>
+            </td>
         </tr>
         {{end}}
     </tbody>
@@ -34,6 +71,14 @@
                 toggleLoading();
             }
         });
+    }
+
+    function downloadFile(filePath) {
+        const a = document.createElement("a");
+        a.href = "/api/download" + filePath;
+        a.download = true;
+        a.click();
+        a.remove();
     }
 </script>
 {{end}}
