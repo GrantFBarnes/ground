@@ -1,6 +1,7 @@
 :root {
     --top-bar-height: 20px;
-    --top-bar-padding: 15px;
+    --padding-large: 12px;
+    --padding-small: 6px;
     --bottom-view-margin: 20px;
     --loading-wheel-diameter: 100px;
     --loading-wheel-thickness: 15px;
@@ -13,9 +14,20 @@ body {
     font-family: monospace;
 }
 
+table {
+    border-collapse: collapse;
+    overflow: auto;
+    width: 100%;
+}
+
+th,
+td {
+    padding: var(--padding-small)
+}
+
 #top-bar {
     height: var(--top-bar-height);
-    padding: var(--top-bar-padding);
+    padding: var(--padding-large);
     display: grid;
     grid-auto-flow: column;
     overflow: hidden;
@@ -23,7 +35,7 @@ body {
 
 #bottom-view {
     margin: var(--bottom-view-margin);
-    height: calc(100% - (2 * var(--bottom-view-margin)) - (2 * var(--top-bar-padding)) - var(--top-bar-height));
+    height: calc(100% - (2 * var(--bottom-view-margin)) - (2 * var(--padding-large)) - var(--top-bar-height));
 }
 
 #content {
@@ -61,7 +73,7 @@ body {
     z-index: 999;
     bottom: 30px;
     left: 30px;
-    padding: 15px;
+    padding: var(--padding-large);
     width: calc(100vw - 90px);
     text-align: center;
 }
