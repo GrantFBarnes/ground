@@ -34,14 +34,9 @@
 <table>
     <tbody>
         {{range .DirectoryEntries}}
-        <tr>
-            {{if .IsDir}}
-            <td>&#128193;</td>
-            <td><a href="/files{{.Path}}">{{.Name}}</a></td>
-            {{else}}
-            <td></td>
-            <td><a href="/file{{.Path}}">{{.Name}}</a></td>
-            {{end}}
+        <tr class="clickable" ondblclick="window.location.href='{{.UrlPath}}'">
+            {{if .IsDir}}<td>&#128193;</td> {{else}}<td></td>{{end}}
+            <td>{{.Name}}</td>
             <td class="muted">{{.SymLinkPath}}</td>
             <td style="text-align: right;">{{.HumanSize}}</td>
             <td class="action-group-container">

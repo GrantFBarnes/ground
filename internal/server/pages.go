@@ -96,8 +96,9 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		Name        string
 		Path        string
 		Size        int64
-		HumanSize   string
 		SymLinkPath string
+		UrlPath     string
+		HumanSize   string
 	}
 
 	var directoryEntries []directoryEntryData
@@ -114,20 +115,6 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 			Size:  entryInfo.Size(),
 		}
 
-		if directoryEntry.IsDir {
-			directoryEntry.HumanSize = "-"
-		} else {
-			if directoryEntry.Size > 1000*1000*1000 {
-				directoryEntry.HumanSize = fmt.Sprintf("%dG", directoryEntry.Size/(1000.0*1000.0*1000.0))
-			} else if directoryEntry.Size > 1000*1000 {
-				directoryEntry.HumanSize = fmt.Sprintf("%dM", directoryEntry.Size/(1000.0*1000.0))
-			} else if directoryEntry.Size > 1000 {
-				directoryEntry.HumanSize = fmt.Sprintf("%dK", directoryEntry.Size/(1000.0))
-			} else {
-				directoryEntry.HumanSize = fmt.Sprintf("%d", directoryEntry.Size)
-			}
-		}
-
 		linkPath, err := os.Readlink(path.Join(fullPath, directoryEntry.Name))
 		if err == nil {
 			if !strings.HasPrefix(linkPath, "/") {
@@ -140,6 +127,22 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 				}
 				linkPath = strings.TrimPrefix(linkPath, fullPath)
 				directoryEntry.SymLinkPath = linkPath
+			}
+		}
+
+		if directoryEntry.IsDir {
+			directoryEntry.UrlPath = path.Join("/files", directoryEntry.Path)
+			directoryEntry.HumanSize = "-"
+		} else {
+			directoryEntry.UrlPath = path.Join("/file", directoryEntry.Path)
+			if directoryEntry.Size > 1000*1000*1000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%dG", directoryEntry.Size/(1000.0*1000.0*1000.0))
+			} else if directoryEntry.Size > 1000*1000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%dM", directoryEntry.Size/(1000.0*1000.0))
+			} else if directoryEntry.Size > 1000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%dK", directoryEntry.Size/(1000.0))
+			} else {
+				directoryEntry.HumanSize = fmt.Sprintf("%d", directoryEntry.Size)
 			}
 		}
 
