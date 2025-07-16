@@ -64,12 +64,19 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type filePathBreadcrumb struct {
-		Name string
-		Path string
+		Name   string
+		Path   string
+		IsHome bool
 	}
 
-	var filePathBreadcrumbs []filePathBreadcrumb
 	breadcrumbPath := "/"
+	filePathBreadcrumbs := []filePathBreadcrumb{
+		{
+			Name:   "home",
+			Path:   breadcrumbPath,
+			IsHome: true,
+		},
+	}
 	for breadcrumbDir := range strings.SplitSeq(homePath, "/") {
 		if breadcrumbDir == "" {
 			continue
@@ -77,8 +84,9 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 
 		breadcrumbPath = path.Join(breadcrumbPath, breadcrumbDir)
 		filePathBreadcrumbs = append(filePathBreadcrumbs, filePathBreadcrumb{
-			Name: breadcrumbDir,
-			Path: breadcrumbPath,
+			Name:   breadcrumbDir,
+			Path:   breadcrumbPath,
+			IsHome: false,
 		})
 	}
 
@@ -90,15 +98,6 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var directoryEntries []directoryEntryData
-
-	if homePath != "/" {
-		directoryEntries = append(directoryEntries, directoryEntryData{
-			IsDir: true,
-			Name:  "..",
-			Path:  path.Join(homePath, ".."),
-		})
-	}
-
 	for _, entry := range dirEntries {
 		directoryEntry := directoryEntryData{
 			Name: entry.Name(),

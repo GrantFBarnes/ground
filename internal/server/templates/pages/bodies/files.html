@@ -30,7 +30,9 @@
 </style>
 <div>
     {{range .FilePathBreadcrumbs}}
+    {{if not .IsHome}}
     <span>/</span>
+    {{end}}
     <span><a href="/files{{.Path}}">{{.Name}}</a></span>
     {{end}}
 </div>
