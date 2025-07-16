@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"embed"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -94,14 +95,37 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		IsDir       bool
 		Name        string
 		Path        string
+		Size        int64
+		HumanSize   string
 		SymLinkPath string
 	}
 
 	var directoryEntries []directoryEntryData
 	for _, entry := range dirEntries {
+		entryInfo, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
 		directoryEntry := directoryEntryData{
-			Name: entry.Name(),
-			Path: path.Join(homePath, entry.Name()),
+			IsDir: entry.IsDir(),
+			Name:  entry.Name(),
+			Path:  path.Join(homePath, entry.Name()),
+			Size:  entryInfo.Size(),
+		}
+
+		if directoryEntry.Size > 1000*1000*1000*1000*1000 {
+			directoryEntry.HumanSize = fmt.Sprintf("%dP", directoryEntry.Size/(1000.0*1000.0*1000.0*1000.0*1000.0))
+		} else if directoryEntry.Size > 1000*1000*1000*1000 {
+			directoryEntry.HumanSize = fmt.Sprintf("%dT", directoryEntry.Size/(1000.0*1000.0*1000.0*1000.0))
+		} else if directoryEntry.Size > 1000*1000*1000 {
+			directoryEntry.HumanSize = fmt.Sprintf("%dG", directoryEntry.Size/(1000.0*1000.0*1000.0))
+		} else if directoryEntry.Size > 1000*1000 {
+			directoryEntry.HumanSize = fmt.Sprintf("%dM", directoryEntry.Size/(1000.0*1000.0))
+		} else if directoryEntry.Size > 1000 {
+			directoryEntry.HumanSize = fmt.Sprintf("%dK", directoryEntry.Size/(1000.0))
+		} else {
+			directoryEntry.HumanSize = fmt.Sprintf("%d", directoryEntry.Size)
 		}
 
 		linkPath, err := os.Readlink(path.Join(fullPath, directoryEntry.Name))
@@ -117,10 +141,6 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 				linkPath = strings.TrimPrefix(linkPath, fullPath)
 				directoryEntry.SymLinkPath = linkPath
 			}
-		}
-
-		if entry.IsDir() {
-			directoryEntry.IsDir = true
 		}
 
 		directoryEntries = append(directoryEntries, directoryEntry)
