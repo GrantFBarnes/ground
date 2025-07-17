@@ -64,7 +64,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	_, err = os.Stat(path.Join("/home", body.Username))
 	if err != nil {
-		http.Error(w, "User has no home.", http.StatusNotFound)
+		http.Error(w, "User has no home.", http.StatusBadRequest)
 		return
 	}
 
@@ -89,12 +89,12 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 	rootPath := path.Join("/home", username, homePath)
 	pathInfo, err := os.Stat(rootPath)
 	if err != nil {
-		http.Error(w, "Path not found.", http.StatusNotFound)
+		http.Error(w, "Path not found.", http.StatusBadRequest)
 		return
 	}
 
 	if !pathInfo.IsDir() {
-		http.Error(w, "Path is not a directory.", http.StatusNotAcceptable)
+		http.Error(w, "Path is not a directory.", http.StatusBadRequest)
 		return
 	}
 
@@ -104,7 +104,7 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 
 	_, err = os.Stat(filePath)
 	if err == nil {
-		http.Error(w, "File already exists.", http.StatusNotAcceptable)
+		http.Error(w, "File already exists.", http.StatusBadRequest)
 		return
 	}
 
@@ -130,12 +130,12 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 	rootPath := path.Join("/home", username, homePath)
 	pathInfo, err := os.Stat(rootPath)
 	if err != nil {
-		http.Error(w, "Path not found.", http.StatusNotFound)
+		http.Error(w, "Path not found.", http.StatusBadRequest)
 		return
 	}
 
 	if !pathInfo.IsDir() {
-		http.Error(w, "Path is not a directory.", http.StatusNotAcceptable)
+		http.Error(w, "Path is not a directory.", http.StatusBadRequest)
 		return
 	}
 
@@ -253,12 +253,12 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 	rootPath := path.Join("/home", username, homePath)
 	pathInfo, err := os.Stat(rootPath)
 	if err != nil {
-		http.Error(w, "Path not found.", http.StatusNotFound)
+		http.Error(w, "Path not found.", http.StatusBadRequest)
 		return
 	}
 
 	if pathInfo.IsDir() {
-		http.Error(w, "Path is not a file.", http.StatusNotFound)
+		http.Error(w, "Path is not a file.", http.StatusBadRequest)
 		return
 	}
 
