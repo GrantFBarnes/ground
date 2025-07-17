@@ -166,6 +166,13 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 		fileName := getAvailableFileName(formFilePath, formFileName)
 		filePath := path.Join(formFilePath, fileName)
 
+		cmd := exec.Command("su", "-c", "mkdir -p '"+formFilePath+"'", username)
+		err = cmd.Run()
+		if err != nil {
+			http.Error(w, "Failed to create directory.", http.StatusInternalServerError)
+			return
+		}
+
 		osFile, err := os.Create(filePath)
 		if err != nil {
 			http.Error(w, "Failed to create file.", http.StatusInternalServerError)
