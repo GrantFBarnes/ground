@@ -14,10 +14,6 @@ import (
 	"github.com/grantfbarnes/ground/internal/auth"
 )
 
-type contextKey string
-
-const usernameContextKey contextKey = "username"
-
 //go:embed templates
 var templates embed.FS
 

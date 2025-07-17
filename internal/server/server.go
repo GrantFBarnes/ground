@@ -13,6 +13,10 @@ import (
 //go:embed static
 var static embed.FS
 
+type contextKey string
+
+const usernameContextKey contextKey = "username"
+
 func Run() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -28,9 +32,9 @@ func Run() {
 	// apis
 	http.HandleFunc("POST /api/login", login)
 	http.HandleFunc("POST /api/logout", logout)
-	http.HandleFunc("POST /api/compress/", compressDirectory)
-	http.HandleFunc("POST /api/upload/", uploadFiles)
-	http.HandleFunc("GET /api/download/", downloadFile)
+	http.Handle("POST /api/compress/", apiMiddleware(http.HandlerFunc(compressDirectory)))
+	http.Handle("POST /api/upload/", apiMiddleware(http.HandlerFunc(uploadFiles)))
+	http.Handle("GET /api/download/", apiMiddleware(http.HandlerFunc(downloadFile)))
 
 	// pages
 	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))

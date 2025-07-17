@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +18,18 @@ import (
 )
 
 var fileCopyNameRegex = regexp.MustCompile(`(.*)\(([0-9]+)\)$`)
+
+func apiMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username, err := auth.GetUsername(r)
+		if err != nil {
+			auth.RemoveUsername(w)
+			http.Error(w, "No login credentials found.", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), usernameContextKey, username)))
+	})
+}
 
 func login(w http.ResponseWriter, r *http.Request) {
 	type bodyStruct struct {
@@ -71,12 +84,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func compressDirectory(w http.ResponseWriter, r *http.Request) {
-	username, err := auth.GetUsername(r)
-	if err != nil {
-		http.Error(w, "No login credentials found.", http.StatusUnauthorized)
-		return
-	}
-
+	username := r.Context().Value(usernameContextKey).(string)
 	homePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
 	rootPath := path.Join("/home", username, homePath)
 	pathInfo, err := os.Stat(rootPath)
@@ -111,12 +119,7 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadFiles(w http.ResponseWriter, r *http.Request) {
-	username, err := auth.GetUsername(r)
-	if err != nil {
-		http.Error(w, "No login credentials found.", http.StatusUnauthorized)
-		return
-	}
-
+	username := r.Context().Value(usernameContextKey).(string)
 	user, err := user.Lookup(username)
 	if err != nil {
 		http.Error(w, "Failed to lookup user.", http.StatusInternalServerError)
@@ -245,12 +248,7 @@ func getFileExtension(fileName string) (coreFileName, fileExtension string) {
 }
 
 func downloadFile(w http.ResponseWriter, r *http.Request) {
-	username, err := auth.GetUsername(r)
-	if err != nil {
-		http.Error(w, "No login credentials found.", http.StatusUnauthorized)
-		return
-	}
-
+	username := r.Context().Value(usernameContextKey).(string)
 	homePath := strings.TrimPrefix(r.URL.Path, "/api/download")
 	rootPath := path.Join("/home", username, homePath)
 	pathInfo, err := os.Stat(rootPath)
