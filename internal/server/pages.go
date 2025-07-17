@@ -42,20 +42,20 @@ func pageMiddleware(next http.Handler) http.Handler {
 
 func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(usernameContextKey).(string)
-	homePath := strings.TrimPrefix(r.URL.Path, "/files")
-	rootPath := path.Join("/home", username, homePath)
-	dirInfo, err := os.Stat(rootPath)
+	urlHomePath := strings.TrimPrefix(r.URL.Path, "/files")
+	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "the requested file path could not be found in your home directory")
 		return
 	}
 
-	if !dirInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/file", homePath), http.StatusSeeOther)
+	if !urlPathInfo.IsDir() {
+		http.Redirect(w, r, path.Join("/file", urlHomePath), http.StatusSeeOther)
 		return
 	}
 
-	dirEntries, err := os.ReadDir(rootPath)
+	dirEntries, err := os.ReadDir(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "entries in the requested directory could not be read")
 		return
@@ -75,7 +75,7 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 			IsHome: true,
 		},
 	}
-	for breadcrumbDir := range strings.SplitSeq(homePath, "/") {
+	for breadcrumbDir := range strings.SplitSeq(urlHomePath, "/") {
 		if breadcrumbDir == "" {
 			continue
 		}
@@ -108,21 +108,21 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		directoryEntry := directoryEntryData{
 			IsDir: entry.IsDir(),
 			Name:  entry.Name(),
-			Path:  path.Join(homePath, entry.Name()),
+			Path:  path.Join(urlHomePath, entry.Name()),
 			Size:  entryInfo.Size(),
 		}
 
-		linkPath, err := os.Readlink(path.Join(rootPath, directoryEntry.Name))
+		linkPath, err := os.Readlink(path.Join(urlRootPath, directoryEntry.Name))
 		if err == nil {
 			if !strings.HasPrefix(linkPath, "/") {
-				linkPath = path.Join(rootPath, linkPath)
+				linkPath = path.Join(urlRootPath, linkPath)
 			}
 			linkInfo, err := os.Stat(linkPath)
 			if err == nil {
 				if linkInfo.IsDir() {
 					directoryEntry.IsDir = true
 				}
-				linkPath = strings.TrimPrefix(linkPath, rootPath)
+				linkPath = strings.TrimPrefix(linkPath, urlRootPath)
 				directoryEntry.SymLinkPath = linkPath
 			}
 		}
@@ -181,7 +181,7 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle:           "Ground - Files",
 		Username:            username,
-		Path:                homePath,
+		Path:                urlHomePath,
 		FilePathBreadcrumbs: filePathBreadcrumbs,
 		DirectoryEntries:    directoryEntries,
 	})
@@ -189,20 +189,20 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 
 func getFilePage(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(usernameContextKey).(string)
-	homePath := strings.TrimPrefix(r.URL.Path, "/file")
-	rootPath := path.Join("/home", username, homePath)
-	pathInfo, err := os.Stat(rootPath)
+	urlHomePath := strings.TrimPrefix(r.URL.Path, "/file")
+	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "the requested file path could not be found in your home directory")
 		return
 	}
 
-	if pathInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/files", homePath), http.StatusSeeOther)
+	if urlPathInfo.IsDir() {
+		http.Redirect(w, r, path.Join("/files", urlHomePath), http.StatusSeeOther)
 		return
 	}
 
-	http.ServeFile(w, r, rootPath)
+	http.ServeFile(w, r, urlRootPath)
 }
 
 func getLoginPage(w http.ResponseWriter, r *http.Request) {
