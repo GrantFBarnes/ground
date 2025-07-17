@@ -108,7 +108,7 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := exec.Command("su", "-c", "tar -zcf '"+filePath+"' --directory="+rootPath+" .", username)
+	cmd := exec.Command("su", "-c", "tar -zcf '"+filePath+"' --directory='"+rootPath+"' .", username)
 	err = cmd.Run()
 	if err != nil {
 		http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
