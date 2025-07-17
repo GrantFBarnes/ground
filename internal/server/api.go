@@ -145,8 +145,23 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 		}
 		defer formFile.Close()
 
-		fileName := getAvailableFileName(rootPath, formFileHandler.Filename)
-		filePath := path.Join(rootPath, fileName)
+		formFileName := formFileHandler.Filename
+		contentDisposition := formFileHandler.Header.Get("Content-Disposition")
+		if strings.Contains(contentDisposition, "filename") {
+			parts := strings.SplitSeq(contentDisposition, ";")
+			for part := range parts {
+				part = strings.TrimSpace(part)
+				if fn, ok := strings.CutPrefix(part, "filename="); ok {
+					formFileName = strings.Trim(fn, `"`)
+					break
+				}
+			}
+		}
+
+		formFilePath, formFileName := path.Split(formFileName)
+		formFilePath = path.Join(rootPath, formFilePath)
+		fileName := getAvailableFileName(formFilePath, formFileName)
+		filePath := path.Join(formFilePath, fileName)
 
 		osFile, err := os.Create(filePath)
 		if err != nil {
