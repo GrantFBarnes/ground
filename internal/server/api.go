@@ -125,6 +125,8 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to lookup user.", http.StatusInternalServerError)
 		return
 	}
+	uid, _ := strconv.Atoi(user.Uid)
+	gid, _ := strconv.Atoi(user.Gid)
 
 	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
 	urlRootPath := path.Join("/home", username, urlHomePath)
@@ -147,35 +149,49 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 		}
 		defer formFile.Close()
 
-		var formFileName string
+		var formFileRelativePath string
 		contentDisposition := formFileHandler.Header.Get("Content-Disposition")
 		if strings.Contains(contentDisposition, "filename") {
 			parts := strings.SplitSeq(contentDisposition, ";")
 			for part := range parts {
 				part = strings.TrimSpace(part)
-				if filenameValue, ok := strings.CutPrefix(part, "filename="); ok {
-					formFileName = strings.Trim(filenameValue, `"`)
+				if filename, ok := strings.CutPrefix(part, "filename="); ok {
+					formFileRelativePath = strings.Trim(filename, `"`)
 					break
 				}
 			}
 		}
 
-		if formFileName == "" {
+		if formFileRelativePath == "" {
 			http.Error(w, "Filename not provided in header.", http.StatusBadRequest)
 			return
 		}
 
-		formFileParentDirPath, formFileName := path.Split(formFileName)
-		formFileParentDirPath = path.Join(urlRootPath, formFileParentDirPath)
-		formFileName = getAvailableFileName(formFileParentDirPath, formFileName)
-		formFilePath := path.Join(formFileParentDirPath, formFileName)
+		formFileParentDirRelativePath, formFileName := path.Split(formFileRelativePath)
+		formFileParentDirFullPath := path.Join(urlRootPath, formFileParentDirRelativePath)
 
-		cmd := exec.Command("su", "-c", "mkdir -p '"+formFileParentDirPath+"'", username)
-		err = cmd.Run()
-		if err != nil {
-			http.Error(w, "Failed to create directory.", http.StatusInternalServerError)
-			return
+		if formFileParentDirRelativePath != "" {
+			err = os.MkdirAll(formFileParentDirFullPath, os.FileMode(0755))
+			if err != nil {
+				http.Error(w, "Failed to create directories.", http.StatusInternalServerError)
+				return
+			}
+
+			formFileParentDirRelativePathBuildUp := ""
+			for dirName := range strings.SplitSeq(formFileParentDirRelativePath, "/") {
+				formFileParentDirRelativePathBuildUp = path.Join(formFileParentDirRelativePathBuildUp, dirName)
+				formFileParentDirBuildUpPath := path.Join(urlRootPath, formFileParentDirRelativePathBuildUp)
+
+				err = os.Chown(formFileParentDirBuildUpPath, uid, gid)
+				if err != nil {
+					http.Error(w, "Failed to change ownership of directory.", http.StatusInternalServerError)
+					return
+				}
+			}
 		}
+
+		formFileName = getAvailableFileName(formFileParentDirFullPath, formFileName)
+		formFilePath := path.Join(formFileParentDirFullPath, formFileName)
 
 		osFile, err := os.Create(formFilePath)
 		if err != nil {
@@ -190,8 +206,6 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		uid, _ := strconv.Atoi(user.Uid)
-		gid, _ := strconv.Atoi(user.Gid)
 		err = os.Chown(formFilePath, uid, gid)
 		if err != nil {
 			http.Error(w, "Failed to change ownership of file.", http.StatusInternalServerError)
