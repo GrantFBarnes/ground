@@ -1,6 +1,7 @@
 package server
 
 import (
+	"archive/zip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -306,7 +308,7 @@ func getFileExtension(fileName string) (coreFileName, fileExtension string) {
 	return coreFileName, fileExtension
 }
 
-func downloadFile(w http.ResponseWriter, r *http.Request) {
+func download(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(usernameContextKey).(string)
 	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/download")
 	urlRootPath := path.Join("/home", username, urlHomePath)
@@ -317,13 +319,43 @@ func downloadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if urlPathInfo.IsDir() {
-		http.Error(w, "Path is not a file.", http.StatusBadRequest)
-		return
+		_, dirName := path.Split(urlRootPath)
+		w.Header().Set("Content-Disposition", "attachment; filename="+dirName+".zip")
+		w.Header().Set("Content-Type", "application/zip")
+
+		zipWriter := zip.NewWriter(w)
+		defer zipWriter.Close()
+
+		filepath.Walk(urlRootPath, func(filePath string, fileInfo os.FileInfo, _ error) error {
+			if fileInfo.IsDir() {
+				return nil
+			}
+
+			relPath, err := filepath.Rel(urlRootPath, filePath)
+			if err != nil {
+				return err
+			}
+
+			file, err := os.Open(filePath)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			fileWriter, err := zipWriter.Create(relPath)
+			if err != nil {
+				return err
+			}
+
+			io.Copy(fileWriter, file)
+
+			return nil
+		})
+	} else {
+		_, fileName := path.Split(urlRootPath)
+		w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+		w.Header().Set("Content-Type", "application/octet-stream")
+
+		http.ServeFile(w, r, urlRootPath)
 	}
-
-	_, fileName := path.Split(urlRootPath)
-	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/octet-stream")
-
-	http.ServeFile(w, r, urlRootPath)
 }

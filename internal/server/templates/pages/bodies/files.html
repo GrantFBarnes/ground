@@ -76,9 +76,8 @@
                     <div class="action-group">
                         {{if .IsDir}}
                         <div onclick="compressDirectory('{{.Path}}')">Compress</div>
-                        {{else}}
-                        <div onclick="downloadFile('{{.Path}}')">Download</div>
                         {{end}}
+                        <div onclick="downloadFile('{{.Path}}')">Download</div>
                     </div>
                 </td>
             </tr>
