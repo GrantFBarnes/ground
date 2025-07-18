@@ -15,7 +15,7 @@
     <div id="top-bar">
         <div style="text-align: left;">
             {{if ne .Username ""}}
-            <span>{{.Username}}@ground</span>
+            <span class="clickable" onclick="window.location.href='/'">{{.Username}}@ground</span>
             {{else}}
             <span>ground</span>
             {{end}}
