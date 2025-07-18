@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"os/exec"
@@ -98,17 +100,17 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parentDirectoryPath, directoryName := path.Split(urlRootPath)
-	compressedFileName := getAvailableFileName(parentDirectoryPath, directoryName+".tar.gz")
-	compressedFilePath := path.Join(parentDirectoryPath, compressedFileName)
+	dirPath, dirName := path.Split(urlRootPath)
+	fileName := getAvailableFileName(dirPath, dirName+".tar.gz")
+	filePath := path.Join(dirPath, fileName)
 
-	_, err = os.Stat(compressedFilePath)
+	_, err = os.Stat(filePath)
 	if err == nil {
 		http.Error(w, "File already exists.", http.StatusBadRequest)
 		return
 	}
 
-	cmd := exec.Command("su", "-c", "tar -zcf '"+compressedFilePath+"' --directory='"+urlRootPath+"' .", username)
+	cmd := exec.Command("su", "-c", "tar -zcf '"+filePath+"' --directory='"+urlRootPath+"' .", username)
 	err = cmd.Run()
 	if err != nil {
 		http.Error(w, "Failed to compress directory.", http.StatusInternalServerError)
@@ -143,72 +145,31 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 
 	fileIndex := 0
 	for {
-		formFile, formFileHandler, err := r.FormFile(fmt.Sprintf("file%d", fileIndex))
+		file, fileHandler, err := r.FormFile(fmt.Sprintf("file%d", fileIndex))
 		if err != nil {
 			break
 		}
-		defer formFile.Close()
+		defer file.Close()
 
-		var formFileRelativePath string
-		contentDisposition := formFileHandler.Header.Get("Content-Disposition")
-		if strings.Contains(contentDisposition, "filename") {
-			parts := strings.SplitSeq(contentDisposition, ";")
-			for part := range parts {
-				part = strings.TrimSpace(part)
-				if filename, ok := strings.CutPrefix(part, "filename="); ok {
-					formFileRelativePath = strings.Trim(filename, `"`)
-					break
-				}
-			}
-		}
-
-		if formFileRelativePath == "" {
-			http.Error(w, "Filename not provided in header.", http.StatusBadRequest)
+		fileDirRelPath, fileName, err := getDirectoryPathFileName(fileHandler)
+		if err != nil {
+			http.Error(w, "Filename not found in header.", http.StatusBadRequest)
 			return
 		}
 
-		formFileParentDirRelativePath, formFileName := path.Split(formFileRelativePath)
-		formFileParentDirFullPath := path.Join(urlRootPath, formFileParentDirRelativePath)
-
-		if formFileParentDirRelativePath != "" {
-			err = os.MkdirAll(formFileParentDirFullPath, os.FileMode(0755))
-			if err != nil {
-				http.Error(w, "Failed to create directories.", http.StatusInternalServerError)
-				return
-			}
-
-			formFileParentDirRelativePathBuildUp := ""
-			for dirName := range strings.SplitSeq(formFileParentDirRelativePath, "/") {
-				formFileParentDirRelativePathBuildUp = path.Join(formFileParentDirRelativePathBuildUp, dirName)
-				formFileParentDirBuildUpPath := path.Join(urlRootPath, formFileParentDirRelativePathBuildUp)
-
-				err = os.Chown(formFileParentDirBuildUpPath, uid, gid)
-				if err != nil {
-					http.Error(w, "Failed to change ownership of directory.", http.StatusInternalServerError)
-					return
-				}
-			}
+		err = createMissingDirectories(urlRootPath, fileDirRelPath, uid, gid)
+		if err != nil {
+			http.Error(w, "Failed to create missing directories.", http.StatusInternalServerError)
+			return
 		}
 
-		formFileName = getAvailableFileName(formFileParentDirFullPath, formFileName)
-		formFilePath := path.Join(formFileParentDirFullPath, formFileName)
+		fileDirPath := path.Join(urlRootPath, fileDirRelPath)
+		fileName = getAvailableFileName(fileDirPath, fileName)
+		filePath := path.Join(fileDirPath, fileName)
 
-		osFile, err := os.Create(formFilePath)
+		err = createFile(file, filePath, uid, gid)
 		if err != nil {
 			http.Error(w, "Failed to create file.", http.StatusInternalServerError)
-			return
-		}
-		defer osFile.Close()
-
-		_, err = io.Copy(osFile, formFile)
-		if err != nil {
-			http.Error(w, "Failed to write to file.", http.StatusInternalServerError)
-			return
-		}
-
-		err = os.Chown(formFilePath, uid, gid)
-		if err != nil {
-			http.Error(w, "Failed to change ownership of file.", http.StatusInternalServerError)
 			return
 		}
 
@@ -216,6 +177,79 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func getDirectoryPathFileName(fileHandler *multipart.FileHeader) (dirPath string, fileName string, err error) {
+	var filePath string
+
+	contentDisposition := fileHandler.Header.Get("Content-Disposition")
+	if strings.Contains(contentDisposition, "filename") {
+		parts := strings.SplitSeq(contentDisposition, ";")
+		for part := range parts {
+			part = strings.TrimSpace(part)
+			if filename, ok := strings.CutPrefix(part, "filename="); ok {
+				filePath = strings.Trim(filename, `"`)
+				break
+			}
+		}
+	}
+
+	if filePath == "" {
+		return "", "", errors.New("filename not found in header")
+	}
+
+	dirPath, fileName = path.Split(filePath)
+
+	return dirPath, fileName, nil
+}
+
+func createMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
+	relDirPathBuildUp := ""
+	for dirName := range strings.SplitSeq(relDirPath, "/") {
+		if relDirPath == "" {
+			continue
+		}
+
+		relDirPathBuildUp = path.Join(relDirPathBuildUp, dirName)
+		dirPath := path.Join(rootPath, relDirPathBuildUp)
+
+		_, err := os.Stat(dirPath)
+		if err == nil {
+			// directory already exists
+			continue
+		}
+
+		err = os.Mkdir(dirPath, os.FileMode(0755))
+		if err != nil {
+			return errors.New("failed to create directory")
+		}
+
+		err = os.Chown(dirPath, uid, gid)
+		if err != nil {
+			return errors.New("failed to change directory ownership")
+		}
+	}
+	return nil
+}
+
+func createFile(file multipart.File, filePath string, uid int, gid int) error {
+	osFile, err := os.Create(filePath)
+	if err != nil {
+		return errors.New("failed to create file")
+	}
+	defer osFile.Close()
+
+	_, err = io.Copy(osFile, file)
+	if err != nil {
+		return errors.New("failed to write to file")
+	}
+
+	err = os.Chown(filePath, uid, gid)
+	if err != nil {
+		return errors.New("failed to change file ownership")
+	}
+
+	return nil
 }
 
 func getAvailableFileName(fileDirPath string, fileName string) string {
