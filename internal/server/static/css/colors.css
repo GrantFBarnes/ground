@@ -94,6 +94,10 @@ tbody>tr:hover {
     background-color: var(--color-red0)
 }
 
+.highlighted {
+    background-color: var(--color-bg2)
+}
+
 .muted {
     color: var(--color-fg4);
 }

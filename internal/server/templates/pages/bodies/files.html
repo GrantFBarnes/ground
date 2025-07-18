@@ -77,7 +77,7 @@
                         {{if .IsDir}}
                         <div onclick="compressDirectory('{{.Path}}')">Compress</div>
                         {{end}}
-                        <div onclick="downloadFile('{{.Path}}')">Download</div>
+                        <div onclick="download('{{.Path}}')">Download</div>
                     </div>
                 </td>
             </tr>
@@ -86,6 +86,54 @@
     </table>
 </div>
 <script>
+    const contentElement = document.getElementById("content");
+
+    contentElement.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        contentElement.className = "highlighted";
+    });
+
+    contentElement.addEventListener("dragleave", () => {
+        contentElement.className = "";
+    });
+
+    contentElement.addEventListener("drop", async (event) => {
+        event.preventDefault();
+        contentElement.className = "";
+        const items = event.dataTransfer.items;
+        if (confirm("Are you sure you want to upload this file/directory?")) {
+            let files = [];
+            for (const item of items) {
+                const entry = item.webkitGetAsEntry();
+                if (!entry) continue;
+                files = files.concat(await traverseFileTree(entry));
+            }
+            upload(files);
+        }
+    });
+
+    function traverseFileTree(entry, path = "") {
+        return new Promise((resolve, reject) => {
+            if (entry.isFile) {
+                entry.file((file) => {
+                    file.relativePath = path + file.name;
+                    resolve([file]);
+                });
+            } else if (entry.isDirectory) {
+                const subDirReader = entry.createReader();
+                subDirReader.readEntries(async (subEntries) => {
+                    let files = [];
+                    for (const subEntry of subEntries) {
+                        files = files.concat(await traverseFileTree(subEntry, path + entry.name + "/"));
+                    }
+                    resolve(files);
+                });
+            } else {
+                reject("entry not valid");
+            }
+        });
+    }
+
     const formElement = document.getElementById("upload-form");
 
     formElement.addEventListener("submit", (event) => {
@@ -103,15 +151,21 @@
             return;
         }
 
-        const formData = new FormData();
-        let fileCount = 0;
-        for (let file of fileUploadElement.files) {
-            formData.append("file" + fileCount, file);
-            fileCount += 1;
+        let files = [];
+        for (const file of fileUploadElement.files) {
+            files.push(file);
         }
-        for (let file of directoryUploadElement.files) {
-            formData.append("file" + fileCount, file);
-            fileCount += 1;
+        for (const file of directoryUploadElement.files) {
+            files.push(file);
+        }
+
+        upload(files);
+    });
+
+    function upload(files) {
+        const formData = new FormData();
+        for (const i in files) {
+            formData.append("file" + i, files[i]);
         }
 
         toggleLoading();
@@ -123,7 +177,7 @@
                 toggleLoading();
             }
         });
-    });
+    }
 
     function compressDirectory(filePath) {
         toggleLoading();
@@ -137,7 +191,7 @@
         });
     }
 
-    function downloadFile(filePath) {
+    function download(filePath) {
         const a = document.createElement("a");
         a.href = "/api/download" + filePath;
         a.download = true;
