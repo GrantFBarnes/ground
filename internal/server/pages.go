@@ -132,14 +132,14 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 			directoryEntry.HumanSize = "-"
 		} else {
 			directoryEntry.UrlPath = path.Join("/file", directoryEntry.Path)
-			if directoryEntry.Size > 1000*1000*1000 {
-				directoryEntry.HumanSize = fmt.Sprintf("%dG", directoryEntry.Size/(1000.0*1000.0*1000.0))
-			} else if directoryEntry.Size > 1000*1000 {
-				directoryEntry.HumanSize = fmt.Sprintf("%dM", directoryEntry.Size/(1000.0*1000.0))
+			if directoryEntry.Size > 1000000000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%.3f GB", float64(directoryEntry.Size)/1000000000.0)
+			} else if directoryEntry.Size > 1000000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%.3f MB", float64(directoryEntry.Size)/1000000.0)
 			} else if directoryEntry.Size > 1000 {
-				directoryEntry.HumanSize = fmt.Sprintf("%dK", directoryEntry.Size/(1000.0))
+				directoryEntry.HumanSize = fmt.Sprintf("%.3f KB", float64(directoryEntry.Size)/1000.0)
 			} else {
-				directoryEntry.HumanSize = fmt.Sprintf("%d", directoryEntry.Size)
+				directoryEntry.HumanSize = fmt.Sprintf("%d B", directoryEntry.Size)
 			}
 		}
 
