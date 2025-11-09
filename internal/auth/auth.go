@@ -49,6 +49,15 @@ func CredentialsAreValid(username string, password string) bool {
 	return cmd.Wait() == nil
 }
 
+func IsAdmin(username string) bool {
+	cmd := exec.Command("sudo", "-l", "-U", username)
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return !strings.Contains(string(output), "not allowed to run sudo")
+}
+
 func GetUsername(r *http.Request) (string, error) {
 	token, err := getCookieValue(r, cookieNameUserToken)
 	if err != nil {

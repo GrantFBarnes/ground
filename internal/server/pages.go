@@ -388,9 +388,11 @@ func getHomePage(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
 		Username  string
+		IsAdmin   bool
 	}{
 		PageTitle: "Ground - Home",
 		Username:  username,
+		IsAdmin:   auth.IsAdmin(username),
 	})
 }
 

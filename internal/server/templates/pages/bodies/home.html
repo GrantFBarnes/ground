@@ -1,5 +1,13 @@
 {{define "body"}}
+<style>
+    .menu-option {
+        padding-bottom: 10px;
+    }
+</style>
 <h1>Ground</h1>
-<div><a href="/files">Files</a></div>
-<div><a href="/trash">Trash</a></div>
+<div class="menu-option"><a href="/files">Files</a></div>
+<div class="menu-option"><a href="/trash">Trash</a></div>
+{{if .IsAdmin}}
+<div class="menu-option"><a href="/admin">Admin</a></div>
+{{end}}
 {{end}}
