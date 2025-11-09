@@ -42,6 +42,7 @@ func Run() {
 	// pages
 	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))
 	http.Handle("GET /login", pageMiddleware(http.HandlerFunc(getLoginPage)))
+	http.Handle("GET /admin", pageMiddleware(http.HandlerFunc(getAdminPage)))
 	http.Handle("GET /files/", pageMiddleware(http.HandlerFunc(getFilesPage)))
 	http.Handle("GET /file/", pageMiddleware(http.HandlerFunc(getFilePage)))
 	http.Handle("GET /trash/", pageMiddleware(http.HandlerFunc(getTrashPage)))

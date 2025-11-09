@@ -58,16 +58,11 @@ func healthCheck() error {
 		return errors.New("not running as root")
 	}
 
-	if missingRequiredDependencyProgram("su") {
-		return errors.New("missing required dependency program 'su'")
-	}
-
-	if missingRequiredDependencyProgram("tar") {
-		return errors.New("missing required dependency program 'tar'")
-	}
-
-	if missingRequiredDependencyProgram("mv") {
-		return errors.New("missing required dependency program 'mv'")
+	dependencies := []string{"su", "sudo", "tar", "mv", "uptime"}
+	for _, dependency := range dependencies {
+		if missingRequiredDependencyProgram(dependency) {
+			return errors.New("missing required dependency program '" + dependency + "'")
+		}
 	}
 
 	return nil

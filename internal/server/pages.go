@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"sort"
 	"strings"
@@ -349,6 +350,42 @@ func getTrashPage(w http.ResponseWriter, r *http.Request) {
 		Path:                urlHomePath,
 		FilePathBreadcrumbs: filePathBreadcrumbs,
 		DirectoryEntries:    directoryEntries,
+	})
+}
+
+func getAdminPage(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	cmd := exec.Command("uptime", "--pretty")
+	uptime, err := cmd.Output()
+	if err != nil {
+		getProblemPage(w, r, "failed to get server uptime")
+		return
+	}
+
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/admin.html",
+	)
+	if err != nil {
+		getProblemPage(w, r, "failed to generate html for the requested page")
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle string
+		Username  string
+		Uptime    string
+	}{
+		PageTitle: "Ground - Admin",
+		Username:  username,
+		Uptime:    string(uptime),
 	})
 }
 
