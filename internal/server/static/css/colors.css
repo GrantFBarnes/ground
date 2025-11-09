@@ -101,11 +101,3 @@ tbody>tr:hover {
 .muted {
     color: var(--color-fg4);
 }
-
-.action-group {
-    background-color: var(--color-bg2)
-}
-
-.action-group div:hover {
-    background-color: var(--color-bg3)
-}

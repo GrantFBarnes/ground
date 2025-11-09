@@ -4,27 +4,6 @@
         text-align: center;
         width: 2em;
     }
-
-    .action-group-container {
-        position: relative;
-        cursor: context-menu;
-    }
-
-    .action-group {
-        display: none;
-        position: absolute;
-        right: 0;
-        z-index: 1;
-    }
-
-    .action-group-container:hover .action-group {
-        display: block;
-    }
-
-    .action-group div {
-        cursor: pointer;
-        padding: 10px;
-    }
 </style>
 <div>
     {{range .FilePathBreadcrumbs}}
@@ -68,6 +47,7 @@
                 <th></th>
                 <th style="text-align: right;">size</th>
                 <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -86,14 +66,21 @@
                 <td>{{.Name}}</td>
                 <td class="muted">{{.SymLinkPath}}</td>
                 <td style="text-align: right;">{{.HumanSize}}</td>
-                <td class="single-icon-cell action-group-container">
-                    <span>&#8942;</span>
-                    <div class="action-group">
-                        {{if .IsDir}}
-                        <div onclick="compressDirectory('{{.Path}}')">Compress</div>
-                        {{end}}
-                        <div onclick="download('{{.Path}}')">Download</div>
-                    </div>
+                <td class="single-icon-cell">
+                    {{if .IsDir}}
+                    <span
+                        title="Compress Directory"
+                        class="clickable"
+                        onclick="compressDirectory('{{.Path}}')"
+                    >&#128476;</span>
+                    {{end}}
+                </td>
+                <td class="single-icon-cell">
+                    <span
+                        title="Download"
+                        class="clickable"
+                        onclick="download('{{.Path}}')"
+                    >&#8681;</span>
                 </td>
             </tr>
             {{end}}
