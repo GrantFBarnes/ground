@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/grantfbarnes/ground/internal/server"
 )
@@ -57,7 +58,20 @@ func healthCheck() error {
 		return errors.New("not running as root")
 	}
 
+	if missingRequiredDependencyProgram("su") {
+		return errors.New("missing required dependency program 'su'")
+	}
+
+	if missingRequiredDependencyProgram("tar") {
+		return errors.New("missing required dependency program 'tar'")
+	}
+
 	return nil
+}
+
+func missingRequiredDependencyProgram(name string) bool {
+	_, err := exec.LookPath(name)
+	return err != nil
 }
 
 func printErrorMessage(msg string) {
