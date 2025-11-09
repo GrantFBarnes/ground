@@ -32,7 +32,7 @@ func apiMiddleware(next http.Handler) http.Handler {
 			http.Error(w, "No login credentials found.", http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), usernameContextKey, username)))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CONTEXT_KEY_USERNAME, username)))
 	})
 }
 
@@ -89,7 +89,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func compressDirectory(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
 	urlRootPath := path.Join("/home", username, urlHomePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
@@ -124,7 +124,7 @@ func compressDirectory(w http.ResponseWriter, r *http.Request) {
 }
 
 func uploadFiles(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	user, err := user.Lookup(username)
 	if err != nil {
 		http.Error(w, "Failed to lookup user.", http.StatusInternalServerError)
@@ -310,7 +310,7 @@ func getFileExtension(fileName string) (coreFileName, fileExtension string) {
 }
 
 func download(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/download")
 	urlRootPath := path.Join("/home", username, urlHomePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
@@ -362,7 +362,7 @@ func download(w http.ResponseWriter, r *http.Request) {
 }
 
 func trash(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	user, err := user.Lookup(username)
 	if err != nil {
 		http.Error(w, "Failed to lookup user.", http.StatusInternalServerError)
@@ -380,7 +380,7 @@ func trash(w http.ResponseWriter, r *http.Request) {
 	}
 
 	homePath := path.Join("/home", username)
-	trashTimestampHomePath := path.Join(trashHomePath, time.Now().Format("20060102150405.000"), path.Dir(urlHomePath))
+	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlHomePath))
 	err = createMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
 	if err != nil {
 		http.Error(w, "Failed to create missing directories.", http.StatusInternalServerError)
@@ -398,8 +398,8 @@ func trash(w http.ResponseWriter, r *http.Request) {
 }
 
 func emptyTrash(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
-	trashRootPath := path.Join("/home", username, trashHomePath)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	trashRootPath := path.Join("/home", username, TRASH_HOME_PATH)
 
 	dirEntries, err := os.ReadDir(trashRootPath)
 	if err != nil {

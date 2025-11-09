@@ -15,8 +15,8 @@ var static embed.FS
 
 type contextKey string
 
-const usernameContextKey contextKey = "username"
-const trashHomePath string = ".local/share/ground/trash"
+const CONTEXT_KEY_USERNAME contextKey = "username"
+const TRASH_HOME_PATH string = ".local/share/ground/trash"
 
 func Run() {
 	defer func() {

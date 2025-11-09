@@ -36,12 +36,12 @@ func pageMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), usernameContextKey, username)))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CONTEXT_KEY_USERNAME, username)))
 	})
 }
 
 func getFilesPage(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlHomePath := strings.TrimPrefix(r.URL.Path, "/files")
 	urlRootPath := path.Join("/home", username, urlHomePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
@@ -55,8 +55,8 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.HasPrefix(urlHomePath, "/"+trashHomePath) {
-		http.Redirect(w, r, path.Join("/trash", strings.TrimPrefix(urlHomePath, "/"+trashHomePath)), http.StatusSeeOther)
+	if strings.HasPrefix(urlHomePath, "/"+TRASH_HOME_PATH) {
+		http.Redirect(w, r, path.Join("/trash", strings.TrimPrefix(urlHomePath, "/"+TRASH_HOME_PATH)), http.StatusSeeOther)
 		return
 	}
 
@@ -193,7 +193,7 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func getFilePage(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlHomePath := strings.TrimPrefix(r.URL.Path, "/file")
 	urlRootPath := path.Join("/home", username, urlHomePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
@@ -211,9 +211,9 @@ func getFilePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTrashPage(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlHomePath := strings.TrimPrefix(r.URL.Path, "/trash")
-	urlRootPath := path.Join("/home", username, trashHomePath, urlHomePath)
+	urlRootPath := path.Join("/home", username, TRASH_HOME_PATH, urlHomePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil || !urlPathInfo.IsDir() {
 		http.Redirect(w, r, path.Join("/trash", path.Dir(urlHomePath)), http.StatusSeeOther)
@@ -273,7 +273,7 @@ func getTrashPage(w http.ResponseWriter, r *http.Request) {
 		directoryEntry := directoryEntryData{
 			IsDir: entry.IsDir(),
 			Name:  entry.Name(),
-			Path:  path.Join("/", trashHomePath, urlHomePath, entry.Name()),
+			Path:  path.Join("/", TRASH_HOME_PATH, urlHomePath, entry.Name()),
 			Size:  entryInfo.Size(),
 		}
 
@@ -373,7 +373,7 @@ func getLoginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func getHomePage(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
 	tmpl, err := template.ParseFS(
 		templates,
@@ -399,7 +399,7 @@ func get404Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage string) {
-	username := r.Context().Value(usernameContextKey).(string)
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
 	tmpl, err := template.ParseFS(
 		templates,
