@@ -380,18 +380,40 @@ func trash(w http.ResponseWriter, r *http.Request) {
 	}
 
 	homePath := path.Join("/home", username)
-	trashHomePath := path.Join(".local/share/ground/trash", time.Now().Format("20060102150405.000"), path.Dir(urlHomePath))
-	err = createMissingDirectories(homePath, trashHomePath, uid, gid)
+	trashTimestampHomePath := path.Join(trashHomePath, time.Now().Format("20060102150405.000"), path.Dir(urlHomePath))
+	err = createMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
 	if err != nil {
 		http.Error(w, "Failed to create missing directories.", http.StatusInternalServerError)
 		return
 	}
 
-	cmd := exec.Command("mv", urlRootPath, path.Join(homePath, trashHomePath))
+	cmd := exec.Command("mv", urlRootPath, path.Join(homePath, trashTimestampHomePath))
 	err = cmd.Run()
 	if err != nil {
 		http.Error(w, "Failed to move to trash.", http.StatusInternalServerError)
 		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func emptyTrash(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(usernameContextKey).(string)
+	trashRootPath := path.Join("/home", username, trashHomePath)
+
+	dirEntries, err := os.ReadDir(trashRootPath)
+	if err != nil {
+		http.Error(w, "Failed to read trash.", http.StatusInternalServerError)
+		return
+	}
+
+	for _, entry := range dirEntries {
+		entryFullPath := path.Join(trashRootPath, entry.Name())
+		err = os.RemoveAll(entryFullPath)
+		if err != nil {
+			http.Error(w, "Failed empty trash.", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

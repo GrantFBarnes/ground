@@ -1,0 +1,95 @@
+{{define "body"}}
+<style>
+    .single-icon-cell {
+        text-align: center;
+        width: 2em;
+    }
+</style>
+<div>
+    {{range .FilePathBreadcrumbs}}
+    {{if not .IsHome}}
+    <span>/</span>
+    {{end}}
+    <span><a href="/trash{{.Path}}">{{.Name}}</a></span>
+    {{end}}
+</div>
+
+<br />
+
+<div style="float: right;">
+    <button
+        class="clickable"
+        onclick="emptyTrash()"
+    >
+        Empty Trash
+    </button>
+</div>
+
+<br />
+
+<div
+    class="table-container"
+    style="padding-bottom: 200px;"
+>
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th style="text-align: left;">name</th>
+                <th></th>
+                <th style="text-align: right;">size</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .DirectoryEntries}}
+            <tr
+                class="clickable"
+                ondblclick="window.location.href='{{.UrlPath}}'"
+            >
+                <td class="single-icon-cell">
+                    {{if .IsDir}}
+                    &#128448;
+                    {{else}}
+                    &#128459;
+                    {{end}}
+                </td>
+                <td>{{.Name}}</td>
+                <td class="muted">{{.SymLinkPath}}</td>
+                <td style="text-align: right;">{{.HumanSize}}</td>
+                <td class="single-icon-cell">
+                    <span
+                        title="Download"
+                        class="clickable"
+                        onclick="download('{{.Path}}')"
+                    >&#8681;</span>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+<script>
+    function emptyTrash(filePath) {
+        if (confirm("Are you sure you want to empty the trash? This is permanent and cannot be undone.")) {
+            toggleLoading();
+            fetch("/api/trash", { method: "DELETE" }).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    location.href = "/trash";
+                } else {
+                    response.text().then((text) => displayNotification(text));
+                    toggleLoading();
+                }
+            });
+        }
+    }
+
+    function download(filePath) {
+        const a = document.createElement("a");
+        a.href = "/api/download" + filePath;
+        a.download = true;
+        a.click();
+        a.remove();
+    }
+</script>
+{{end}}

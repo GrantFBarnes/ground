@@ -55,6 +55,11 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if strings.HasPrefix(urlHomePath, "/"+trashHomePath) {
+		http.Redirect(w, r, path.Join("/trash", strings.TrimPrefix(urlHomePath, "/"+trashHomePath)), http.StatusSeeOther)
+		return
+	}
+
 	dirEntries, err := os.ReadDir(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "entries in the requested directory could not be read")
@@ -203,6 +208,148 @@ func getFilePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, urlRootPath)
+}
+
+func getTrashPage(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(usernameContextKey).(string)
+	urlHomePath := strings.TrimPrefix(r.URL.Path, "/trash")
+	urlRootPath := path.Join("/home", username, trashHomePath, urlHomePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
+	if err != nil || !urlPathInfo.IsDir() {
+		http.Redirect(w, r, path.Join("/trash", path.Dir(urlHomePath)), http.StatusSeeOther)
+		return
+	}
+
+	dirEntries, err := os.ReadDir(urlRootPath)
+	if err != nil {
+		getProblemPage(w, r, "entries in the requested directory could not be read")
+		return
+	}
+
+	type filePathBreadcrumb struct {
+		Name   string
+		Path   string
+		IsHome bool
+	}
+
+	breadcrumbPath := "/"
+	filePathBreadcrumbs := []filePathBreadcrumb{
+		{
+			Name:   "trash",
+			Path:   breadcrumbPath,
+			IsHome: true,
+		},
+	}
+	for breadcrumbDir := range strings.SplitSeq(urlHomePath, "/") {
+		if breadcrumbDir == "" {
+			continue
+		}
+
+		breadcrumbPath = path.Join(breadcrumbPath, breadcrumbDir)
+		filePathBreadcrumbs = append(filePathBreadcrumbs, filePathBreadcrumb{
+			Name:   breadcrumbDir,
+			Path:   breadcrumbPath,
+			IsHome: false,
+		})
+	}
+
+	type directoryEntryData struct {
+		IsDir       bool
+		Name        string
+		Path        string
+		Size        int64
+		SymLinkPath string
+		UrlPath     string
+		HumanSize   string
+	}
+
+	var directoryEntries []directoryEntryData
+	for _, entry := range dirEntries {
+		entryInfo, err := entry.Info()
+		if err != nil {
+			continue
+		}
+
+		directoryEntry := directoryEntryData{
+			IsDir: entry.IsDir(),
+			Name:  entry.Name(),
+			Path:  path.Join("/", trashHomePath, urlHomePath, entry.Name()),
+			Size:  entryInfo.Size(),
+		}
+
+		linkPath, err := os.Readlink(path.Join(urlRootPath, directoryEntry.Name))
+		if err == nil {
+			if !strings.HasPrefix(linkPath, "/") {
+				linkPath = path.Join(urlRootPath, linkPath)
+			}
+			linkInfo, err := os.Stat(linkPath)
+			if err == nil {
+				if linkInfo.IsDir() {
+					directoryEntry.IsDir = true
+				}
+				linkPath = strings.TrimPrefix(linkPath, urlRootPath)
+				directoryEntry.SymLinkPath = linkPath
+			}
+		}
+
+		if directoryEntry.IsDir {
+			directoryEntry.UrlPath = path.Join("/trash", path.Join(urlHomePath, entry.Name()))
+			directoryEntry.HumanSize = "-"
+		} else {
+			directoryEntry.UrlPath = path.Join("/file", directoryEntry.Path)
+			if directoryEntry.Size > 1000000000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%.3f GB", float64(directoryEntry.Size)/1000000000.0)
+			} else if directoryEntry.Size > 1000000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%.3f MB", float64(directoryEntry.Size)/1000000.0)
+			} else if directoryEntry.Size > 1000 {
+				directoryEntry.HumanSize = fmt.Sprintf("%.3f KB", float64(directoryEntry.Size)/1000.0)
+			} else {
+				directoryEntry.HumanSize = fmt.Sprintf("%d B", directoryEntry.Size)
+			}
+		}
+
+		directoryEntries = append(directoryEntries, directoryEntry)
+	}
+
+	sort.Slice(directoryEntries, func(i, j int) bool {
+		a, b := directoryEntries[i], directoryEntries[j]
+
+		if a.IsDir != b.IsDir {
+			return a.IsDir
+		}
+
+		aDot := strings.HasPrefix(a.Name, ".")
+		bDot := strings.HasPrefix(b.Name, ".")
+		if aDot != bDot {
+			return bDot
+		}
+
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
+
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/trash.html",
+	)
+	if err != nil {
+		getProblemPage(w, r, "failed to generate html for the requested page")
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle           string
+		Username            string
+		Path                string
+		FilePathBreadcrumbs []filePathBreadcrumb
+		DirectoryEntries    []directoryEntryData
+	}{
+		PageTitle:           "Ground - Trash",
+		Username:            username,
+		Path:                urlHomePath,
+		FilePathBreadcrumbs: filePathBreadcrumbs,
+		DirectoryEntries:    directoryEntries,
+	})
 }
 
 func getLoginPage(w http.ResponseWriter, r *http.Request) {

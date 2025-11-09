@@ -16,6 +16,7 @@ var static embed.FS
 type contextKey string
 
 const usernameContextKey contextKey = "username"
+const trashHomePath string = ".local/share/ground/trash"
 
 func Run() {
 	defer func() {
@@ -36,12 +37,14 @@ func Run() {
 	http.Handle("POST /api/upload/", apiMiddleware(http.HandlerFunc(uploadFiles)))
 	http.Handle("GET /api/download/", apiMiddleware(http.HandlerFunc(download)))
 	http.Handle("POST /api/trash/", apiMiddleware(http.HandlerFunc(trash)))
+	http.Handle("DELETE /api/trash", apiMiddleware(http.HandlerFunc(emptyTrash)))
 
 	// pages
 	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))
 	http.Handle("GET /login", pageMiddleware(http.HandlerFunc(getLoginPage)))
 	http.Handle("GET /files/", pageMiddleware(http.HandlerFunc(getFilesPage)))
 	http.Handle("GET /file/", pageMiddleware(http.HandlerFunc(getFilePage)))
+	http.Handle("GET /trash/", pageMiddleware(http.HandlerFunc(getTrashPage)))
 	http.Handle("GET /", pageMiddleware(http.HandlerFunc(get404Page)))
 
 	ip, err := getLocalIPv4()
