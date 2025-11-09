@@ -39,15 +39,27 @@
 
 <div style="float: right;">
     <form id="upload-form">
-        <input id="file-upload" type="file" multiple />
-        <input id="directory-upload" type="file" multiple webkitdirectory />
+        <input
+            id="file-upload"
+            type="file"
+            multiple
+        />
+        <input
+            id="directory-upload"
+            type="file"
+            multiple
+            webkitdirectory
+        />
         <button type="submit">Upload</button>
     </form>
 </div>
 
 <br />
 
-<div class="table-container" style="padding-bottom: 200px;">
+<div
+    class="table-container"
+    style="padding-bottom: 200px;"
+>
     <table>
         <thead>
             <tr>
@@ -60,7 +72,10 @@
         </thead>
         <tbody>
             {{range .DirectoryEntries}}
-            <tr class="clickable" ondblclick="window.location.href='{{.UrlPath}}'">
+            <tr
+                class="clickable"
+                ondblclick="window.location.href='{{.UrlPath}}'"
+            >
                 <td class="single-icon-cell">
                     {{if .IsDir}}
                     &#128448;

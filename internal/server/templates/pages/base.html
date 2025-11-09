@@ -4,25 +4,45 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    />
     <title>{{.PageTitle}}</title>
     <script src="/static/js/global.js"></script>
-    <link rel="stylesheet" href="/static/css/global.css" />
-    <link rel="stylesheet" href="/static/css/colors.css" />
+    <link
+        rel="icon"
+        type="image/x-icon"
+        href="/static/images/favicon.png"
+    />
+    <link
+        rel="stylesheet"
+        href="/static/css/global.css"
+    />
+    <link
+        rel="stylesheet"
+        href="/static/css/colors.css"
+    />
 </head>
 
 <body>
     <div id="top-bar">
         <div style="text-align: left;">
             {{if ne .Username ""}}
-            <span class="clickable" onclick="window.location.href='/'">{{.Username}}@ground</span>
+            <span
+                class="clickable"
+                onclick="window.location.href='/'"
+            >{{.Username}}@ground</span>
             {{else}}
             <span>ground</span>
             {{end}}
         </div>
         <div style="text-align: right;">
             {{if ne .Username ""}}
-            <span class="clickable" onclick="logout()">logout</span>
+            <span
+                class="clickable"
+                onclick="logout()"
+            >logout</span>
             {{end}}
         </div>
     </div>
