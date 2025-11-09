@@ -66,6 +66,10 @@ func healthCheck() error {
 		return errors.New("missing required dependency program 'tar'")
 	}
 
+	if missingRequiredDependencyProgram("mv") {
+		return errors.New("missing required dependency program 'mv'")
+	}
+
 	return nil
 }
 

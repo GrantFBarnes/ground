@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grantfbarnes/ground/internal/auth"
 )
@@ -358,4 +359,40 @@ func download(w http.ResponseWriter, r *http.Request) {
 
 		http.ServeFile(w, r, urlRootPath)
 	}
+}
+
+func trash(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(usernameContextKey).(string)
+	user, err := user.Lookup(username)
+	if err != nil {
+		http.Error(w, "Failed to lookup user.", http.StatusInternalServerError)
+		return
+	}
+	uid, _ := strconv.Atoi(user.Uid)
+	gid, _ := strconv.Atoi(user.Gid)
+
+	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/trash")
+	urlRootPath := path.Join("/home", username, urlHomePath)
+	_, err = os.Stat(urlRootPath)
+	if err != nil {
+		http.Error(w, "Path not found.", http.StatusBadRequest)
+		return
+	}
+
+	homePath := path.Join("/home", username)
+	trashHomePath := path.Join(".local/share/ground/trash", time.Now().Format("20060102150405.000"), path.Dir(urlHomePath))
+	err = createMissingDirectories(homePath, trashHomePath, uid, gid)
+	if err != nil {
+		http.Error(w, "Failed to create missing directories.", http.StatusInternalServerError)
+		return
+	}
+
+	cmd := exec.Command("mv", urlRootPath, path.Join(homePath, trashHomePath))
+	err = cmd.Run()
+	if err != nil {
+		http.Error(w, "Failed to move to trash.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
