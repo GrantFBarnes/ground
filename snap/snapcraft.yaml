@@ -1,6 +1,6 @@
 name: ground
 title: ground
-version: "0.0.2"
+version: "1.0.0"
 source-code: https://github.com/GrantFBarnes/ground
 license: AGPL-3.0-only
 icon: snap/icon.png
