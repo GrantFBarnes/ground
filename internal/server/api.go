@@ -61,20 +61,29 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = user.Lookup(body.Username)
+	user, err := user.Lookup(body.Username)
 	if err != nil {
 		http.Error(w, "User does not exist.", http.StatusBadRequest)
 		return
 	}
 
-	_, err = os.Stat(path.Join("/home", body.Username))
+	if !auth.CredentialsAreValid(body.Username, body.Password) {
+		http.Error(w, "Invalid credentials provided.", http.StatusUnauthorized)
+		return
+	}
+
+	homePath := path.Join("/home", body.Username)
+	_, err = os.Stat(homePath)
 	if err != nil {
 		http.Error(w, "User has no home.", http.StatusBadRequest)
 		return
 	}
 
-	if !auth.CredentialsAreValid(body.Username, body.Password) {
-		http.Error(w, "Invalid credentials provided.", http.StatusUnauthorized)
+	uid, _ := strconv.Atoi(user.Uid)
+	gid, _ := strconv.Atoi(user.Gid)
+	err = createMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
+	if err != nil {
+		http.Error(w, "Failed to create ground trash.", http.StatusInternalServerError)
 		return
 	}
 
@@ -209,7 +218,7 @@ func getDirectoryPathFileName(fileHandler *multipart.FileHeader) (dirPath string
 func createMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
 	relDirPathBuildUp := ""
 	for dirName := range strings.SplitSeq(relDirPath, "/") {
-		if relDirPath == "" {
+		if dirName == "" {
 			continue
 		}
 
