@@ -38,6 +38,7 @@ func Run() {
 	http.Handle("GET /api/download/", apiMiddleware(http.HandlerFunc(download)))
 	http.Handle("POST /api/trash/", apiMiddleware(http.HandlerFunc(trash)))
 	http.Handle("DELETE /api/trash", apiMiddleware(http.HandlerFunc(emptyTrash)))
+	http.Handle("POST /api/system/{method}", apiMiddleware(http.HandlerFunc(systemCallMethod)))
 
 	// pages
 	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))

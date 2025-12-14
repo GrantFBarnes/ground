@@ -427,3 +427,28 @@ func emptyTrash(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func systemCallMethod(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to make system calls.", http.StatusForbidden)
+		return
+	}
+
+	method := r.PathValue("method")
+	switch method {
+	case "reboot":
+		fallthrough
+	case "poweroff":
+		cmd := exec.Command("systemctl", method)
+		err := cmd.Run()
+		if err != nil {
+			http.Error(w, "Failed to make system call.", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	default:
+		http.Error(w, "System method not recognized.", http.StatusBadRequest)
+	}
+}

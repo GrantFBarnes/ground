@@ -58,7 +58,14 @@ func healthCheck() error {
 		return errors.New("not running as root")
 	}
 
-	dependencies := []string{"su", "sudo", "tar", "mv", "uptime"}
+	dependencies := []string{
+		"su",
+		"sudo",
+		"tar",
+		"mv",
+		"uptime",
+		"systemctl",
+	}
 	for _, dependency := range dependencies {
 		if missingRequiredDependencyProgram(dependency) {
 			return errors.New("missing required dependency program '" + dependency + "'")
