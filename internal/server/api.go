@@ -90,8 +90,8 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
 func compressDirectory(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
-	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
+	urlRootPath := path.Join("/home", username, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusBadRequest)
@@ -133,8 +133,8 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 	uid, _ := strconv.Atoi(user.Uid)
 	gid, _ := strconv.Atoi(user.Gid)
 
-	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
-	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
+	urlRootPath := path.Join("/home", username, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusBadRequest)
@@ -311,8 +311,8 @@ func getFileExtension(fileName string) (coreFileName, fileExtension string) {
 
 func download(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/download")
-	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/download")
+	urlRootPath := path.Join("/home", username, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusBadRequest)
@@ -371,8 +371,8 @@ func trash(w http.ResponseWriter, r *http.Request) {
 	uid, _ := strconv.Atoi(user.Uid)
 	gid, _ := strconv.Atoi(user.Gid)
 
-	urlHomePath := strings.TrimPrefix(r.URL.Path, "/api/trash")
-	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/trash")
+	urlRootPath := path.Join("/home", username, urlRelativePath)
 	_, err = os.Stat(urlRootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusBadRequest)
@@ -380,7 +380,7 @@ func trash(w http.ResponseWriter, r *http.Request) {
 	}
 
 	homePath := path.Join("/home", username)
-	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlHomePath))
+	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlRelativePath))
 	err = createMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
 	if err != nil {
 		http.Error(w, "Failed to create missing directories.", http.StatusInternalServerError)

@@ -60,8 +60,8 @@ func pageMiddleware(next http.Handler) http.Handler {
 
 func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	urlHomePath := strings.TrimPrefix(r.URL.Path, "/files")
-	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/files")
+	urlRootPath := path.Join("/home", username, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "the requested file path could not be found in your home directory")
@@ -69,16 +69,16 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !urlPathInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/file", urlHomePath), http.StatusSeeOther)
+		http.Redirect(w, r, path.Join("/file", urlRelativePath), http.StatusSeeOther)
 		return
 	}
 
-	if urlTrashPath, ok := strings.CutPrefix(urlHomePath, "/"+TRASH_HOME_PATH); ok {
+	if urlTrashPath, ok := strings.CutPrefix(urlRelativePath, "/"+TRASH_HOME_PATH); ok {
 		http.Redirect(w, r, path.Join("/trash", urlTrashPath), http.StatusSeeOther)
 		return
 	}
 
-	directoryEntries, err := getDirectoryEntries(urlHomePath, urlRootPath, false)
+	directoryEntries, err := getDirectoryEntries(urlRelativePath, urlRootPath, false)
 	if err != nil {
 		getProblemPage(w, r, err.Error())
 		return
@@ -103,16 +103,16 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle:           "Ground - Files",
 		Username:            username,
-		Path:                urlHomePath,
-		FilePathBreadcrumbs: getBreadcrumbs("home", urlHomePath),
+		Path:                urlRelativePath,
+		FilePathBreadcrumbs: getBreadcrumbs("home", urlRelativePath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
 
 func getFilePage(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	urlHomePath := strings.TrimPrefix(r.URL.Path, "/file")
-	urlRootPath := path.Join("/home", username, urlHomePath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/file")
+	urlRootPath := path.Join("/home", username, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "the requested file path could not be found in your home directory")
@@ -120,7 +120,7 @@ func getFilePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if urlPathInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/files", urlHomePath), http.StatusSeeOther)
+		http.Redirect(w, r, path.Join("/files", urlRelativePath), http.StatusSeeOther)
 		return
 	}
 
@@ -129,15 +129,15 @@ func getFilePage(w http.ResponseWriter, r *http.Request) {
 
 func getTrashPage(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	urlHomePath := strings.TrimPrefix(r.URL.Path, "/trash")
-	urlRootPath := path.Join("/home", username, TRASH_HOME_PATH, urlHomePath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/trash")
+	urlRootPath := path.Join("/home", username, TRASH_HOME_PATH, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil || !urlPathInfo.IsDir() {
-		http.Redirect(w, r, path.Join("/trash", path.Dir(urlHomePath)), http.StatusSeeOther)
+		http.Redirect(w, r, path.Join("/trash", path.Dir(urlRelativePath)), http.StatusSeeOther)
 		return
 	}
 
-	directoryEntries, err := getDirectoryEntries(urlHomePath, urlRootPath, true)
+	directoryEntries, err := getDirectoryEntries(urlRelativePath, urlRootPath, true)
 	if err != nil {
 		getProblemPage(w, r, err.Error())
 		return
@@ -162,8 +162,8 @@ func getTrashPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle:           "Ground - Trash",
 		Username:            username,
-		Path:                urlHomePath,
-		FilePathBreadcrumbs: getBreadcrumbs("trash", urlHomePath),
+		Path:                urlRelativePath,
+		FilePathBreadcrumbs: getBreadcrumbs("trash", urlRelativePath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
@@ -276,7 +276,7 @@ func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage strin
 	})
 }
 
-func getDirectoryEntries(urlHomePath string, urlRootPath string, isTrash bool) ([]directoryEntryData, error) {
+func getDirectoryEntries(urlRelativePath string, urlRootPath string, isTrash bool) ([]directoryEntryData, error) {
 	dirEntries, err := os.ReadDir(urlRootPath)
 	if err != nil {
 		return nil, errors.New("entries in the requested directory could not be read")
@@ -284,7 +284,7 @@ func getDirectoryEntries(urlHomePath string, urlRootPath string, isTrash bool) (
 
 	var directoryEntries []directoryEntryData
 	for _, entry := range dirEntries {
-		directoryEntry, err := getDirectoryEntry(entry, urlHomePath, urlRootPath, isTrash)
+		directoryEntry, err := getDirectoryEntry(entry, urlRelativePath, urlRootPath, isTrash)
 		if err != nil {
 			continue
 		}
@@ -293,7 +293,7 @@ func getDirectoryEntries(urlHomePath string, urlRootPath string, isTrash bool) (
 	return sortEntries(directoryEntries), nil
 }
 
-func getDirectoryEntry(entry os.DirEntry, urlHomePath string, urlRootPath string, isTrash bool) (directoryEntryData, error) {
+func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath string, isTrash bool) (directoryEntryData, error) {
 	entryInfo, err := entry.Info()
 	if err != nil {
 		return directoryEntryData{}, err
@@ -302,7 +302,7 @@ func getDirectoryEntry(entry os.DirEntry, urlHomePath string, urlRootPath string
 	directoryEntry := directoryEntryData{
 		IsDir: entry.IsDir(),
 		Name:  entry.Name(),
-		Path:  path.Join(urlHomePath, entry.Name()),
+		Path:  path.Join(urlRelativePath, entry.Name()),
 		Size:  entryInfo.Size(),
 	}
 
@@ -315,7 +315,7 @@ func getDirectoryEntry(entry os.DirEntry, urlHomePath string, urlRootPath string
 	if isSymLinkDir {
 		directoryEntry.IsDir = true
 	}
-	directoryEntry.UrlPath = directoryEntry.getUrlPath(urlHomePath, isTrash)
+	directoryEntry.UrlPath = directoryEntry.getUrlPath(urlRelativePath, isTrash)
 	directoryEntry.HumanSize = directoryEntry.getHumanSize()
 
 	return directoryEntry, nil
@@ -339,13 +339,13 @@ func (directoryEntry directoryEntryData) getSymLinkInfo(urlRootPath string) (str
 	return strings.TrimPrefix(linkPath, urlRootPath), linkInfo.IsDir()
 }
 
-func (directoryEntry directoryEntryData) getUrlPath(urlHomePath string, isTrash bool) string {
+func (directoryEntry directoryEntryData) getUrlPath(urlRelativePath string, isTrash bool) string {
 	if !directoryEntry.IsDir {
 		return path.Join("/file", directoryEntry.Path)
 	}
 
 	if isTrash {
-		return path.Join("/trash", path.Join(urlHomePath, directoryEntry.Name))
+		return path.Join("/trash", path.Join(urlRelativePath, directoryEntry.Name))
 	}
 
 	return path.Join("/files", directoryEntry.Path)
