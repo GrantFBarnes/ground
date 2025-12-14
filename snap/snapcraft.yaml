@@ -25,3 +25,5 @@ apps:
     command: bin/ground
     plugs:
       - home
+      - network
+      - network-bind
