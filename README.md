@@ -18,6 +18,7 @@ The easiest way to get the executable is to download it from the [latest release
 However, if preferred, the executable can be built manually:
 
 ```sh
+cd src
 go build .
 ```
 
