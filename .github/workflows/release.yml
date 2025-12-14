@@ -18,13 +18,14 @@ jobs:
           go-version: '1.25'
 
       - name: Build
+        working-directory: ./src
         run: go build -o ground
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ground
-          path: ./ground
+          path: ./src/ground
 
   release:
     name: Create Release
