@@ -2,7 +2,7 @@
 
 A simple down to earth cloud alternative.
 
-Version: 0.0.1
+Version: 1.0.0
 
 ## Why is it simple?
 
