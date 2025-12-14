@@ -9,7 +9,7 @@ import (
 	"github.com/grantfbarnes/ground/internal/server"
 )
 
-const VERSION string = "v0.0.1"
+const VERSION string = "v0.0.2"
 
 func main() {
 	settings := getSettingsFromArguments()
