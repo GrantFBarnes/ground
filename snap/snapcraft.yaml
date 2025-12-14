@@ -16,7 +16,7 @@ confinement: strict
 parts:
   ground:
     plugin: go
-    source: .
+    source: ./src
     build-snaps:
       - go/1.25/stable
 
