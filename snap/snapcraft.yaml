@@ -1,0 +1,25 @@
+name: ground
+title: ground
+version: "0.0.1"
+source-code: https://github.com/GrantFBarnes/ground
+license: AGPL-3.0-only
+icon: snap/icon.png
+summary: A simple down to earth cloud alternative.
+description: |
+  A website for using a linux machine as a file server.
+  Basic features only to prevent software bloat.
+
+base: core24
+grade: stable
+confinement: strict
+
+parts:
+  ground:
+    plugin: go
+    source: .
+
+apps:
+  ground:
+    command: bin/ground
+    plugs:
+      - home
