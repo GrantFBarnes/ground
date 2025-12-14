@@ -70,7 +70,7 @@ NEW_VERSION="$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH"
 ################################################################################
 # update versions
 
-sed -i -E 's/^Version: '$REGEX_VALID_VERSION'$/Version: '$NEW_VERSION'/' README.md
+sed -i -E 's/^const VERSION string = "v'$REGEX_VALID_VERSION'"$/const VERSION string = "v'$NEW_VERSION'"/' main.go
 
 ################################################################################
 # print final messages

@@ -9,11 +9,18 @@ import (
 	"github.com/grantfbarnes/ground/internal/server"
 )
 
+const VERSION string = "v0.0.0"
+
 func main() {
 	settings := getSettingsFromArguments()
 
 	if settings.help {
 		printHelp()
+		os.Exit(0)
+	}
+
+	if settings.version {
+		fmt.Println(VERSION)
 		os.Exit(0)
 	}
 
@@ -32,8 +39,9 @@ func main() {
 }
 
 type settings struct {
-	help bool
-	run  bool
+	help    bool
+	version bool
+	run     bool
 }
 
 func getSettingsFromArguments() settings {
@@ -46,6 +54,14 @@ func getSettingsFromArguments() settings {
 			fallthrough
 		case "-h":
 			args.help = true
+
+		case "version":
+			fallthrough
+		case "--version":
+			fallthrough
+		case "-v":
+			args.version = true
+
 		case "run":
 			args.run = true
 		}
@@ -93,10 +109,12 @@ func printHelp() {
 	fmt.Print(`ground
 
 Methods:
-  help: Print this message
-  run:  Run web server
+  help:    Print this message
+  version: Print version
+  run:     Run web server
 
 Arguments:
-  -h, --help: Print this message
+  -h, --help:    Print this message
+  -v, --version: Print version
 `)
 }
