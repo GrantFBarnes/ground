@@ -71,7 +71,6 @@ NEW_VERSION="$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH"
 # update versions
 
 sed -i -E 's/^const VERSION string = "v'$REGEX_VALID_VERSION'"$/const VERSION string = "v'$NEW_VERSION'"/' src/main.go
-sed -i -E 's/^version: "'$REGEX_VALID_VERSION'"$/version: "'$NEW_VERSION'"/' snap/snapcraft.yaml
 
 ################################################################################
 # print final messages
