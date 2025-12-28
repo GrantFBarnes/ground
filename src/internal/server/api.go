@@ -244,6 +244,27 @@ func createMissingDirectories(rootPath string, relDirPath string, uid int, gid i
 	return nil
 }
 
+func createMissingFile(filePath string, uid int, gid int) error {
+	_, err := os.Stat(filePath)
+	if err == nil {
+		// file already exists
+		return nil
+	}
+
+	createdFile, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer createdFile.Close()
+
+	err = os.Chown(filePath, uid, gid)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func createFile(file multipart.File, filePath string, uid int, gid int) error {
 	osFile, err := os.Create(filePath)
 	if err != nil {
@@ -504,6 +525,63 @@ func resetUserPassword(w http.ResponseWriter, r *http.Request) {
 	err := setUserPassword(r.PathValue("username"), "password")
 	if err != nil {
 		http.Error(w, "Failed to reset password.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func addUserSshKey(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to add user SSH Keys.", http.StatusForbidden)
+		return
+	}
+
+	sshKey := r.FormValue("sshKey")
+	if sshKey == "" {
+		http.Error(w, "SSH Key was not provided.", http.StatusBadRequest)
+		return
+	}
+
+	targetUsername := r.PathValue("username")
+	homePath := path.Join("/home", targetUsername)
+	sshKeyPath := path.Join(homePath, ".ssh", "authorized_keys")
+	_, err := os.Stat(sshKeyPath)
+	if err != nil {
+		targetUser, err := user.Lookup(targetUsername)
+		if err != nil {
+			http.Error(w, "Target user does not exist.", http.StatusBadRequest)
+			return
+		}
+
+		uid, _ := strconv.Atoi(targetUser.Uid)
+		gid, _ := strconv.Atoi(targetUser.Gid)
+
+		err = createMissingDirectories(homePath, ".ssh", uid, gid)
+		if err != nil {
+			http.Error(w, "Failed to create SSH folder.", http.StatusInternalServerError)
+			return
+		}
+
+		err = createMissingFile(sshKeyPath, uid, gid)
+		if err != nil {
+			http.Error(w, "Failed to create SSH file.", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	sshKeyFile, err := os.OpenFile(sshKeyPath, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		http.Error(w, "Failed to open SSH file.", http.StatusInternalServerError)
+		return
+	}
+	defer sshKeyFile.Close()
+
+	_, err = sshKeyFile.WriteString(sshKey + "\n")
+	if err != nil {
+		http.Error(w, "Failed to write to SSH file.", http.StatusInternalServerError)
 		return
 	}
 

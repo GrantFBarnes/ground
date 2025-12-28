@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bufio"
 	"context"
 	"embed"
 	"errors"
@@ -217,6 +218,63 @@ func getAdminPage(w http.ResponseWriter, r *http.Request) {
 		Uptime:    string(uptime),
 		Users:     users,
 	})
+}
+
+func getUserPage(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	targetUsername := r.PathValue("username")
+
+	sshKeyPath := path.Join("/home", targetUsername, ".ssh", "authorized_keys")
+	sshKeys, _ := getFileLines(sshKeyPath)
+
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/user.html",
+	)
+	if err != nil {
+		getProblemPage(w, r, "failed to generate html for the requested page")
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle      string
+		Username       string
+		TargetUsername string
+		SshKeys        []string
+	}{
+		PageTitle:      "Ground - User Manage",
+		Username:       username,
+		TargetUsername: targetUsername,
+		SshKeys:        sshKeys,
+	})
+}
+
+func getFileLines(filePath string) ([]string, error) {
+	var lines []string
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return lines, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		return lines, err
+	}
+
+	return lines, nil
 }
 
 func getLoginPage(w http.ResponseWriter, r *http.Request) {

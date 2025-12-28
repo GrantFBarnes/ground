@@ -1,0 +1,69 @@
+{{define "body"}}
+<h1>Manage User - {{.TargetUsername}}</h1>
+<h3>SSH Keys</h3>
+<button onclick="document.getElementById('add-ssh-key-dialog').showModal()">
+    Add New SSH Key &#128931;
+</button>
+<br />
+<br />
+<table>
+    <tbody>
+        {{range .SshKeys}}
+        <tr>
+            <td>{{.}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+<br />
+<dialog id="add-ssh-key-dialog">
+    <div style="display: grid; grid-auto-flow: column">
+        <div>
+            <h3>Add New SSH Key</h3>
+        </div>
+        <div>
+            <span
+                class="close-button"
+                onclick="document.getElementById('add-ssh-key-dialog').close()"
+            >&#128938;</span>
+        </div>
+    </div>
+    <form id="add-ssh-key-form">
+        <label for="addSshKey">SSH Key:</label>
+        <input
+            type="text"
+            id="addSshKey"
+            name="sshKey"
+            maxlength="256"
+            placeholder="Enter SSH Key"
+            required="required"
+            autocomplete="off"
+        />
+        <br />
+        <br />
+        <input
+            type="submit"
+            value="Add SSH Key"
+        />
+    </form>
+</dialog>
+<script>
+    document.getElementById("add-ssh-key-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        if (confirm("Are you sure you want to add this SSH Key?")) {
+            document.getElementById("add-ssh-key-dialog").close();
+            toggleLoading();
+            const reloadTimeout = setTimeout(() => location.reload(), 5000);
+            fetch("/api/user/{{.TargetUsername}}/ssh-key", { method: "POST", body: new FormData(this) }).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    // success, wait for timeout reload
+                } else {
+                    clearTimeout(reloadTimeout);
+                    response.text().then((text) => displayNotification(text));
+                    toggleLoading();
+                }
+            });
+        }
+    });
+</script>
+{{end}}

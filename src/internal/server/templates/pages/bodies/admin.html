@@ -28,6 +28,11 @@
         <tr>
             <td>{{.}}</td>
             <td>
+                <button onclick="window.location.href='/user/{{.}}'">
+                    Manage User
+                </button>
+            </td>
+            <td>
                 <button onclick="resetPassword('{{.}}')">
                     Password Reset &#8635;
                 </button>
