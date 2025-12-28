@@ -4,35 +4,31 @@
 <div>Uptime: {{.Uptime}}</div>
 <br />
 <details>
-    <summary class="clickable">System Control</summary>
+    <summary>System Control</summary>
     <br />
-    <button
-        class="clickable"
-        onclick="systemCall('reboot')"
-    >
+    <button onclick="systemCall('reboot')">
         Reboot
     </button>
     <br />
     <br />
-    <button
-        class="clickable"
-        onclick="systemCall('poweroff')"
-    >
+    <button onclick="systemCall('poweroff')">
         Poweroff
     </button>
 </details>
 <br />
 <h3>Users</h3>
+<button onclick="document.getElementById('create-user-dialog').showModal()">
+    Create New User &#128931;
+</button>
+<br />
+<br />
 <table>
     <tbody>
         {{range .Users}}
         <tr>
             <td>{{.}}</td>
             <td>
-                <button
-                    class="clickable"
-                    onclick="resetPassword('{{.}}')"
-                >
+                <button onclick="resetPassword('{{.}}')">
                     Password Reset &#8635;
                 </button>
             </td>
@@ -41,6 +37,37 @@
     </tbody>
 </table>
 <br />
+<dialog id="create-user-dialog">
+    <div style="display: grid; grid-auto-flow: column">
+        <div>
+            <h3>Create New User</h3>
+        </div>
+        <div>
+            <span
+                class="close-button"
+                onclick="document.getElementById('create-user-dialog').close()"
+            >&#128938;</span>
+        </div>
+    </div>
+    <form id="create-user-form">
+        <label for="createUsername">Username:</label>
+        <input
+            type="text"
+            id="createUsername"
+            name="username"
+            maxlength="32"
+            placeholder="Enter Username"
+            required="required"
+            autocomplete="off"
+        />
+        <br />
+        <br />
+        <input
+            type="submit"
+            value="Create User"
+        />
+    </form>
+</dialog>
 <script>
     function systemCall(callMethod) {
         if (confirm(`Are you sure you want to ${callMethod} the system?`)) {
@@ -57,6 +84,26 @@
             });
         }
     }
+
+    document.getElementById("create-user-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const username = formData.get("username");
+        if (confirm(`Are you sure you want to create user '${username}'?`)) {
+            document.getElementById("create-user-dialog").close();
+            toggleLoading();
+            const reloadTimeout = setTimeout(() => location.reload(), 5000);
+            fetch(`/api/user/${username}/create`, { method: "POST" }).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    // success, wait for timeout reload
+                } else {
+                    clearTimeout(reloadTimeout);
+                    response.text().then((text) => displayNotification(text));
+                    toggleLoading();
+                }
+            });
+        }
+    });
 
     function resetPassword(username) {
         if (confirm(`Are you sure you want to reset the password for '${username}'?`)) {

@@ -14,6 +14,18 @@ body {
     font-family: monospace;
 }
 
+dialog {
+    max-width: 80vw;
+    max-height: 80vh;
+    overflow: auto;
+    border-radius: 4px;
+}
+
+dialog::backdrop {
+    background-color: black;
+    opacity: 0.8;
+}
+
 .table-container {
     width: 100%;
     overflow-x: auto;
@@ -27,6 +39,14 @@ table {
 th,
 td {
     padding: var(--padding-small)
+}
+
+summary {
+    cursor: pointer;
+}
+
+button {
+    cursor: pointer;
 }
 
 #top-bar {
@@ -88,6 +108,11 @@ td {
 
 .muted {
     opacity: 0.5;
+}
+
+.close-button {
+    cursor: pointer;
+    float: right;
 }
 
 @-webkit-keyframes spin {

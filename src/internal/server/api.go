@@ -453,6 +453,46 @@ func systemCallMethod(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func createUser(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to create new users.", http.StatusForbidden)
+		return
+	}
+
+	newUsername := r.PathValue("username")
+
+	homePath := path.Join("/home", newUsername)
+	_, err := os.Stat(homePath)
+	if err == nil {
+		http.Error(w, "User already exists.", http.StatusBadRequest)
+		return
+	}
+
+	cmd := exec.Command("useradd", "--create-home", newUsername)
+
+	err = cmd.Start()
+	if err != nil {
+		http.Error(w, "Failed to create user.", http.StatusInternalServerError)
+		return
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		http.Error(w, "Failed to create user.", http.StatusInternalServerError)
+		return
+	}
+
+	err = setUserPassword(newUsername, "password")
+	if err != nil {
+		http.Error(w, "Failed to set password.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func resetUserPassword(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
@@ -461,30 +501,37 @@ func resetUserPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetUsername := r.PathValue("username")
-
-	cmd := exec.Command("passwd", "--stdin", targetUsername)
-
-	stdin, err := cmd.StdinPipe()
+	err := setUserPassword(r.PathValue("username"), "password")
 	if err != nil {
 		http.Error(w, "Failed to reset password.", http.StatusInternalServerError)
 		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func setUserPassword(username string, password string) error {
+	cmd := exec.Command("passwd", "--stdin", username)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return err
 	}
 
 	go func() {
 		defer stdin.Close()
-		io.WriteString(stdin, "password\n")
+		io.WriteString(stdin, password+"\n")
 	}()
 
 	err = cmd.Start()
 	if err != nil {
-		http.Error(w, "Failed to reset password.", http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		http.Error(w, "Failed to reset password.", http.StatusInternalServerError)
-		return
+		return err
 	}
+
+	return nil
 }

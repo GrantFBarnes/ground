@@ -46,6 +46,11 @@ a:visited {
     color: var(--color-blue1);
 }
 
+dialog {
+    color: var(--color-fg0);
+    background: var(--color-bg0);
+}
+
 button {
     color: var(--color-fg0);
     background-color: var(--color-bg1);
