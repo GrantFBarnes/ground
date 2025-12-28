@@ -41,6 +41,7 @@ func Run() {
 	http.Handle("POST /api/system/{method}", apiMiddleware(http.HandlerFunc(systemCallMethod)))
 	http.Handle("POST /api/user/{username}/create", apiMiddleware(http.HandlerFunc(createUser)))
 	http.Handle("POST /api/user/{username}/password/reset", apiMiddleware(http.HandlerFunc(resetUserPassword)))
+	http.Handle("DELETE /api/user/{username}", apiMiddleware(http.HandlerFunc(deleteUser)))
 
 	// pages
 	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))

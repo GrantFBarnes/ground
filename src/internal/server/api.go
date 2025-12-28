@@ -510,6 +510,33 @@ func resetUserPassword(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to delete users.", http.StatusForbidden)
+		return
+	}
+
+	targetUsername := r.PathValue("username")
+
+	cmd := exec.Command("userdel", "--remove", targetUsername)
+
+	err := cmd.Start()
+	if err != nil {
+		http.Error(w, "Failed to delete user.", http.StatusInternalServerError)
+		return
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		http.Error(w, "Failed to delete user.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func setUserPassword(username string, password string) error {
 	cmd := exec.Command("passwd", "--stdin", username)
 

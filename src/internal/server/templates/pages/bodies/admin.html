@@ -32,6 +32,11 @@
                     Password Reset &#8635;
                 </button>
             </td>
+            <td>
+                <button onclick="deleteUser('{{.}}')">
+                    Delete User &#128465;
+                </button>
+            </td>
         </tr>
         {{end}}
     </tbody>
@@ -111,6 +116,22 @@
             fetch(`/api/user/${username}/password/reset`, { method: "POST" }).then((response) => {
                 if (response.status >= 200 && response.status < 300) {
                     toggleLoading();
+                } else {
+                    clearTimeout(reloadTimeout);
+                    response.text().then((text) => displayNotification(text));
+                    toggleLoading();
+                }
+            });
+        }
+    }
+
+    function deleteUser(username) {
+        if (confirm(`Are you sure you want to delete user '${username}'?`)) {
+            toggleLoading();
+            const reloadTimeout = setTimeout(() => location.reload(), 5000);
+            fetch(`/api/user/${username}`, { method: "DELETE" }).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    // success, wait for timeout reload
                 } else {
                     clearTimeout(reloadTimeout);
                     response.text().then((text) => displayNotification(text));
