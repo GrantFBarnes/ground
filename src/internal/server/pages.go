@@ -183,6 +183,19 @@ func getAdminPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	homeEntries, err := os.ReadDir("/home")
+	if err != nil {
+		getProblemPage(w, r, "failed to get users")
+		return
+	}
+
+	users := []string{}
+	for _, e := range homeEntries {
+		if e.IsDir() {
+			users = append(users, e.Name())
+		}
+	}
+
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
@@ -197,10 +210,12 @@ func getAdminPage(w http.ResponseWriter, r *http.Request) {
 		PageTitle string
 		Username  string
 		Uptime    string
+		Users     []string
 	}{
 		PageTitle: "Ground - Admin",
 		Username:  username,
 		Uptime:    string(uptime),
+		Users:     users,
 	})
 }
 

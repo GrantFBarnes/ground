@@ -1,6 +1,7 @@
 {{define "body"}}
 <h1>Admin</h1>
-<div>System Uptime: {{.Uptime}}</div>
+<h3>System</h3>
+<div>Uptime: {{.Uptime}}</div>
 <br />
 <details>
     <summary class="clickable">System Control</summary>
@@ -20,6 +21,26 @@
         Poweroff
     </button>
 </details>
+<br />
+<h3>Users</h3>
+<table>
+    <tbody>
+        {{range .Users}}
+        <tr>
+            <td>{{.}}</td>
+            <td>
+                <button
+                    class="clickable"
+                    onclick="resetPassword('{{.}}')"
+                >
+                    Password Reset &#8635;
+                </button>
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+<br />
 <script>
     function systemCall(callMethod) {
         if (confirm(`Are you sure you want to ${callMethod} the system?`)) {
@@ -28,6 +49,21 @@
             fetch(`/api/system/${callMethod}`, { method: "POST" }).then((response) => {
                 if (response.status >= 200 && response.status < 300) {
                     // success, wait for timeout reload
+                } else {
+                    clearTimeout(reloadTimeout);
+                    response.text().then((text) => displayNotification(text));
+                    toggleLoading();
+                }
+            });
+        }
+    }
+
+    function resetPassword(username) {
+        if (confirm(`Are you sure you want to reset the password for '${username}'?`)) {
+            toggleLoading();
+            fetch(`/api/user/${username}/password/reset`, { method: "POST" }).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    toggleLoading();
                 } else {
                     clearTimeout(reloadTimeout);
                     response.text().then((text) => displayNotification(text));

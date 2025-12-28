@@ -452,3 +452,39 @@ func systemCallMethod(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "System method not recognized.", http.StatusBadRequest)
 	}
 }
+
+func resetUserPassword(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to reset user passwords.", http.StatusForbidden)
+		return
+	}
+
+	targetUsername := r.PathValue("username")
+
+	cmd := exec.Command("passwd", "--stdin", targetUsername)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		http.Error(w, "Failed to reset password.", http.StatusInternalServerError)
+		return
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, "password\n")
+	}()
+
+	err = cmd.Start()
+	if err != nil {
+		http.Error(w, "Failed to reset password.", http.StatusInternalServerError)
+		return
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		http.Error(w, "Failed to reset password.", http.StatusInternalServerError)
+		return
+	}
+}

@@ -39,6 +39,7 @@ func Run() {
 	http.Handle("POST /api/trash/", apiMiddleware(http.HandlerFunc(trash)))
 	http.Handle("DELETE /api/trash", apiMiddleware(http.HandlerFunc(emptyTrash)))
 	http.Handle("POST /api/system/{method}", apiMiddleware(http.HandlerFunc(systemCallMethod)))
+	http.Handle("POST /api/user/{username}/password/reset", apiMiddleware(http.HandlerFunc(resetUserPassword)))
 
 	// pages
 	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))
