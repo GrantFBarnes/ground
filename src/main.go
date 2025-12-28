@@ -75,12 +75,15 @@ func healthCheck() error {
 	}
 
 	dependencies := []string{
+		"mv",
+		"passwd",
 		"su",
 		"sudo",
-		"tar",
-		"mv",
-		"uptime",
 		"systemctl",
+		"tar",
+		"uptime",
+		"useradd",
+		"userdel",
 	}
 	for _, dependency := range dependencies {
 		if missingRequiredDependencyProgram(dependency) {
