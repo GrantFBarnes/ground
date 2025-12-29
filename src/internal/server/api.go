@@ -588,6 +588,52 @@ func addUserSshKey(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func deleteUserSshKey(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to delete user SSH Keys.", http.StatusForbidden)
+		return
+	}
+
+	lineNumberString := r.PathValue("lineNumber")
+	lineNumber, err := strconv.Atoi(lineNumberString)
+	if err != nil {
+		http.Error(w, "Line number is not a number.", http.StatusBadRequest)
+		return
+	}
+
+	if lineNumber < 1 {
+		http.Error(w, "Line number is not valid.", http.StatusBadRequest)
+		return
+	}
+
+	targetUsername := r.PathValue("username")
+	homePath := path.Join("/home", targetUsername)
+	sshKeyPath := path.Join(homePath, ".ssh", "authorized_keys")
+	_, err = os.Stat(sshKeyPath)
+	if err != nil {
+		http.Error(w, "SSH file does not exist.", http.StatusInternalServerError)
+		return
+	}
+
+	cmd := exec.Command("sed", "-i", fmt.Sprintf("%dd", lineNumber), sshKeyPath)
+
+	err = cmd.Start()
+	if err != nil {
+		http.Error(w, "Failed to delete SSH Key.", http.StatusInternalServerError)
+		return
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		http.Error(w, "Failed to delete SSH Key.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 

@@ -77,6 +77,7 @@ func healthCheck() error {
 	dependencies := []string{
 		"mv",
 		"passwd",
+		"sed",
 		"su",
 		"sudo",
 		"systemctl",

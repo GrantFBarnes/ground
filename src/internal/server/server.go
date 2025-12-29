@@ -42,6 +42,7 @@ func Run() {
 	http.Handle("POST /api/user/{username}/create", apiMiddleware(http.HandlerFunc(createUser)))
 	http.Handle("POST /api/user/{username}/password/reset", apiMiddleware(http.HandlerFunc(resetUserPassword)))
 	http.Handle("POST /api/user/{username}/ssh-key", apiMiddleware(http.HandlerFunc(addUserSshKey)))
+	http.Handle("DELETE /api/user/{username}/ssh-key/{lineNumber}", apiMiddleware(http.HandlerFunc(deleteUserSshKey)))
 	http.Handle("DELETE /api/user/{username}", apiMiddleware(http.HandlerFunc(deleteUser)))
 
 	// pages

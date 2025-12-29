@@ -8,9 +8,14 @@
 <br />
 <table>
     <tbody>
-        {{range .SshKeys}}
+        {{range $index, $sshKey := .SshKeys}}
         <tr>
-            <td>{{.}}</td>
+            <td>{{$sshKey}}</td>
+            <td>
+                <button onclick="deleteSshKeyLine({{$index}}+1)">
+                    Delete SSH Key &#128465;
+                </button>
+            </td>
         </tr>
         {{end}}
     </tbody>
@@ -65,5 +70,21 @@
             });
         }
     });
+
+    function deleteSshKeyLine(lineNumber) {
+        if (confirm("Are you sure you want to delete this SSH Key?")) {
+            toggleLoading();
+            const reloadTimeout = setTimeout(() => location.reload(), 5000);
+            fetch(`/api/user/{{.TargetUsername}}/ssh-key/${lineNumber}`, { method: "DELETE" }).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    // success, wait for timeout reload
+                } else {
+                    clearTimeout(reloadTimeout);
+                    response.text().then((text) => displayNotification(text));
+                    toggleLoading();
+                }
+            });
+        }
+    }
 </script>
 {{end}}
