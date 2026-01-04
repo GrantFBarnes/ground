@@ -1,42 +1,26 @@
-package server
+package pages
 
 import (
-	"bufio"
 	"context"
 	"embed"
-	"errors"
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
-	"sort"
 	"strings"
 
 	"github.com/grantfbarnes/ground/internal/auth"
+	"github.com/grantfbarnes/ground/internal/filesystem"
+	"github.com/grantfbarnes/ground/internal/system"
+	"github.com/grantfbarnes/ground/internal/users"
 )
+
+const CONTEXT_KEY_USERNAME string = "username"
 
 //go:embed templates
 var templates embed.FS
 
-type directoryEntryData struct {
-	IsDir       bool
-	Name        string
-	Path        string
-	Size        int64
-	SymLinkPath string
-	UrlPath     string
-	HumanSize   string
-}
-
-type filePathBreadcrumb struct {
-	Name   string
-	Path   string
-	IsHome bool
-}
-
-func pageMiddleware(next http.Handler) http.Handler {
+func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, err := auth.GetUsername(r)
 		loggedIn := err == nil
@@ -59,7 +43,7 @@ func pageMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getFilesPage(w http.ResponseWriter, r *http.Request) {
+func Files(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/files")
 	urlRootPath := path.Join("/home", username, urlRelativePath)
@@ -74,12 +58,12 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if urlTrashPath, ok := strings.CutPrefix(urlRelativePath, "/"+TRASH_HOME_PATH); ok {
+	if urlTrashPath, ok := strings.CutPrefix(urlRelativePath, "/"+filesystem.TRASH_HOME_PATH); ok {
 		http.Redirect(w, r, path.Join("/trash", urlTrashPath), http.StatusSeeOther)
 		return
 	}
 
-	directoryEntries, err := getDirectoryEntries(urlRelativePath, urlRootPath, false)
+	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, false)
 	if err != nil {
 		getProblemPage(w, r, err.Error())
 		return
@@ -99,18 +83,18 @@ func getFilesPage(w http.ResponseWriter, r *http.Request) {
 		PageTitle           string
 		Username            string
 		Path                string
-		FilePathBreadcrumbs []filePathBreadcrumb
-		DirectoryEntries    []directoryEntryData
+		FilePathBreadcrumbs []filesystem.FilePathBreadcrumb
+		DirectoryEntries    []filesystem.DirectoryEntryData
 	}{
 		PageTitle:           "Ground - Files",
 		Username:            username,
 		Path:                urlRelativePath,
-		FilePathBreadcrumbs: getBreadcrumbs("home", urlRelativePath),
+		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("home", urlRelativePath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
 
-func getFilePage(w http.ResponseWriter, r *http.Request) {
+func File(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/file")
 	urlRootPath := path.Join("/home", username, urlRelativePath)
@@ -128,17 +112,17 @@ func getFilePage(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, urlRootPath)
 }
 
-func getTrashPage(w http.ResponseWriter, r *http.Request) {
+func Trash(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/trash")
-	urlRootPath := path.Join("/home", username, TRASH_HOME_PATH, urlRelativePath)
+	urlRootPath := path.Join("/home", username, filesystem.TRASH_HOME_PATH, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil || !urlPathInfo.IsDir() {
 		http.Redirect(w, r, path.Join("/trash", path.Dir(urlRelativePath)), http.StatusSeeOther)
 		return
 	}
 
-	directoryEntries, err := getDirectoryEntries(urlRelativePath, urlRootPath, true)
+	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, true)
 	if err != nil {
 		getProblemPage(w, r, err.Error())
 		return
@@ -158,18 +142,18 @@ func getTrashPage(w http.ResponseWriter, r *http.Request) {
 		PageTitle           string
 		Username            string
 		Path                string
-		FilePathBreadcrumbs []filePathBreadcrumb
-		DirectoryEntries    []directoryEntryData
+		FilePathBreadcrumbs []filesystem.FilePathBreadcrumb
+		DirectoryEntries    []filesystem.DirectoryEntryData
 	}{
 		PageTitle:           "Ground - Trash",
 		Username:            username,
 		Path:                urlRelativePath,
-		FilePathBreadcrumbs: getBreadcrumbs("trash", urlRelativePath),
+		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("trash", urlRelativePath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
 
-func getAdminPage(w http.ResponseWriter, r *http.Request) {
+func Admin(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
 	if !auth.IsAdmin(username) {
@@ -177,24 +161,16 @@ func getAdminPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := exec.Command("uptime", "--pretty")
-	uptime, err := cmd.Output()
+	uptime, err := system.GetUptime()
 	if err != nil {
 		getProblemPage(w, r, "failed to get server uptime")
 		return
 	}
 
-	homeEntries, err := os.ReadDir("/home")
+	users, err := users.GetUserList()
 	if err != nil {
 		getProblemPage(w, r, "failed to get users")
 		return
-	}
-
-	users := []string{}
-	for _, e := range homeEntries {
-		if e.IsDir() {
-			users = append(users, e.Name())
-		}
 	}
 
 	tmpl, err := template.ParseFS(
@@ -215,12 +191,12 @@ func getAdminPage(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle: "Ground - Admin",
 		Username:  username,
-		Uptime:    string(uptime),
+		Uptime:    uptime,
 		Users:     users,
 	})
 }
 
-func getUserPage(w http.ResponseWriter, r *http.Request) {
+func User(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
 	if !auth.IsAdmin(username) {
@@ -229,9 +205,6 @@ func getUserPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	targetUsername := r.PathValue("username")
-
-	sshKeyPath := path.Join("/home", targetUsername, ".ssh", "authorized_keys")
-	sshKeys, _ := getFileLines(sshKeyPath)
 
 	tmpl, err := template.ParseFS(
 		templates,
@@ -252,32 +225,11 @@ func getUserPage(w http.ResponseWriter, r *http.Request) {
 		PageTitle:      "Ground - User Manage",
 		Username:       username,
 		TargetUsername: targetUsername,
-		SshKeys:        sshKeys,
+		SshKeys:        filesystem.GetUserSshKeys(targetUsername),
 	})
 }
 
-func getFileLines(filePath string) ([]string, error) {
-	var lines []string
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		return lines, err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		return lines, err
-	}
-
-	return lines, nil
-}
-
-func getLoginPage(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
@@ -297,7 +249,7 @@ func getLoginPage(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getHomePage(w http.ResponseWriter, r *http.Request) {
+func Home(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
 	tmpl, err := template.ParseFS(
@@ -321,7 +273,7 @@ func getHomePage(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func get404Page(w http.ResponseWriter, r *http.Request) {
+func NotFound(w http.ResponseWriter, r *http.Request) {
 	getProblemPage(w, r, "the requested url path is not valid")
 }
 
@@ -347,145 +299,4 @@ func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage strin
 		Username:       username,
 		ProblemMessage: problemMessage,
 	})
-}
-
-func getDirectoryEntries(urlRelativePath string, urlRootPath string, isTrash bool) ([]directoryEntryData, error) {
-	dirEntries, err := os.ReadDir(urlRootPath)
-	if err != nil {
-		return nil, errors.New("entries in the requested directory could not be read")
-	}
-
-	var directoryEntries []directoryEntryData
-	for _, entry := range dirEntries {
-		directoryEntry, err := getDirectoryEntry(entry, urlRelativePath, urlRootPath, isTrash)
-		if err != nil {
-			continue
-		}
-		directoryEntries = append(directoryEntries, directoryEntry)
-	}
-	return sortEntries(directoryEntries), nil
-}
-
-func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath string, isTrash bool) (directoryEntryData, error) {
-	entryInfo, err := entry.Info()
-	if err != nil {
-		return directoryEntryData{}, err
-	}
-
-	directoryEntry := directoryEntryData{
-		IsDir: entry.IsDir(),
-		Name:  entry.Name(),
-		Path:  path.Join(urlRelativePath, entry.Name()),
-		Size:  entryInfo.Size(),
-	}
-
-	if isTrash {
-		directoryEntry.Path = path.Join("/", TRASH_HOME_PATH, directoryEntry.Path)
-	}
-
-	symLinkPath, isSymLinkDir := directoryEntry.getSymLinkInfo(urlRootPath)
-	directoryEntry.SymLinkPath = symLinkPath
-	if isSymLinkDir {
-		directoryEntry.IsDir = true
-	}
-	directoryEntry.UrlPath = directoryEntry.getUrlPath(urlRelativePath, isTrash)
-	directoryEntry.HumanSize = directoryEntry.getHumanSize()
-
-	return directoryEntry, nil
-}
-
-func (directoryEntry directoryEntryData) getSymLinkInfo(urlRootPath string) (string, bool) {
-	linkPath, err := os.Readlink(path.Join(urlRootPath, directoryEntry.Name))
-	if err != nil {
-		return "", false
-	}
-
-	if !strings.HasPrefix(linkPath, "/") {
-		linkPath = path.Join(urlRootPath, linkPath)
-	}
-
-	linkInfo, err := os.Stat(linkPath)
-	if err != nil {
-		return "", false
-	}
-
-	return strings.TrimPrefix(linkPath, urlRootPath), linkInfo.IsDir()
-}
-
-func (directoryEntry directoryEntryData) getUrlPath(urlRelativePath string, isTrash bool) string {
-	if !directoryEntry.IsDir {
-		return path.Join("/file", directoryEntry.Path)
-	}
-
-	if isTrash {
-		return path.Join("/trash", path.Join(urlRelativePath, directoryEntry.Name))
-	}
-
-	return path.Join("/files", directoryEntry.Path)
-}
-
-func (directoryEntry directoryEntryData) getHumanSize() string {
-	if directoryEntry.IsDir {
-		return "-"
-	}
-
-	if directoryEntry.Size > 1000000000 {
-		return fmt.Sprintf("%.3f GB", float64(directoryEntry.Size)/1000000000.0)
-	}
-
-	if directoryEntry.Size > 1000000 {
-		return fmt.Sprintf("%.3f MB", float64(directoryEntry.Size)/1000000.0)
-	}
-
-	if directoryEntry.Size > 1000 {
-		return fmt.Sprintf("%.3f KB", float64(directoryEntry.Size)/1000.0)
-	}
-
-	return fmt.Sprintf("%d B", directoryEntry.Size)
-}
-
-func sortEntries(directoryEntries []directoryEntryData) []directoryEntryData {
-	sort.Slice(directoryEntries, func(i, j int) bool {
-		a, b := directoryEntries[i], directoryEntries[j]
-
-		if a.IsDir != b.IsDir {
-			return a.IsDir
-		}
-
-		aDot := strings.HasPrefix(a.Name, ".")
-		bDot := strings.HasPrefix(b.Name, ".")
-		if aDot != bDot {
-			return bDot
-		}
-
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
-	})
-
-	return directoryEntries
-}
-
-func getBreadcrumbs(homeName string, urlPath string) []filePathBreadcrumb {
-	breadcrumbPath := "/"
-	filePathBreadcrumbs := []filePathBreadcrumb{
-		{
-			Name:   homeName,
-			Path:   breadcrumbPath,
-			IsHome: true,
-		},
-	}
-
-	for breadcrumbDir := range strings.SplitSeq(urlPath, "/") {
-		if breadcrumbDir == "" {
-			continue
-		}
-
-		breadcrumbPath = path.Join(breadcrumbPath, breadcrumbDir)
-		filePathBreadcrumbs = append(filePathBreadcrumbs, filePathBreadcrumb{
-			Name:   breadcrumbDir,
-			Path:   breadcrumbPath,
-			IsHome: false,
-		})
-	}
-
-	return filePathBreadcrumbs
 }

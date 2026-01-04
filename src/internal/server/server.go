@@ -8,15 +8,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/grantfbarnes/ground/internal/api"
+	"github.com/grantfbarnes/ground/internal/pages"
 )
 
 //go:embed static
 var static embed.FS
-
-type contextKey string
-
-const CONTEXT_KEY_USERNAME contextKey = "username"
-const TRASH_HOME_PATH string = ".local/share/ground/trash"
 
 func Run() {
 	defer func() {
@@ -31,29 +29,30 @@ func Run() {
 	})
 
 	// apis
-	http.HandleFunc("POST /api/login", login)
-	http.HandleFunc("POST /api/logout", logout)
-	http.Handle("POST /api/compress/", apiMiddleware(http.HandlerFunc(compressDirectory)))
-	http.Handle("POST /api/upload/", apiMiddleware(http.HandlerFunc(uploadFiles)))
-	http.Handle("GET /api/download/", apiMiddleware(http.HandlerFunc(download)))
-	http.Handle("POST /api/trash/", apiMiddleware(http.HandlerFunc(trash)))
-	http.Handle("DELETE /api/trash", apiMiddleware(http.HandlerFunc(emptyTrash)))
-	http.Handle("POST /api/system/{method}", apiMiddleware(http.HandlerFunc(systemCallMethod)))
-	http.Handle("POST /api/user/{username}/create", apiMiddleware(http.HandlerFunc(createUser)))
-	http.Handle("POST /api/user/{username}/password/reset", apiMiddleware(http.HandlerFunc(resetUserPassword)))
-	http.Handle("POST /api/user/{username}/ssh-key", apiMiddleware(http.HandlerFunc(addUserSshKey)))
-	http.Handle("DELETE /api/user/{username}/ssh-key/{lineNumber}", apiMiddleware(http.HandlerFunc(deleteUserSshKey)))
-	http.Handle("DELETE /api/user/{username}", apiMiddleware(http.HandlerFunc(deleteUser)))
+	http.HandleFunc("POST /api/login", api.Login)
+	http.HandleFunc("POST /api/logout", api.Logout)
+	http.Handle("POST /api/compress/", api.Middleware(http.HandlerFunc(api.CompressDirectory)))
+	http.Handle("POST /api/upload/", api.Middleware(http.HandlerFunc(api.UploadFiles)))
+	http.Handle("GET /api/download/", api.Middleware(http.HandlerFunc(api.Download)))
+	http.Handle("POST /api/trash/", api.Middleware(http.HandlerFunc(api.Trash)))
+	http.Handle("DELETE /api/trash", api.Middleware(http.HandlerFunc(api.EmptyTrash)))
+	http.Handle("POST /api/system/reboot", api.Middleware(http.HandlerFunc(api.SystemReboot)))
+	http.Handle("POST /api/system/poweroff", api.Middleware(http.HandlerFunc(api.SystemPoweroff)))
+	http.Handle("POST /api/user/{username}/create", api.Middleware(http.HandlerFunc(api.CreateUser)))
+	http.Handle("POST /api/user/{username}/password/reset", api.Middleware(http.HandlerFunc(api.ResetUserPassword)))
+	http.Handle("POST /api/user/{username}/ssh-key", api.Middleware(http.HandlerFunc(api.AddUserSshKey)))
+	http.Handle("DELETE /api/user/{username}/ssh-key/{lineNumber}", api.Middleware(http.HandlerFunc(api.DeleteUserSshKey)))
+	http.Handle("DELETE /api/user/{username}", api.Middleware(http.HandlerFunc(api.DeleteUser)))
 
 	// pages
-	http.Handle("GET /{$}", pageMiddleware(http.HandlerFunc(getHomePage)))
-	http.Handle("GET /login", pageMiddleware(http.HandlerFunc(getLoginPage)))
-	http.Handle("GET /admin", pageMiddleware(http.HandlerFunc(getAdminPage)))
-	http.Handle("GET /user/{username}", pageMiddleware(http.HandlerFunc(getUserPage)))
-	http.Handle("GET /files/", pageMiddleware(http.HandlerFunc(getFilesPage)))
-	http.Handle("GET /file/", pageMiddleware(http.HandlerFunc(getFilePage)))
-	http.Handle("GET /trash/", pageMiddleware(http.HandlerFunc(getTrashPage)))
-	http.Handle("GET /", pageMiddleware(http.HandlerFunc(get404Page)))
+	http.Handle("GET /{$}", pages.Middleware(http.HandlerFunc(pages.Home)))
+	http.Handle("GET /login", pages.Middleware(http.HandlerFunc(pages.Login)))
+	http.Handle("GET /admin", pages.Middleware(http.HandlerFunc(pages.Admin)))
+	http.Handle("GET /user/{username}", pages.Middleware(http.HandlerFunc(pages.User)))
+	http.Handle("GET /files/", pages.Middleware(http.HandlerFunc(pages.Files)))
+	http.Handle("GET /file/", pages.Middleware(http.HandlerFunc(pages.File)))
+	http.Handle("GET /trash/", pages.Middleware(http.HandlerFunc(pages.Trash)))
+	http.Handle("GET /", pages.Middleware(http.HandlerFunc(pages.NotFound)))
 
 	ip, err := getLocalIPv4()
 	if err != nil {
