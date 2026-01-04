@@ -102,12 +102,10 @@
         if (confirm(`Are you sure you want to create user '${username}'?`)) {
             document.getElementById("create-user-dialog").close();
             toggleLoading();
-            const reloadTimeout = setTimeout(() => location.reload(), 5000);
             fetch(`/api/user/${username}/create`, { method: "POST" }).then((response) => {
                 if (response.status >= 200 && response.status < 300) {
-                    // success, wait for timeout reload
+                    location.reload();
                 } else {
-                    clearTimeout(reloadTimeout);
                     response.text().then((text) => displayNotification(text));
                     toggleLoading();
                 }
@@ -122,7 +120,6 @@
                 if (response.status >= 200 && response.status < 300) {
                     toggleLoading();
                 } else {
-                    clearTimeout(reloadTimeout);
                     response.text().then((text) => displayNotification(text));
                     toggleLoading();
                 }
@@ -133,12 +130,10 @@
     function deleteUser(username) {
         if (confirm(`Are you sure you want to delete user '${username}'?`)) {
             toggleLoading();
-            const reloadTimeout = setTimeout(() => location.reload(), 5000);
             fetch(`/api/user/${username}`, { method: "DELETE" }).then((response) => {
                 if (response.status >= 200 && response.status < 300) {
-                    // success, wait for timeout reload
+                    location.reload();
                 } else {
-                    clearTimeout(reloadTimeout);
                     response.text().then((text) => displayNotification(text));
                     toggleLoading();
                 }
