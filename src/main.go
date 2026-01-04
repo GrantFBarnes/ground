@@ -11,7 +11,14 @@ import (
 
 const VERSION string = "v1.1.0"
 
+const COLOR_RED string = "\x1b[31m"
+const COLOR_GREEN string = "\x1b[32m"
+const COLOR_BLUE string = "\x1b[34m"
+const COLOR_CYAN string = "\x1b[36m"
+const COLOR_RESET string = "\x1b[0m"
+
 func main() {
+	var err error
 	settings := getSettingsFromArguments()
 
 	if settings.help {
@@ -24,12 +31,21 @@ func main() {
 		os.Exit(0)
 	}
 
+	if settings.service {
+		err = printService()
+		if err != nil {
+			printErrorMessage(err.Error())
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
 	if !settings.run {
 		printErrorMessage("nothing to run")
 		os.Exit(1)
 	}
 
-	err := healthCheck()
+	err = healthCheck()
 	if err != nil {
 		printErrorMessage(err.Error())
 		os.Exit(1)
@@ -41,6 +57,7 @@ func main() {
 type settings struct {
 	help    bool
 	version bool
+	service bool
 	run     bool
 }
 
@@ -61,6 +78,9 @@ func getSettingsFromArguments() settings {
 			fallthrough
 		case "-v":
 			args.version = true
+
+		case "service":
+			args.service = true
 
 		case "run":
 			args.run = true
@@ -101,10 +121,7 @@ func missingRequiredDependencyProgram(name string) bool {
 }
 
 func printErrorMessage(msg string) {
-	colorRed := "\x1b[31m"
-	colorReset := "\x1b[0m"
-
-	fmt.Printf("%sError:%s ", colorRed, colorReset)
+	fmt.Printf("%sError:%s ", COLOR_RED, COLOR_RESET)
 	fmt.Println(msg)
 	fmt.Println("Run with -h/--help to print help.")
 }
@@ -115,10 +132,67 @@ func printHelp() {
 Methods:
   help:    Print this message
   version: Print version
+  service: Print systemd service intructions
   run:     Run web server
 
 Arguments:
   -h, --help:    Print this message
   -v, --version: Print version
 `)
+}
+
+func printService() error {
+	execPath, err := os.Executable()
+	if err != nil {
+		return errors.New("Failed to detect executable location")
+	}
+
+	servicePath := "/etc/systemd/system/ground.service"
+
+	fmt.Println("The following instructions are to set up ground as a systemd service.")
+	fmt.Println("Note, this is just an example, the actual service location/content can be modified.")
+	fmt.Printf("Executable location: %s%s%s\n", COLOR_CYAN, execPath, COLOR_RESET)
+	fmt.Printf("   Service location: %s%s%s", COLOR_CYAN, servicePath, COLOR_RESET)
+	if _, err := os.Stat(servicePath); err == nil {
+		fmt.Print(" (file already exists)")
+	}
+	fmt.Println()
+	fmt.Println()
+
+	fmt.Println("Example content of service file (uses current executable location):")
+	fmt.Printf(`%s[Unit]
+Description=Ground
+After=network.target
+
+[Service]
+User=root
+ExecStart=%s run
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+%s`, COLOR_BLUE, execPath, COLOR_RESET)
+
+	fmt.Println()
+
+	fmt.Println("After you have a service file defined, you can enable/start the service with the following:")
+	fmt.Print(COLOR_GREEN)
+	fmt.Println("sudo systemctl enable ground.service")
+	fmt.Println("sudo systemctl start ground.service")
+	fmt.Println("sudo systemctl reboot")
+	fmt.Print(COLOR_RESET)
+
+	fmt.Println()
+
+	fmt.Println("You can stop/disable the service with the following:")
+	fmt.Print(COLOR_GREEN)
+	fmt.Println("sudo systemctl stop ground.service")
+	fmt.Println("sudo systemctl disable ground.service")
+	fmt.Print(COLOR_RESET)
+
+	fmt.Println()
+
+	fmt.Println("Simply update the binary to get a newer version running, no updates to service needed.")
+
+	return nil
 }
