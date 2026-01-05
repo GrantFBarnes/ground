@@ -65,7 +65,7 @@ func CompressDirectory(username string, urlRelativePath string) error {
 		return errors.New("File already exists.")
 	}
 
-	cmd := exec.Command("su", "-c", "tar -zcf '"+filePath+"' --directory='"+urlRootPath+"' .", username)
+	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+urlRootPath+"' .", username)
 	err = cmd.Run()
 	if err != nil {
 		return errors.New("Failed to compress directory.")
