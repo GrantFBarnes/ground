@@ -24,13 +24,14 @@ const TRASH_HOME_PATH string = ".local/share/ground/trash"
 var fileCopyNameRegex = regexp.MustCompile(`(.*)\(([0-9]+)\)$`)
 
 type DirectoryEntryData struct {
-	IsDir       bool
-	Name        string
-	Path        string
-	Size        int64
-	SymLinkPath string
-	UrlPath     string
-	HumanSize   string
+	IsDir        bool
+	Name         string
+	Path         string
+	Size         int64
+	LastModified string
+	SymLinkPath  string
+	UrlPath      string
+	HumanSize    string
 }
 
 type FilePathBreadcrumb struct {
@@ -395,10 +396,11 @@ func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath st
 	}
 
 	directoryEntry := DirectoryEntryData{
-		IsDir: entry.IsDir(),
-		Name:  entry.Name(),
-		Path:  path.Join(urlRelativePath, entry.Name()),
-		Size:  entryInfo.Size(),
+		IsDir:        entry.IsDir(),
+		Name:         entry.Name(),
+		Path:         path.Join(urlRelativePath, entry.Name()),
+		Size:         entryInfo.Size(),
+		LastModified: entryInfo.ModTime().Format("2006-01-02 03:04:05 PM"),
 	}
 
 	if isTrash {

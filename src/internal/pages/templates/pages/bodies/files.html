@@ -46,6 +46,7 @@
                 <th style="text-align: left;">name</th>
                 <th></th>
                 <th style="text-align: right;">size</th>
+                <th style="text-align: right;">last modified</th>
                 <th></th>
                 <th></th>
             </tr>
@@ -66,6 +67,7 @@
                 <td>{{.Name}}</td>
                 <td class="muted">{{.SymLinkPath}}</td>
                 <td style="text-align: right;">{{.HumanSize}}</td>
+                <td style="text-align: right;">{{.LastModified}}</td>
                 <td class="single-icon-cell">
                     {{if .IsDir}}
                     <span
