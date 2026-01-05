@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path"
@@ -86,13 +89,97 @@ func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
-	err := filesystem.UploadFiles(username, urlRelativePath, r)
+
+	urlRootPath := path.Join("/home", username, urlRelativePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Path not found.", http.StatusBadRequest)
 		return
 	}
 
+	if !urlPathInfo.IsDir() {
+		http.Error(w, "Path is not a directory.", http.StatusBadRequest)
+		return
+	}
+
+	uid, gid, err := users.GetUserIds(username)
+	if err != nil {
+		http.Error(w, "Failed to get user ids.", http.StatusInternalServerError)
+		return
+	}
+
+	fileIndex := 0
+	for {
+		done, err := createRequestFormFile(r, urlRootPath, uid, gid, fileIndex)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if done {
+			break
+		}
+
+		fileIndex += 1
+	}
+
 	w.WriteHeader(http.StatusOK)
+}
+
+func createRequestFormFile(r *http.Request, urlRootPath string, uid int, gid int, fileIndex int) (bool, error) {
+	file, fileHandler, err := r.FormFile(fmt.Sprintf("file%d", fileIndex))
+	if err != nil {
+		return true, nil
+	}
+	defer file.Close()
+
+	fileDirRelPath, fileName, err := getFileHandlerDirPathFileName(fileHandler)
+	if err != nil {
+		return false, errors.New("Filename not found in header.")
+	}
+
+	err = filesystem.CreateMissingDirectories(urlRootPath, fileDirRelPath, uid, gid)
+	if err != nil {
+		return false, errors.New("Failed to create missing directories.")
+	}
+
+	fileDirPath := path.Join(urlRootPath, fileDirRelPath)
+	fileName, err = filesystem.GetAvailableFileName(fileDirPath, fileName)
+	if err != nil {
+		return false, errors.New("Failed to find available file name.")
+	}
+	filePath := path.Join(fileDirPath, fileName)
+
+	err = filesystem.CreateMultipartFile(file, filePath, uid, gid)
+	if err != nil {
+		return false, errors.New("Failed to create file.")
+	}
+
+	return false, nil
+}
+
+func getFileHandlerDirPathFileName(fileHandler *multipart.FileHeader) (dirPath string, fileName string, err error) {
+	var filePath string
+
+	contentDisposition := fileHandler.Header.Get("Content-Disposition")
+	if strings.Contains(contentDisposition, "filename") {
+		parts := strings.SplitSeq(contentDisposition, ";")
+		for part := range parts {
+			part = strings.TrimSpace(part)
+			if filename, ok := strings.CutPrefix(part, "filename="); ok {
+				filePath = strings.Trim(filename, `"`)
+				break
+			}
+		}
+	}
+
+	if filePath == "" {
+		return "", "", errors.New("filename not found in header")
+	}
+
+	dirPath, fileName = path.Split(filePath)
+
+	return dirPath, fileName, nil
 }
 
 func DownloadFile(w http.ResponseWriter, r *http.Request) {

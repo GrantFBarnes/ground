@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -52,7 +51,7 @@ func CompressDirectory(username string, urlRelativePath string) error {
 	}
 
 	dirPath, dirName := path.Split(urlRootPath)
-	fileName, err := getAvailableFileName(dirPath, dirName+".tar.gz")
+	fileName, err := GetAvailableFileName(dirPath, dirName+".tar.gz")
 	if err != nil {
 		return errors.New("Failed to find available file name.")
 	}
@@ -72,58 +71,6 @@ func CompressDirectory(username string, urlRelativePath string) error {
 	return nil
 }
 
-func UploadFiles(username string, urlRelativePath string, r *http.Request) error {
-	urlRootPath := path.Join("/home", username, urlRelativePath)
-	urlPathInfo, err := os.Stat(urlRootPath)
-	if err != nil {
-		return errors.New("Path not found.")
-	}
-
-	if !urlPathInfo.IsDir() {
-		return errors.New("Path is not a directory.")
-	}
-
-	uid, gid, err := users.GetUserIds(username)
-	if err != nil {
-		return err
-	}
-
-	fileIndex := 0
-	for {
-		file, fileHandler, err := r.FormFile(fmt.Sprintf("file%d", fileIndex))
-		if err != nil {
-			break
-		}
-		defer file.Close()
-
-		fileDirRelPath, fileName, err := getDirectoryPathFileName(fileHandler)
-		if err != nil {
-			return errors.New("Filename not found in header.")
-		}
-
-		err = createMissingDirectories(urlRootPath, fileDirRelPath, uid, gid)
-		if err != nil {
-			return errors.New("Failed to create missing directories.")
-		}
-
-		fileDirPath := path.Join(urlRootPath, fileDirRelPath)
-		fileName, err = getAvailableFileName(fileDirPath, fileName)
-		if err != nil {
-			return errors.New("Failed to find available file name.")
-		}
-		filePath := path.Join(fileDirPath, fileName)
-
-		err = createFile(file, filePath, uid, gid)
-		if err != nil {
-			return errors.New("Failed to create file.")
-		}
-
-		fileIndex += 1
-	}
-
-	return nil
-}
-
 func CreateTrashDirectory(username string) error {
 	uid, gid, err := users.GetUserIds(username)
 	if err != nil {
@@ -131,7 +78,7 @@ func CreateTrashDirectory(username string) error {
 	}
 
 	homePath := path.Join("/home", username)
-	err = createMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
+	err = CreateMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
 	if err != nil {
 		return errors.New("Failed to create ground trash.")
 	}
@@ -153,7 +100,7 @@ func Trash(username string, urlRelativePath string) error {
 
 	homePath := path.Join("/home", username)
 	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlRelativePath))
-	err = createMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
+	err = CreateMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
 	if err != nil {
 		return errors.New("Failed to create missing directories.")
 	}
@@ -231,7 +178,7 @@ func AddUserSshKey(username string, targetUsername string, sshKey string) error 
 			return err
 		}
 
-		err = createMissingDirectories(homePath, ".ssh", uid, gid)
+		err = CreateMissingDirectories(homePath, ".ssh", uid, gid)
 		if err != nil {
 			return errors.New("Failed to create SSH folder.")
 		}
@@ -292,7 +239,7 @@ func DeleteUserSshKey(username string, targetUsername string, lineNumberString s
 	return nil
 }
 
-func getAvailableFileName(fileDirPath string, fileName string) (string, error) {
+func GetAvailableFileName(fileDirPath string, fileName string) (string, error) {
 	for {
 		filePath := path.Join(fileDirPath, fileName)
 		_, err := os.Stat(filePath)
@@ -348,31 +295,7 @@ func getFileExtension(fileName string) (string, string) {
 	return coreFileName, fileExtension
 }
 
-func getDirectoryPathFileName(fileHandler *multipart.FileHeader) (dirPath string, fileName string, err error) {
-	var filePath string
-
-	contentDisposition := fileHandler.Header.Get("Content-Disposition")
-	if strings.Contains(contentDisposition, "filename") {
-		parts := strings.SplitSeq(contentDisposition, ";")
-		for part := range parts {
-			part = strings.TrimSpace(part)
-			if filename, ok := strings.CutPrefix(part, "filename="); ok {
-				filePath = strings.Trim(filename, `"`)
-				break
-			}
-		}
-	}
-
-	if filePath == "" {
-		return "", "", errors.New("filename not found in header")
-	}
-
-	dirPath, fileName = path.Split(filePath)
-
-	return dirPath, fileName, nil
-}
-
-func createMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
+func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
 	relDirPathBuildUp := ""
 	for dirName := range strings.SplitSeq(relDirPath, "/") {
 		if dirName == "" {
@@ -422,7 +345,7 @@ func createMissingFile(filePath string, uid int, gid int) error {
 	return nil
 }
 
-func createFile(file multipart.File, filePath string, uid int, gid int) error {
+func CreateMultipartFile(file multipart.File, filePath string, uid int, gid int) error {
 	osFile, err := os.Create(filePath)
 	if err != nil {
 		return err
