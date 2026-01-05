@@ -167,29 +167,36 @@
             files.push(file);
         }
 
-        if (files.length === 0) {
-            displayNotification("No files selected.");
-            return;
-        }
-
         upload(files);
     });
 
     function upload(files) {
-        const formData = new FormData();
-        for (const i in files) {
-            formData.append("file" + i, files[i]);
+        if (files.length === 0) {
+            displayNotification("No files available to upload.");
+            return;
         }
 
         toggleLoading();
-        fetch("/api/upload{{.Path}}", { method: "POST", body: formData }).then((response) => {
-            if (response.status >= 200 && response.status < 300) {
+
+        function uploadFile(index) {
+            if (index >= files.length) {
                 location.reload(true);
-            } else {
-                response.text().then((text) => displayNotification(text));
-                toggleLoading();
+                return;
             }
-        });
+
+            const formData = new FormData();
+            formData.append("file", files[index]);
+            fetch("/api/upload{{.Path}}", { method: "POST", body: formData }).then((response) => {
+                if (response.status >= 200 && response.status < 300) {
+                    uploadFile(index + 1);
+                } else {
+                    response.text().then((text) => displayNotification(text));
+                    toggleLoading();
+                }
+            });
+        }
+
+        uploadFile(0);
     }
 
     function compressDirectory(filePath) {
