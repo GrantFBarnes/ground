@@ -278,7 +278,8 @@ func GetAvailableFileName(fileDirPath string, fileName string) (string, error) {
 
 func getFileExtension(fileName string) (string, string) {
 	split := strings.Split(fileName, ".")
-	if strings.HasPrefix(fileName, ".") {
+	isDotFile := strings.HasPrefix(fileName, ".")
+	if isDotFile {
 		split = strings.Split(fileName[1:], ".")
 	}
 
@@ -290,6 +291,10 @@ func getFileExtension(fileName string) (string, string) {
 	fileExtension := strings.Join(split[1:], ".")
 	if fileExtension != "" {
 		fileExtension = "." + fileExtension
+	}
+
+	if isDotFile {
+		coreFileName = "." + coreFileName
 	}
 
 	return coreFileName, fileExtension
