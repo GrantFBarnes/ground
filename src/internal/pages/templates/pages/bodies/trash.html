@@ -55,11 +55,19 @@
                 <td class="muted">{{.SymLinkPath}}</td>
                 <td style="text-align: right;">{{.HumanSize}}</td>
                 <td class="single-icon-cell">
+                    {{if .IsDir}}
                     <span
-                        title="Download"
+                        title="Compress Directory"
                         class="clickable"
-                        onclick="download('{{.Path}}')"
+                        onclick="compressDirectory('{{.Path}}')"
+                    >&#128476;</span>
+                    {{else}}
+                    <span
+                        title="Download File"
+                        class="clickable"
+                        onclick="downloadFile('{{.Path}}')"
                     >&#8681;</span>
+                    {{end}}
                 </td>
             </tr>
             {{end}}
@@ -81,7 +89,19 @@
         }
     }
 
-    function download(filePath) {
+    function compressDirectory(filePath) {
+        toggleLoading();
+        fetch("/api/compress" + filePath, { method: "POST" }).then((response) => {
+            if (response.status >= 200 && response.status < 300) {
+                location.reload();
+            } else {
+                response.text().then((text) => displayNotification(text));
+                toggleLoading();
+            }
+        });
+    }
+
+    function downloadFile(filePath) {
         const a = document.createElement("a");
         a.href = "/api/download" + filePath;
         a.download = true;

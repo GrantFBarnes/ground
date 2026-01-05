@@ -1,7 +1,6 @@
 package filesystem
 
 import (
-	"archive/zip"
 	"bufio"
 	"errors"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -121,57 +119,6 @@ func UploadFiles(username string, urlRelativePath string, r *http.Request) error
 		}
 
 		fileIndex += 1
-	}
-
-	return nil
-}
-
-func Download(username string, urlRelativePath string, w http.ResponseWriter, r *http.Request) error {
-	urlRootPath := path.Join("/home", username, urlRelativePath)
-	urlPathInfo, err := os.Stat(urlRootPath)
-	if err != nil {
-		return errors.New("Path not found.")
-	}
-
-	if urlPathInfo.IsDir() {
-		_, dirName := path.Split(urlRootPath)
-		w.Header().Set("Content-Disposition", "attachment; filename="+dirName+".zip")
-		w.Header().Set("Content-Type", "application/zip")
-
-		zipWriter := zip.NewWriter(w)
-		defer zipWriter.Close()
-
-		filepath.Walk(urlRootPath, func(filePath string, fileInfo os.FileInfo, _ error) error {
-			if fileInfo.IsDir() {
-				return nil
-			}
-
-			relPath, err := filepath.Rel(urlRootPath, filePath)
-			if err != nil {
-				return err
-			}
-
-			file, err := os.Open(filePath)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-
-			fileWriter, err := zipWriter.Create(relPath)
-			if err != nil {
-				return err
-			}
-
-			io.Copy(fileWriter, file)
-
-			return nil
-		})
-	} else {
-		_, fileName := path.Split(urlRootPath)
-		w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-		w.Header().Set("Content-Type", "application/octet-stream")
-
-		http.ServeFile(w, r, urlRootPath)
 	}
 
 	return nil

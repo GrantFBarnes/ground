@@ -33,7 +33,7 @@ func Run() {
 	http.HandleFunc("POST /api/logout", api.Logout)
 	http.Handle("POST /api/compress/", api.Middleware(http.HandlerFunc(api.CompressDirectory)))
 	http.Handle("POST /api/upload/", api.Middleware(http.HandlerFunc(api.UploadFiles)))
-	http.Handle("GET /api/download/", api.Middleware(http.HandlerFunc(api.Download)))
+	http.Handle("GET /api/download/", api.Middleware(http.HandlerFunc(api.DownloadFile)))
 	http.Handle("POST /api/trash/", api.Middleware(http.HandlerFunc(api.Trash)))
 	http.Handle("DELETE /api/trash", api.Middleware(http.HandlerFunc(api.EmptyTrash)))
 	http.Handle("POST /api/system/reboot", api.Middleware(http.HandlerFunc(api.SystemReboot)))

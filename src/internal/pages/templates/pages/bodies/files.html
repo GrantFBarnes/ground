@@ -48,7 +48,6 @@
                 <th style="text-align: right;">size</th>
                 <th></th>
                 <th></th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -74,14 +73,13 @@
                         class="clickable"
                         onclick="compressDirectory('{{.Path}}')"
                     >&#128476;</span>
-                    {{end}}
-                </td>
-                <td class="single-icon-cell">
+                    {{else}}
                     <span
-                        title="Download"
+                        title="Download File"
                         class="clickable"
-                        onclick="download('{{.Path}}')"
+                        onclick="downloadFile('{{.Path}}')"
                     >&#8681;</span>
+                    {{end}}
                 </td>
                 <td class="single-icon-cell">
                     <span
@@ -201,7 +199,7 @@
         });
     }
 
-    function download(filePath) {
+    function downloadFile(filePath) {
         const a = document.createElement("a");
         a.href = "/api/download" + filePath;
         a.download = true;

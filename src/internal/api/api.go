@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/grantfbarnes/ground/internal/auth"
@@ -93,14 +95,27 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func Download(w http.ResponseWriter, r *http.Request) {
+func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/download")
-	err := filesystem.Download(username, urlRelativePath, w, r)
+
+	urlRootPath := path.Join("/home", username, urlRelativePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Path not found.", http.StatusBadRequest)
 		return
 	}
+
+	if urlPathInfo.IsDir() {
+		http.Error(w, "Path is a directory.", http.StatusBadRequest)
+		return
+	}
+
+	_, fileName := path.Split(urlRootPath)
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	http.ServeFile(w, r, urlRootPath)
 }
 
 func Trash(w http.ResponseWriter, r *http.Request) {
