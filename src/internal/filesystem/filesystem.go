@@ -345,14 +345,14 @@ func createMissingFile(filePath string, uid int, gid int) error {
 	return nil
 }
 
-func CreateMultipartFile(file multipart.File, filePath string, uid int, gid int) error {
+func CreateMultipartFile(part *multipart.Part, filePath string, uid int, gid int) error {
 	osFile, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
 	defer osFile.Close()
 
-	_, err = io.Copy(osFile, file)
+	_, err = io.Copy(osFile, part)
 	if err != nil {
 		return err
 	}

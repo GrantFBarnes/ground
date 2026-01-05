@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -108,78 +109,69 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileIndex := 0
+	mediaType, contentParams, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || !strings.HasPrefix(mediaType, "multipart/") {
+		http.Error(w, "Failed to parse media type.", http.StatusInternalServerError)
+		return
+	}
+
+	boundary, ok := contentParams["boundary"]
+	if !ok {
+		http.Error(w, "Failed to get file boundary.", http.StatusInternalServerError)
+		return
+	}
+
+	multipartReader := multipart.NewReader(r.Body, boundary)
 	for {
-		done, err := createRequestFormFile(r, urlRootPath, uid, gid, fileIndex)
+		part, err := multipartReader.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			http.Error(w, "Failed to get next file part.", http.StatusInternalServerError)
+			return
+		}
+
+		err = createFileFromPart(part, urlRootPath, uid, gid)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		if done {
-			break
-		}
-
-		fileIndex += 1
 	}
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func createRequestFormFile(r *http.Request, urlRootPath string, uid int, gid int, fileIndex int) (bool, error) {
-	file, fileHandler, err := r.FormFile(fmt.Sprintf("file%d", fileIndex))
+func createFileFromPart(part *multipart.Part, urlRootPath string, uid int, gid int) error {
+	_, params, err := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
 	if err != nil {
-		return true, nil
+		return errors.New("Failed to get content disposition.")
 	}
-	defer file.Close()
 
-	fileDirRelPath, fileName, err := getFileHandlerDirPathFileName(fileHandler)
-	if err != nil {
-		return false, errors.New("Filename not found in header.")
+	fileRelPath, ok := params["filename"]
+	if !ok {
+		return errors.New("Filename not found in content disposition.")
 	}
+	fileDirRelPath, fileName := path.Split(fileRelPath)
 
 	err = filesystem.CreateMissingDirectories(urlRootPath, fileDirRelPath, uid, gid)
 	if err != nil {
-		return false, errors.New("Failed to create missing directories.")
+		return errors.New("Failed to create missing directories.")
 	}
 
 	fileDirPath := path.Join(urlRootPath, fileDirRelPath)
 	fileName, err = filesystem.GetAvailableFileName(fileDirPath, fileName)
 	if err != nil {
-		return false, errors.New("Failed to find available file name.")
+		return errors.New("Failed to find available file name.")
 	}
 	filePath := path.Join(fileDirPath, fileName)
 
-	err = filesystem.CreateMultipartFile(file, filePath, uid, gid)
+	err = filesystem.CreateMultipartFile(part, filePath, uid, gid)
 	if err != nil {
-		return false, errors.New("Failed to create file.")
+		return errors.New("Failed to create file.")
 	}
 
-	return false, nil
-}
-
-func getFileHandlerDirPathFileName(fileHandler *multipart.FileHeader) (dirPath string, fileName string, err error) {
-	var filePath string
-
-	contentDisposition := fileHandler.Header.Get("Content-Disposition")
-	if strings.Contains(contentDisposition, "filename") {
-		parts := strings.SplitSeq(contentDisposition, ";")
-		for part := range parts {
-			part = strings.TrimSpace(part)
-			if filename, ok := strings.CutPrefix(part, "filename="); ok {
-				filePath = strings.Trim(filename, `"`)
-				break
-			}
-		}
-	}
-
-	if filePath == "" {
-		return "", "", errors.New("filename not found in header")
-	}
-
-	dirPath, fileName = path.Split(filePath)
-
-	return dirPath, fileName, nil
+	return nil
 }
 
 func DownloadFile(w http.ResponseWriter, r *http.Request) {

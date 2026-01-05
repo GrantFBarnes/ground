@@ -167,6 +167,11 @@
             files.push(file);
         }
 
+        if (files.length === 0) {
+            displayNotification("No files selected.");
+            return;
+        }
+
         upload(files);
     });
 
