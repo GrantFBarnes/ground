@@ -59,7 +59,7 @@
             document.getElementById("add-ssh-key-dialog").close();
             toggleLoading();
             fetch("/api/user/{{.TargetUsername}}/ssh-key", { method: "POST", body: new FormData(this) }).then((response) => {
-                if (response.status >= 200 && response.status < 300) {
+                if (response.ok) {
                     location.reload();
                 } else {
                     response.text().then((text) => displayNotification(text));
@@ -73,7 +73,7 @@
         if (confirm("Are you sure you want to delete this SSH Key?")) {
             toggleLoading();
             fetch(`/api/user/{{.TargetUsername}}/ssh-key/${lineNumber}`, { method: "DELETE" }).then((response) => {
-                if (response.status >= 200 && response.status < 300) {
+                if (response.ok) {
                     location.reload();
                 } else {
                     response.text().then((text) => displayNotification(text));

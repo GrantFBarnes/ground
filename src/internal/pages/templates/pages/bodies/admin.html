@@ -84,7 +84,7 @@
             toggleLoading();
             const reloadTimeout = setTimeout(() => location.reload(), 5000);
             fetch(`/api/system/${callMethod}`, { method: "POST" }).then((response) => {
-                if (response.status >= 200 && response.status < 300) {
+                if (response.ok) {
                     // success, wait for timeout reload
                 } else {
                     clearTimeout(reloadTimeout);
@@ -103,7 +103,7 @@
             document.getElementById("create-user-dialog").close();
             toggleLoading();
             fetch(`/api/user/${username}/create`, { method: "POST" }).then((response) => {
-                if (response.status >= 200 && response.status < 300) {
+                if (response.ok) {
                     location.reload();
                 } else {
                     response.text().then((text) => displayNotification(text));
@@ -117,7 +117,7 @@
         if (confirm(`Are you sure you want to reset the password for '${username}'?`)) {
             toggleLoading();
             fetch(`/api/user/${username}/password/reset`, { method: "POST" }).then((response) => {
-                if (response.status >= 200 && response.status < 300) {
+                if (response.ok) {
                     toggleLoading();
                 } else {
                     response.text().then((text) => displayNotification(text));
@@ -131,7 +131,7 @@
         if (confirm(`Are you sure you want to delete user '${username}'?`)) {
             toggleLoading();
             fetch(`/api/user/${username}`, { method: "DELETE" }).then((response) => {
-                if (response.status >= 200 && response.status < 300) {
+                if (response.ok) {
                     location.reload();
                 } else {
                     response.text().then((text) => displayNotification(text));
