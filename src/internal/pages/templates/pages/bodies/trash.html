@@ -33,7 +33,6 @@
             <tr>
                 <th></th>
                 <th style="text-align: left;">name</th>
-                <th></th>
                 <th style="text-align: right;">size</th>
                 <th style="text-align: right;">last modified</th>
                 <th></th>
@@ -53,11 +52,6 @@
                     {{end}}
                 </td>
                 <td>{{.Name}}</td>
-                <td>
-                    {{if ne .SymLinkPath ""}}
-                    <span title="{{.SymLinkPath}}">&#128279;</span>
-                    {{end}}
-                </td>
                 <td style="text-align: right;">{{.HumanSize}}</td>
                 <td style="text-align: right;">{{.LastModified}}</td>
                 <td class="single-icon-cell">

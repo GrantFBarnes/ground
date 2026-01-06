@@ -25,9 +25,10 @@ var fileCopyNameRegex = regexp.MustCompile(`(.*)\(([0-9]+)\)$`)
 
 type DirectoryEntryData struct {
 	IsDir        bool
+	isTrash      bool
 	Name         string
 	Path         string
-	Size         int64
+	size         int64
 	LastModified string
 	SymLinkPath  string
 	UrlPath      string
@@ -397,25 +398,63 @@ func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath st
 
 	directoryEntry := DirectoryEntryData{
 		IsDir:        entry.IsDir(),
+		isTrash:      isTrash,
 		Name:         entry.Name(),
 		Path:         path.Join(urlRelativePath, entry.Name()),
-		Size:         entryInfo.Size(),
+		size:         entryInfo.Size(),
 		LastModified: entryInfo.ModTime().Format("2006-01-02 03:04:05 PM"),
 	}
 
-	if isTrash {
-		directoryEntry.Path = path.Join("/", TRASH_HOME_PATH, directoryEntry.Path)
-	}
-
-	symLinkPath, isSymLinkDir := directoryEntry.getSymLinkInfo(urlRootPath)
-	directoryEntry.SymLinkPath = symLinkPath
-	if isSymLinkDir {
-		directoryEntry.IsDir = true
-	}
-	directoryEntry.UrlPath = directoryEntry.getUrlPath(urlRelativePath, isTrash)
+	directoryEntry.UrlPath = directoryEntry.getUrlPath()
 	directoryEntry.HumanSize = directoryEntry.getHumanSize()
 
+	if directoryEntry.isTrash {
+		directoryEntry.Path = path.Join("/", TRASH_HOME_PATH, directoryEntry.Path)
+	} else {
+		symLinkPath, isSymLinkDir := directoryEntry.getSymLinkInfo(urlRootPath)
+		directoryEntry.SymLinkPath = symLinkPath
+		if isSymLinkDir {
+			directoryEntry.IsDir = true
+		}
+	}
+
 	return directoryEntry, nil
+}
+
+func (directoryEntry DirectoryEntryData) getUrlPath() string {
+	if directoryEntry.isTrash {
+		if directoryEntry.IsDir {
+			return path.Join("/trash", directoryEntry.Path)
+		} else {
+			return path.Join("/file", TRASH_HOME_PATH, directoryEntry.Path)
+		}
+	} else {
+		if directoryEntry.IsDir {
+			return path.Join("/files", directoryEntry.Path)
+		} else {
+			return path.Join("/file", directoryEntry.Path)
+		}
+	}
+}
+
+func (directoryEntry DirectoryEntryData) getHumanSize() string {
+	if directoryEntry.IsDir {
+		return "-"
+	}
+
+	if directoryEntry.size > 1000000000 {
+		return fmt.Sprintf("%.3f GB", float64(directoryEntry.size)/1000000000.0)
+	}
+
+	if directoryEntry.size > 1000000 {
+		return fmt.Sprintf("%.3f MB", float64(directoryEntry.size)/1000000.0)
+	}
+
+	if directoryEntry.size > 1000 {
+		return fmt.Sprintf("%.3f KB", float64(directoryEntry.size)/1000.0)
+	}
+
+	return fmt.Sprintf("%d B", directoryEntry.size)
 }
 
 func (directoryEntry DirectoryEntryData) getSymLinkInfo(urlRootPath string) (string, bool) {
@@ -434,38 +473,6 @@ func (directoryEntry DirectoryEntryData) getSymLinkInfo(urlRootPath string) (str
 	}
 
 	return strings.TrimPrefix(linkPath, urlRootPath), linkInfo.IsDir()
-}
-
-func (directoryEntry DirectoryEntryData) getUrlPath(urlRelativePath string, isTrash bool) string {
-	if !directoryEntry.IsDir {
-		return path.Join("/file", directoryEntry.Path)
-	}
-
-	if isTrash {
-		return path.Join("/trash", path.Join(urlRelativePath, directoryEntry.Name))
-	}
-
-	return path.Join("/files", directoryEntry.Path)
-}
-
-func (directoryEntry DirectoryEntryData) getHumanSize() string {
-	if directoryEntry.IsDir {
-		return "-"
-	}
-
-	if directoryEntry.Size > 1000000000 {
-		return fmt.Sprintf("%.3f GB", float64(directoryEntry.Size)/1000000000.0)
-	}
-
-	if directoryEntry.Size > 1000000 {
-		return fmt.Sprintf("%.3f MB", float64(directoryEntry.Size)/1000000.0)
-	}
-
-	if directoryEntry.Size > 1000 {
-		return fmt.Sprintf("%.3f KB", float64(directoryEntry.Size)/1000.0)
-	}
-
-	return fmt.Sprintf("%d B", directoryEntry.Size)
 }
 
 func sortDirectoryEntries(directoryEntries []DirectoryEntryData) []DirectoryEntryData {
