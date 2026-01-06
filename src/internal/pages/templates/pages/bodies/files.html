@@ -159,13 +159,13 @@
 
         const fileUploadElement = document.getElementById("file-upload");
         if (!fileUploadElement) {
-            displayNotification("Failed to find file upload.");
+            displayErrorMessage("Failed to find file upload.");
             return;
         }
 
         const directoryUploadElement = document.getElementById("directory-upload");
         if (!directoryUploadElement) {
-            displayNotification("Failed to find directory upload.");
+            displayErrorMessage("Failed to find directory upload.");
             return;
         }
 
@@ -182,7 +182,7 @@
 
     function upload(files) {
         if (files.length === 0) {
-            displayNotification("No files available to upload.");
+            displayErrorMessage("No files available to upload.");
             return;
         }
 
@@ -196,7 +196,7 @@
                     if (!response.ok) {
                         return response.text()
                             .then((text) => {
-                                displayNotification(text)
+                                displayErrorMessage(text)
                                 throw new Error(text);
                             });
                     }
@@ -214,7 +214,7 @@
             if (response.ok) {
                 location.reload();
             } else {
-                response.text().then((text) => displayNotification(text));
+                response.text().then((text) => displayErrorMessage(text));
                 toggleLoading();
             }
         });
@@ -235,7 +235,7 @@
                 if (response.ok) {
                     location.reload();
                 } else {
-                    response.text().then((text) => displayNotification(text));
+                    response.text().then((text) => displayErrorMessage(text));
                     toggleLoading();
                 }
             });

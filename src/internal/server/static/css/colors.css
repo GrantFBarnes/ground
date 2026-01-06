@@ -95,7 +95,7 @@ tbody>tr:hover {
     background-color: var(--color-bg1);
 }
 
-#notification {
+#error-message {
     background-color: var(--color-red0)
 }
 

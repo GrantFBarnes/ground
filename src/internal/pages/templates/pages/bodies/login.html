@@ -42,7 +42,7 @@
             if (response.ok) {
                 location.reload();
             } else {
-                response.text().then((text) => displayNotification(text));
+                response.text().then((text) => displayErrorMessage(text));
                 toggleLoading();
             }
         });

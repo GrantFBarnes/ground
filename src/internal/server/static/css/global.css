@@ -93,7 +93,7 @@ button {
     animation: spin 2s linear infinite;
 }
 
-#notification {
+#error-message {
     position: fixed;
     z-index: 999;
     bottom: 30px;

@@ -16,17 +16,17 @@ function toggleLoading() {
     }
 }
 
-function displayNotification(message) {
-    let notificationElement = document.getElementById("notification");
-    if (notificationElement) {
-        notificationElement.remove();
+function displayErrorMessage(message) {
+    let messageElement = document.getElementById("error-message");
+    if (messageElement) {
+        messageElement.remove();
     }
 
-    notificationElement = document.createElement("div");
-    notificationElement.id = "notification";
-    notificationElement.innerText = message;
-    document.body.appendChild(notificationElement);
-    setTimeout(() => notificationElement.remove(), 5000);
+    messageElement = document.createElement("div");
+    messageElement.id = "error-message";
+    messageElement.innerText = message;
+    document.body.appendChild(messageElement);
+    setTimeout(() => messageElement.remove(), 5000);
 }
 
 function logout() {
