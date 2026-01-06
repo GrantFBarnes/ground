@@ -16,40 +16,40 @@ function toggleLoading() {
     }
 }
 
-function displayInfoMessage(message, keepOpen = false) {
-    displayMessage("info-message", message, keepOpen);
+function notifyInfo(message, keepOpen = false) {
+    displayNotification("notification-info", message, keepOpen);
 }
 
-function displayErrorMessage(message, keepOpen = false) {
-    displayMessage("error-message", message, keepOpen);
+function notifyError(message, keepOpen = false) {
+    displayNotification("notification-error", message, keepOpen);
 }
 
-function displayMessage(id, message, keepOpen) {
-    let messageBoxElement = document.getElementById(id);
-    if (messageBoxElement) {
-        messageBoxElement.remove();
+function displayNotification(id, message, keepOpen) {
+    let notificationBoxElement = document.getElementById(id);
+    if (notificationBoxElement) {
+        notificationBoxElement.remove();
     }
 
-    messageBoxElement = document.createElement("div");
-    messageBoxElement.id = id;
-    messageBoxElement.className = "message";
+    notificationBoxElement = document.createElement("div");
+    notificationBoxElement.id = id;
+    notificationBoxElement.className = "notification";
 
-    const messageCloseElement = document.createElement("span");
-    messageCloseElement.className = "close-button";
-    messageCloseElement.onclick = () => { messageBoxElement.remove() };
-    messageCloseElement.innerHTML = "&#128938;";
+    const notificationCloseElement = document.createElement("span");
+    notificationCloseElement.className = "close-button";
+    notificationCloseElement.onclick = () => { notificationBoxElement.remove() };
+    notificationCloseElement.innerHTML = "&#128938;";
 
-    const messageTextElement = document.createElement("span");
-    messageTextElement.innerText = message;
+    const notificationMessageElement = document.createElement("span");
+    notificationMessageElement.innerText = message;
 
-    messageBoxElement.appendChild(messageCloseElement);
-    messageBoxElement.appendChild(messageTextElement);
-    document.body.appendChild(messageBoxElement);
+    notificationBoxElement.appendChild(notificationCloseElement);
+    notificationBoxElement.appendChild(notificationMessageElement);
+    document.body.appendChild(notificationBoxElement);
 
     if (!keepOpen) {
         setTimeout(() => {
-            if (messageBoxElement) {
-                messageBoxElement.remove();
+            if (notificationBoxElement) {
+                notificationBoxElement.remove();
             }
         }, 5000);
     }

@@ -99,7 +99,7 @@
                     // success, wait for timeout reload
                 } else {
                     clearTimeout(reloadTimeout);
-                    response.text().then((text) => displayErrorMessage(text));
+                    response.text().then((text) => notifyError(text));
                     toggleLoading();
                 }
             });
@@ -117,7 +117,7 @@
                 if (response.ok) {
                     location.reload();
                 } else {
-                    response.text().then((text) => displayErrorMessage(text));
+                    response.text().then((text) => notifyError(text));
                     toggleLoading();
                 }
             });
@@ -131,7 +131,7 @@
                 if (response.ok) {
                     toggleLoading();
                 } else {
-                    response.text().then((text) => displayErrorMessage(text));
+                    response.text().then((text) => notifyError(text));
                     toggleLoading();
                 }
             });
@@ -145,7 +145,7 @@
                 if (response.ok) {
                     location.reload();
                 } else {
-                    response.text().then((text) => displayErrorMessage(text));
+                    response.text().then((text) => notifyError(text));
                     toggleLoading();
                 }
             });

@@ -93,15 +93,15 @@ button {
     animation: spin 2s linear infinite;
 }
 
-#info-message {
+#notification-info {
     top: calc(var(--top-bar-height) + (2 * var(--padding-large)) + 10px);
 }
 
-#error-message {
+#notification-error {
     bottom: 30px;
 }
 
-.message {
+.notification {
     position: fixed;
     z-index: 999;
     left: 30px;

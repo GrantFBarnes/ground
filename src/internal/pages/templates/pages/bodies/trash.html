@@ -86,7 +86,7 @@
                 if (response.ok) {
                     location.href = "/trash";
                 } else {
-                    response.text().then((text) => displayErrorMessage(text));
+                    response.text().then((text) => notifyError(text));
                     toggleLoading();
                 }
             });
@@ -99,7 +99,7 @@
             if (response.ok) {
                 location.reload();
             } else {
-                response.text().then((text) => displayErrorMessage(text));
+                response.text().then((text) => notifyError(text));
                 toggleLoading();
             }
         });

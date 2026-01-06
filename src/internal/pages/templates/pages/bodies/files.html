@@ -159,13 +159,13 @@
 
         const fileUploadElement = document.getElementById("file-upload");
         if (!fileUploadElement) {
-            displayErrorMessage("Failed to find file upload.");
+            notifyError("Failed to find file upload.");
             return;
         }
 
         const directoryUploadElement = document.getElementById("directory-upload");
         if (!directoryUploadElement) {
-            displayErrorMessage("Failed to find directory upload.");
+            notifyError("Failed to find directory upload.");
             return;
         }
 
@@ -182,7 +182,7 @@
 
     function upload(files) {
         if (files.length === 0) {
-            displayErrorMessage("No files available to upload.");
+            notifyError("No files available to upload.");
             return;
         }
 
@@ -197,7 +197,7 @@
                 .then((response) => {
                     if (response.ok) {
                         uploadCount += 1;
-                        displayInfoMessage(`Uploaded ${uploadCount} out of ${files.length} files...`);
+                        notifyInfo(`Uploaded ${uploadCount} out of ${files.length} files...`);
                     } else {
                         failedFiles.push(file.webkitRelativePath ?? file.name);
                     }
@@ -208,7 +208,7 @@
             .finally(() => {
                 if (failedFiles.length) {
                     failedFiles = failedFiles.sort();
-                    displayErrorMessage("The following files failed to upload:\n" + failedFiles.join("\n"), true);
+                    notifyError("The following files failed to upload:\n" + failedFiles.join("\n"), true);
                     toggleLoading();
                 } else {
                     location.reload(true);
@@ -222,7 +222,7 @@
             if (response.ok) {
                 location.reload();
             } else {
-                response.text().then((text) => displayErrorMessage(text));
+                response.text().then((text) => notifyError(text));
                 toggleLoading();
             }
         });
@@ -243,7 +243,7 @@
                 if (response.ok) {
                     location.reload();
                 } else {
-                    response.text().then((text) => displayErrorMessage(text));
+                    response.text().then((text) => notifyError(text));
                     toggleLoading();
                 }
             });
