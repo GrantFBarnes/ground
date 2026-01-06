@@ -188,24 +188,32 @@
 
         toggleLoading();
 
+        let uploadCount = 0;
+        let failedFiles = [];
         const uploadPromises = files.map(file => {
             const formData = new FormData();
             formData.append("file", file);
             return fetch("/api/upload{{.Path}}", { method: "POST", body: formData })
                 .then((response) => {
-                    if (!response.ok) {
-                        return response.text()
-                            .then((text) => {
-                                displayErrorMessage(text)
-                                throw new Error(text);
-                            });
+                    if (response.ok) {
+                        uploadCount += 1;
+                        displayInfoMessage(`Uploaded ${uploadCount} out of ${files.length} files...`);
+                    } else {
+                        failedFiles.push(file.webkitRelativePath ?? file.name);
                     }
                 });
         });
 
         Promise.all(uploadPromises)
-            .then(() => location.reload(true))
-            .catch(() => toggleLoading());
+            .finally(() => {
+                if (failedFiles.length) {
+                    failedFiles = failedFiles.sort();
+                    displayErrorMessage("The following files failed to upload:\n" + failedFiles.join("\n"), true);
+                    toggleLoading();
+                } else {
+                    location.reload(true);
+                }
+            });
     }
 
     function compressDirectory(filePath) {
