@@ -32,6 +32,7 @@ function displayMessage(id, message, keepOpen) {
 
     messageBoxElement = document.createElement("div");
     messageBoxElement.id = id;
+    messageBoxElement.className = "message";
 
     const messageCloseElement = document.createElement("span");
     messageCloseElement.className = "close-button";

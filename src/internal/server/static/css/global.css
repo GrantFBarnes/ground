@@ -94,22 +94,21 @@ button {
 }
 
 #info-message {
-    position: fixed;
-    z-index: 999;
     top: calc(var(--top-bar-height) + (2 * var(--padding-large)) + 10px);
-    left: 30px;
-    padding: var(--padding-large);
-    width: calc(100vw - 90px);
-    text-align: center;
 }
 
 #error-message {
+    bottom: 30px;
+}
+
+.message {
     position: fixed;
     z-index: 999;
-    bottom: 30px;
     left: 30px;
     padding: var(--padding-large);
     width: calc(100vw - 90px);
+    max-height: 60px;
+    overflow-y: scroll;
     text-align: center;
 }
 
