@@ -188,25 +188,24 @@
 
         toggleLoading();
 
-        function uploadFile(index) {
-            if (index >= files.length) {
-                location.reload(true);
-                return;
-            }
-
+        const uploadPromises = files.map(file => {
             const formData = new FormData();
-            formData.append("file", files[index]);
-            fetch("/api/upload{{.Path}}", { method: "POST", body: formData }).then((response) => {
-                if (response.ok) {
-                    uploadFile(index + 1);
-                } else {
-                    response.text().then((text) => displayNotification(text));
-                    toggleLoading();
-                }
-            });
-        }
+            formData.append("file", file);
+            return fetch("/api/upload{{.Path}}", { method: "POST", body: formData })
+                .then((response) => {
+                    if (!response.ok) {
+                        return response.text()
+                            .then((text) => {
+                                displayNotification(text)
+                                throw new Error(text);
+                            });
+                    }
+                });
+        });
 
-        uploadFile(0);
+        Promise.all(uploadPromises)
+            .then(() => location.reload(true))
+            .catch(() => toggleLoading());
     }
 
     function compressDirectory(filePath) {
