@@ -16,14 +16,22 @@ function toggleLoading() {
     }
 }
 
+function displayInfoMessage(message) {
+    displayMessage("info-message", message);
+}
+
 function displayErrorMessage(message) {
-    let messageElement = document.getElementById("error-message");
+    displayMessage("error-message", message);
+}
+
+function displayMessage(id, message) {
+    let messageElement = document.getElementById(id);
     if (messageElement) {
         messageElement.remove();
     }
 
     messageElement = document.createElement("div");
-    messageElement.id = "error-message";
+    messageElement.id = id;
     messageElement.innerText = message;
     document.body.appendChild(messageElement);
     setTimeout(() => messageElement.remove(), 5000);

@@ -95,6 +95,10 @@ tbody>tr:hover {
     background-color: var(--color-bg1);
 }
 
+#info-message {
+    background-color: var(--color-aqua0)
+}
+
 #error-message {
     background-color: var(--color-red0)
 }

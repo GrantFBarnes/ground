@@ -93,6 +93,16 @@ button {
     animation: spin 2s linear infinite;
 }
 
+#info-message {
+    position: fixed;
+    z-index: 999;
+    top: calc(var(--top-bar-height) + (2 * var(--padding-large)) + 10px);
+    left: 30px;
+    padding: var(--padding-large);
+    width: calc(100vw - 90px);
+    text-align: center;
+}
+
 #error-message {
     position: fixed;
     z-index: 999;
