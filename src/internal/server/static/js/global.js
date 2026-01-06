@@ -25,16 +25,30 @@ function displayErrorMessage(message) {
 }
 
 function displayMessage(id, message) {
-    let messageElement = document.getElementById(id);
-    if (messageElement) {
-        messageElement.remove();
+    let messageBoxElement = document.getElementById(id);
+    if (messageBoxElement) {
+        messageBoxElement.remove();
     }
 
-    messageElement = document.createElement("div");
-    messageElement.id = id;
-    messageElement.innerText = message;
-    document.body.appendChild(messageElement);
-    setTimeout(() => messageElement.remove(), 5000);
+    messageBoxElement = document.createElement("div");
+    messageBoxElement.id = id;
+
+    const messageCloseElement = document.createElement("span");
+    messageCloseElement.className = "close-button";
+    messageCloseElement.onclick = () => { messageBoxElement.remove() };
+    messageCloseElement.innerHTML = "&#128938;";
+
+    const messageTextElement = document.createElement("span");
+    messageTextElement.innerText = message;
+
+    messageBoxElement.appendChild(messageCloseElement);
+    messageBoxElement.appendChild(messageTextElement);
+    document.body.appendChild(messageBoxElement);
+    setTimeout(() => {
+        if (messageBoxElement) {
+            messageBoxElement.remove();
+        }
+    }, 5000);
 }
 
 function logout() {
