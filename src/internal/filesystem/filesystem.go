@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -304,7 +305,7 @@ func getFileExtension(fileName string) (string, string) {
 
 func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
 	relDirPathBuildUp := ""
-	for dirName := range strings.SplitSeq(relDirPath, "/") {
+	for dirName := range strings.SplitSeq(relDirPath, string(filepath.Separator)) {
 		if dirName == "" {
 			continue
 		}
@@ -318,7 +319,7 @@ func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid i
 			continue
 		}
 
-		err = os.Mkdir(dirPath, os.FileMode(0755))
+		err = os.MkdirAll(dirPath, os.FileMode(0755))
 		if err != nil {
 			return err
 		}
@@ -505,7 +506,7 @@ func GetFileBreadcrumbs(homeName string, urlPath string) []FilePathBreadcrumb {
 		},
 	}
 
-	for breadcrumbDir := range strings.SplitSeq(urlPath, "/") {
+	for breadcrumbDir := range strings.SplitSeq(urlPath, string(filepath.Separator)) {
 		if breadcrumbDir == "" {
 			continue
 		}
