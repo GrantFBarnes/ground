@@ -38,17 +38,17 @@
             <td>{{.Username}}</td>
             <td>{{.DiskUsage}}</td>
             <td>
-                <button onclick="window.location.href='/user/{{.}}'">
+                <button onclick="window.location.href='/user/{{.Username}}'">
                     Manage User
                 </button>
             </td>
             <td>
-                <button onclick="resetPassword('{{.}}')">
+                <button onclick="resetPassword('{{.Username}}')">
                     Reset Password
                 </button>
             </td>
             <td>
-                <button onclick="deleteUser('{{.}}')">
+                <button onclick="deleteUser('{{.Username}}')">
                     Delete User
                 </button>
             </td>
