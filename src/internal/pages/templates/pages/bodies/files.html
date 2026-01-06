@@ -65,7 +65,11 @@
                     {{end}}
                 </td>
                 <td>{{.Name}}</td>
-                <td class="muted">{{.SymLinkPath}}</td>
+                <td>
+                    {{if ne .SymLinkPath ""}}
+                    <span title="{{.SymLinkPath}}">&#128279;</span>
+                    {{end}}
+                </td>
                 <td style="text-align: right;">{{.HumanSize}}</td>
                 <td style="text-align: right;">{{.LastModified}}</td>
                 <td class="single-icon-cell">
