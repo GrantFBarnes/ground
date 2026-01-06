@@ -5,13 +5,17 @@
         width: 2em;
     }
 </style>
-<div>
-    {{range .FilePathBreadcrumbs}}
-    {{if not .IsHome}}
-    <span>/</span>
-    {{end}}
-    <span><a href="/trash{{.Path}}">{{.Name}}</a></span>
-    {{end}}
+
+<div style="display: grid; grid-auto-flow: column">
+    <div>
+        {{range .FilePathBreadcrumbs}}
+        {{if not .IsHome}}
+        <span>/</span>
+        {{end}}
+        <span><a href="/trash{{.Path}}">{{.Name}}</a></span>
+        {{end}}
+    </div>
+    <div style="text-align: right;">Disk Usage: {{.DiskUsage}}</div>
 </div>
 
 <br />

@@ -95,6 +95,8 @@ func healthCheck() error {
 	}
 
 	dependencies := []string{
+		"df",
+		"du",
 		"mv",
 		"passwd",
 		"sed",

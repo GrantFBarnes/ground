@@ -51,11 +51,11 @@ func CredentialsAreValid(username string, password string) bool {
 
 func IsAdmin(username string) bool {
 	cmd := exec.Command("sudo", "-l", "-U", username)
-	output, err := cmd.Output()
+	outputBytes, err := cmd.Output()
 	if err != nil {
 		return false
 	}
-	return !strings.Contains(string(output), "not allowed to run sudo")
+	return !strings.Contains(string(outputBytes), "not allowed to run sudo")
 }
 
 func GetUsername(r *http.Request) (string, error) {
