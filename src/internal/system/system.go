@@ -19,53 +19,45 @@ func GetUptime() (string, error) {
 	return string(outputBytes), nil
 }
 
-func GetDirectoryDiskUsage(dirPath string) (string, error) {
-	directorySize, err := getDirectorySize(dirPath)
-	if err != nil {
-		return "", err
-	}
-
-	diskSize, err := getDiskSize()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s/%s", directorySize, diskSize), nil
+func GetDirectoryDiskUsage(dirPath string) string {
+	directorySize := getDirectorySize(dirPath)
+	diskSize := getDiskSize()
+	return fmt.Sprintf("%s/%s", directorySize, diskSize)
 }
 
-func getDirectorySize(dirPath string) (string, error) {
+func getDirectorySize(dirPath string) string {
 	cmd := exec.Command("du", "--summarize", "--human-readable", dirPath)
 	outputBytes, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "?"
 	}
 
 	fields := strings.Fields(string(outputBytes))
 	if len(fields) < 2 {
-		return "", errors.New("du returned wrong amount of fields")
+		return "?"
 	}
 
-	return fields[0], nil
+	return fields[0]
 }
 
-func getDiskSize() (string, error) {
+func getDiskSize() string {
 	cmd := exec.Command("df", "--human-readable", "--portability", "/home")
 	outputBytes, err := cmd.Output()
 	if err != nil {
-		return "", err
+		return "?"
 	}
 
 	lines := strings.Split(string(outputBytes), "\n")
 	if len(lines) < 2 {
-		return "", errors.New("df returned wrong amount of rows")
+		return "?"
 	}
 
 	fields := strings.Fields(lines[1])
 	if len(fields) < 6 {
-		return "", errors.New("df returned wrong amount of fields")
+		return "?"
 	}
 
-	return fields[1], nil
+	return fields[1]
 }
 
 func Reboot(username string) error {

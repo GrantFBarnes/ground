@@ -26,20 +26,12 @@ func GetUserListItems() ([]UserListItem, error) {
 
 	listItems := []UserListItem{}
 	for _, e := range homeEntries {
-		if !e.IsDir() {
-			continue
+		if e.IsDir() {
+			listItems = append(listItems, UserListItem{
+				Username:  e.Name(),
+				DiskUsage: system.GetDirectoryDiskUsage(path.Join("/home", e.Name())),
+			})
 		}
-
-		listItem := UserListItem{
-			Username: e.Name(),
-		}
-
-		listItem.DiskUsage, err = system.GetDirectoryDiskUsage(path.Join("/home", listItem.Username))
-		if err != nil {
-			return nil, errors.New("Failed to get user disk usage.")
-		}
-
-		listItems = append(listItems, listItem)
 	}
 
 	return listItems, nil

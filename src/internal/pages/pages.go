@@ -63,12 +63,6 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diskUsage, err := system.GetDirectoryDiskUsage(urlRootPath)
-	if err != nil {
-		getProblemPage(w, r, "failed to get directory size")
-		return
-	}
-
 	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, false)
 	if err != nil {
 		getProblemPage(w, r, err.Error())
@@ -97,7 +91,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		Username:            username,
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("home", urlRelativePath),
-		DiskUsage:           diskUsage,
+		DiskUsage:           system.GetDirectoryDiskUsage(urlRootPath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
@@ -130,12 +124,6 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	diskUsage, err := system.GetDirectoryDiskUsage(urlRootPath)
-	if err != nil {
-		getProblemPage(w, r, "failed to get directory size")
-		return
-	}
-
 	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, true)
 	if err != nil {
 		getProblemPage(w, r, err.Error())
@@ -164,7 +152,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		Username:            username,
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("trash", urlRelativePath),
-		DiskUsage:           diskUsage,
+		DiskUsage:           system.GetDirectoryDiskUsage(urlRootPath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
