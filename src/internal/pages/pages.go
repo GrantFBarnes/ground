@@ -190,11 +190,13 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle     string
 		Username      string
+		DiskUsage     string
 		Uptime        string
 		UserListItems []users.UserListItem
 	}{
 		PageTitle:     "Ground - Admin",
 		Username:      username,
+		DiskUsage:     system.GetDirectoryDiskUsage("/home"),
 		Uptime:        uptime,
 		UserListItems: userListItems,
 	})
