@@ -7,7 +7,7 @@
 </style>
 
 <div style="display: grid; grid-auto-flow: column">
-    <div>
+    <div style="text-align: left;">
         {{range .FilePathBreadcrumbs}}
         {{if not .IsHome}}
         <span>/</span>
@@ -47,7 +47,7 @@
         <thead>
             <tr>
                 <th></th>
-                <th style="text-align: left;">name</th>
+                <th>name</th>
                 <th></th>
                 <th style="text-align: right;">size</th>
                 <th style="text-align: right;">last modified</th>

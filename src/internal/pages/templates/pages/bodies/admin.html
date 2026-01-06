@@ -23,10 +23,20 @@
 <br />
 <br />
 <table>
-    <tbody>
-        {{range .Users}}
+    <thead>
         <tr>
-            <td>{{.}}</td>
+            <th>Username</th>
+            <th>Disk Usage</th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .UserListItems}}
+        <tr>
+            <td>{{.Username}}</td>
+            <td>{{.DiskUsage}}</td>
             <td>
                 <button onclick="window.location.href='/user/{{.}}'">
                     Manage User
@@ -34,12 +44,12 @@
             </td>
             <td>
                 <button onclick="resetPassword('{{.}}')">
-                    Password Reset &#8635;
+                    Reset Password
                 </button>
             </td>
             <td>
                 <button onclick="deleteUser('{{.}}')">
-                    Delete User &#128465;
+                    Delete User
                 </button>
             </td>
         </tr>

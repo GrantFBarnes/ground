@@ -38,6 +38,7 @@ table {
 
 th,
 td {
+    text-align: left;
     padding: var(--padding-small)
 }
 

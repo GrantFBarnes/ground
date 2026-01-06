@@ -10,22 +10,39 @@ import (
 	"strconv"
 
 	"github.com/grantfbarnes/ground/internal/auth"
+	"github.com/grantfbarnes/ground/internal/system"
 )
 
-func GetUserList() ([]string, error) {
+type UserListItem struct {
+	Username  string
+	DiskUsage string
+}
+
+func GetUserListItems() ([]UserListItem, error) {
 	homeEntries, err := os.ReadDir("/home")
 	if err != nil {
 		return nil, errors.New("Failed to read home directory.")
 	}
 
-	users := []string{}
+	listItems := []UserListItem{}
 	for _, e := range homeEntries {
-		if e.IsDir() {
-			users = append(users, e.Name())
+		if !e.IsDir() {
+			continue
 		}
+
+		listItem := UserListItem{
+			Username: e.Name(),
+		}
+
+		listItem.DiskUsage, err = system.GetDirectoryDiskUsage(path.Join("/home", listItem.Username))
+		if err != nil {
+			return nil, errors.New("Failed to get user disk usage.")
+		}
+
+		listItems = append(listItems, listItem)
 	}
 
-	return users, nil
+	return listItems, nil
 }
 
 func GetUserIds(username string) (uid int, gid int, err error) {

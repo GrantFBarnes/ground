@@ -183,7 +183,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := users.GetUserList()
+	userListItems, err := users.GetUserListItems()
 	if err != nil {
 		getProblemPage(w, r, "failed to get users")
 		return
@@ -200,15 +200,15 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle string
-		Username  string
-		Uptime    string
-		Users     []string
+		PageTitle     string
+		Username      string
+		Uptime        string
+		UserListItems []users.UserListItem
 	}{
-		PageTitle: "Ground - Admin",
-		Username:  username,
-		Uptime:    uptime,
-		Users:     users,
+		PageTitle:     "Ground - Admin",
+		Username:      username,
+		Uptime:        uptime,
+		UserListItems: userListItems,
 	})
 }
 
