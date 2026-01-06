@@ -2,18 +2,24 @@
 <h1>Manage User - {{.TargetUsername}}</h1>
 <h3>SSH Keys</h3>
 <button onclick="document.getElementById('add-ssh-key-dialog').showModal()">
-    Add New SSH Key &#128931;
+    Add New SSH Key
 </button>
 <br />
 <br />
 <table>
+    <thead>
+        <tr>
+            <th>SSH Key</th>
+            <th></th>
+        </tr>
+    </thead>
     <tbody>
         {{range $index, $sshKey := .SshKeys}}
         <tr>
             <td>{{$sshKey}}</td>
             <td>
                 <button onclick="deleteSshKeyLine({{$index}}+1)">
-                    Delete SSH Key &#128465;
+                    Delete SSH Key
                 </button>
             </td>
         </tr>
