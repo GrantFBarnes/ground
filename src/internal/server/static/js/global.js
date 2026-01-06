@@ -16,15 +16,15 @@ function toggleLoading() {
     }
 }
 
-function displayInfoMessage(message) {
-    displayMessage("info-message", message);
+function displayInfoMessage(message, keepOpen = false) {
+    displayMessage("info-message", message, keepOpen);
 }
 
-function displayErrorMessage(message) {
-    displayMessage("error-message", message);
+function displayErrorMessage(message, keepOpen = false) {
+    displayMessage("error-message", message, keepOpen);
 }
 
-function displayMessage(id, message) {
+function displayMessage(id, message, keepOpen) {
     let messageBoxElement = document.getElementById(id);
     if (messageBoxElement) {
         messageBoxElement.remove();
@@ -44,11 +44,14 @@ function displayMessage(id, message) {
     messageBoxElement.appendChild(messageCloseElement);
     messageBoxElement.appendChild(messageTextElement);
     document.body.appendChild(messageBoxElement);
-    setTimeout(() => {
-        if (messageBoxElement) {
-            messageBoxElement.remove();
-        }
-    }, 5000);
+
+    if (!keepOpen) {
+        setTimeout(() => {
+            if (messageBoxElement) {
+                messageBoxElement.remove();
+            }
+        }, 5000);
+    }
 }
 
 function logout() {
