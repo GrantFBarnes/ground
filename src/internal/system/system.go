@@ -9,6 +9,8 @@ import (
 	"github.com/grantfbarnes/ground/internal/auth"
 )
 
+var DISK_SIZE string = getDiskSize()
+
 func GetUptime() (string, error) {
 	cmd := exec.Command("uptime", "--pretty")
 	outputBytes, err := cmd.Output()
@@ -21,8 +23,7 @@ func GetUptime() (string, error) {
 
 func GetDirectoryDiskUsage(dirPath string) string {
 	directorySize := getDirectorySize(dirPath)
-	diskSize := getDiskSize()
-	return fmt.Sprintf("%s/%s", directorySize, diskSize)
+	return fmt.Sprintf("%s/%s", directorySize, DISK_SIZE)
 }
 
 func getDirectorySize(dirPath string) string {
