@@ -22,7 +22,16 @@ import (
 
 const TRASH_HOME_PATH string = ".local/share/ground/trash"
 
-var fileCopyNameRegex = regexp.MustCompile(`(.*)\(([0-9]+)\)$`)
+var fileCopyNameRegex *regexp.Regexp
+
+func SetupFileCopyNameRegex() error {
+	re, err := regexp.Compile(`(.*)\(([0-9]+)\)$`)
+	if err != nil {
+		return errors.Join(errors.New("regex compile failed"), err)
+	}
+	fileCopyNameRegex = re
+	return nil
+}
 
 type DirectoryEntryData struct {
 	IsDir        bool

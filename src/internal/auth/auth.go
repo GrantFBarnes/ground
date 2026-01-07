@@ -19,24 +19,29 @@ import (
 const cookieNameUserToken string = "GROUND-USER-TOKEN"
 const cookieNameRedirectURL string = "GROUND-REDIRECT-URL"
 
-var secret []byte = getRandomBytes()
-var adminGroup string = getAdminGroup()
+var hashSecret []byte
+var adminGroup string
 
-func getRandomBytes() []byte {
+func SetupHashSecret() error {
 	bytes := make([]byte, 32)
-	rand.Read(bytes)
-	return bytes
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return errors.Join(errors.New("rand read failed"), err)
+	}
+	hashSecret = bytes
+	return nil
 }
 
-func getAdminGroup() string {
+func SetupAdminGroup() error {
 	groups := []string{"sudo", "wheel"}
 	for _, group := range groups {
 		cmd := exec.Command("grep", "-E", "^%"+group+".*ALL", "/etc/sudoers")
 		if cmd.Run() == nil {
-			return group
+			adminGroup = group
+			return nil
 		}
 	}
-	return ""
+	return errors.New("no admin group found")
 }
 
 func CredentialsAreValid(username string, password string) bool {
@@ -63,10 +68,6 @@ func CredentialsAreValid(username string, password string) bool {
 }
 
 func IsAdmin(username string) bool {
-	if adminGroup == "" {
-		return false
-	}
-
 	cmd := exec.Command("groups", username)
 	outputBytes, err := cmd.Output()
 	if err != nil {
@@ -194,7 +195,7 @@ func getUsernameFromToken(token string) (string, error) {
 }
 
 func getHashedBytes(bytes []byte) []byte {
-	hash := hmac.New(sha256.New, secret)
+	hash := hmac.New(sha256.New, hashSecret)
 	hash.Write(bytes)
 	return hash.Sum(nil)
 }

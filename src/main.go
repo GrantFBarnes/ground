@@ -6,7 +6,10 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/grantfbarnes/ground/internal/auth"
+	"github.com/grantfbarnes/ground/internal/filesystem"
 	"github.com/grantfbarnes/ground/internal/server"
+	"github.com/grantfbarnes/ground/internal/system"
 )
 
 const VERSION string = "v1.5.0"
@@ -89,7 +92,7 @@ func getSettingsFromArguments() settings {
 	return args
 }
 
-func healthCheck() error {
+func healthCheck() (err error) {
 	if os.Getuid() != 0 {
 		return errors.New("not running as root")
 	}
@@ -110,8 +113,28 @@ func healthCheck() error {
 	}
 	for _, dependency := range dependencies {
 		if missingRequiredDependencyProgram(dependency) {
-			return errors.New("missing required dependency program '" + dependency + "'")
+			return fmt.Errorf("missing required dependency program '%s'", dependency)
 		}
+	}
+
+	err = auth.SetupHashSecret()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup hash secret"), err)
+	}
+
+	err = auth.SetupAdminGroup()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup admin group"), err)
+	}
+
+	err = filesystem.SetupFileCopyNameRegex()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup file copy name regex"), err)
+	}
+
+	err = system.SetupDiskSize()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup disk size"), err)
 	}
 
 	return nil

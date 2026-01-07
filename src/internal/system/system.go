@@ -9,7 +9,28 @@ import (
 	"github.com/grantfbarnes/ground/internal/auth"
 )
 
-var DISK_SIZE string = getDiskSize()
+var diskSize string
+
+func SetupDiskSize() error {
+	cmd := exec.Command("df", "--human-readable", "--portability", "/home")
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return errors.Join(errors.New("df command failed"), err)
+	}
+
+	lines := strings.Split(string(outputBytes), "\n")
+	if len(lines) < 2 {
+		return errors.New("df output less than two lines")
+	}
+
+	fields := strings.Fields(lines[1])
+	if len(fields) < 6 {
+		return errors.New("df output less than six fields")
+	}
+
+	diskSize = fields[1]
+	return nil
+}
 
 func GetUptime() (string, error) {
 	cmd := exec.Command("uptime", "--pretty")
@@ -23,7 +44,7 @@ func GetUptime() (string, error) {
 
 func GetDirectoryDiskUsage(dirPath string) string {
 	directorySize := getDirectorySize(dirPath)
-	return fmt.Sprintf("%s/%s", directorySize, DISK_SIZE)
+	return fmt.Sprintf("%s/%s", directorySize, diskSize)
 }
 
 func getDirectorySize(dirPath string) string {
@@ -39,26 +60,6 @@ func getDirectorySize(dirPath string) string {
 	}
 
 	return fields[0]
-}
-
-func getDiskSize() string {
-	cmd := exec.Command("df", "--human-readable", "--portability", "/home")
-	outputBytes, err := cmd.Output()
-	if err != nil {
-		return "?"
-	}
-
-	lines := strings.Split(string(outputBytes), "\n")
-	if len(lines) < 2 {
-		return "?"
-	}
-
-	fields := strings.Fields(lines[1])
-	if len(fields) < 6 {
-		return "?"
-	}
-
-	return fields[1]
 }
 
 func Reboot(username string) error {
