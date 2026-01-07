@@ -10,6 +10,7 @@ import (
 	"github.com/grantfbarnes/ground/internal/filesystem"
 	"github.com/grantfbarnes/ground/internal/server"
 	"github.com/grantfbarnes/ground/internal/system"
+	"github.com/grantfbarnes/ground/internal/users"
 )
 
 const VERSION string = "v1.5.0"
@@ -136,6 +137,11 @@ func healthCheck() (err error) {
 	err = system.SetupDiskSize()
 	if err != nil {
 		return errors.Join(errors.New("failed to setup disk size"), err)
+	}
+
+	err = users.SetupUsernameRegex()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup username regex"), err)
 	}
 
 	return nil

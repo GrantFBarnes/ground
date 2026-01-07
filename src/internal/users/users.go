@@ -7,16 +7,33 @@ import (
 	"os/exec"
 	"os/user"
 	"path"
+	"regexp"
 	"strconv"
 
 	"github.com/grantfbarnes/ground/internal/auth"
 	"github.com/grantfbarnes/ground/internal/system"
 )
 
+var usernameRegex *regexp.Regexp
+
 type UserListItem struct {
 	Username  string
 	DiskUsage string
 	IsAdmin   bool
+}
+
+func SetupUsernameRegex() error {
+	// contains only letters, numbers, or ._-
+	// cannot start with -
+	// cannot be exclusively numbers
+	// can end with $
+	// length between 1 and 256
+	re, err := regexp.Compile(`^([a-zA-Z0-9._]*[a-zA-Z._][a-zA-Z0-9._-]*[$]?){1,256}$`)
+	if err != nil {
+		return errors.Join(errors.New("regex compile failed"), err)
+	}
+	usernameRegex = re
+	return nil
 }
 
 func GetUserListItems() ([]UserListItem, error) {
@@ -72,6 +89,10 @@ func Login(username string, password string) error {
 }
 
 func Validate(username string) error {
+	if !usernameRegex.MatchString(username) {
+		return errors.New("Username is not valid.")
+	}
+
 	_, err := user.Lookup(username)
 	if err != nil {
 		return errors.New("User does not exist.")
