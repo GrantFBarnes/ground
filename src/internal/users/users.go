@@ -59,6 +59,19 @@ func GetUserIds(username string) (uid int, gid int, err error) {
 }
 
 func Login(username string, password string) error {
+	err := Validate(username)
+	if err != nil {
+		return err
+	}
+
+	if !auth.CredentialsAreValid(username, password) {
+		return errors.New("Invalid credentials provided.")
+	}
+
+	return nil
+}
+
+func Validate(username string) error {
 	_, err := user.Lookup(username)
 	if err != nil {
 		return errors.New("User does not exist.")
@@ -68,10 +81,6 @@ func Login(username string, password string) error {
 	_, err = os.Stat(homePath)
 	if err != nil {
 		return errors.New("User has no home.")
-	}
-
-	if !auth.CredentialsAreValid(username, password) {
-		return errors.New("Invalid credentials provided.")
 	}
 
 	return nil

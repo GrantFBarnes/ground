@@ -3,6 +3,7 @@ package pages
 import (
 	"context"
 	"embed"
+	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -211,6 +212,12 @@ func User(w http.ResponseWriter, r *http.Request) {
 	}
 
 	targetUsername := r.PathValue("username")
+
+	err := users.Validate(targetUsername)
+	if err != nil {
+		getProblemPage(w, r, fmt.Sprintf("user '%s' does not exist", targetUsername))
+		return
+	}
 
 	tmpl, err := template.ParseFS(
 		templates,
