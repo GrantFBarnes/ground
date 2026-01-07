@@ -28,6 +28,8 @@
 
 <br />
 
+{{$directoryEntryCount := len .DirectoryEntries}}
+{{if gt $directoryEntryCount 0}}
 <div
     class="table-container"
     style="padding-bottom: 200px;"
@@ -78,6 +80,7 @@
         </tbody>
     </table>
 </div>
+{{end}}
 <script>
     function emptyTrash(filePath) {
         customConfirm("Are you sure you want to empty the trash? This is permanent and cannot be undone.").then(confirmed => {

@@ -39,6 +39,8 @@
 
 <br />
 
+{{$directoryEntryCount := len .DirectoryEntries}}
+{{if gt $directoryEntryCount 0}}
 <div
     class="table-container"
     style="padding-bottom: 200px;"
@@ -103,6 +105,7 @@
         </tbody>
     </table>
 </div>
+{{end}}
 <script>
     const contentElement = document.getElementById("content");
 
