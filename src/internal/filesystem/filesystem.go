@@ -238,12 +238,7 @@ func DeleteUserSshKey(username string, targetUsername string, indexString string
 
 	cmd := exec.Command("sed", "-i", fmt.Sprintf("%dd", index+1), sshKeyPath)
 
-	err = cmd.Start()
-	if err != nil {
-		return errors.New("Failed to delete SSH Key.")
-	}
-
-	err = cmd.Wait()
+	err = cmd.Run()
 	if err != nil {
 		return errors.New("Failed to delete SSH Key.")
 	}

@@ -99,12 +99,7 @@ func CreateUser(username string, newUsername string) error {
 
 	cmd := exec.Command("useradd", "--create-home", newUsername)
 
-	err = cmd.Start()
-	if err != nil {
-		return errors.New("Failed to create user.")
-	}
-
-	err = cmd.Wait()
+	err = cmd.Run()
 	if err != nil {
 		return errors.New("Failed to create user.")
 	}
@@ -124,12 +119,7 @@ func DeleteUser(username string, targetUsername string) error {
 
 	cmd := exec.Command("userdel", "--remove", targetUsername)
 
-	err := cmd.Start()
-	if err != nil {
-		return errors.New("Failed to delete user.")
-	}
-
-	err = cmd.Wait()
+	err := cmd.Run()
 	if err != nil {
 		return errors.New("Failed to delete user.")
 	}
@@ -163,12 +153,7 @@ func setUserPassword(username string, password string) error {
 		io.WriteString(stdin, password+"\n")
 	}()
 
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-
-	err = cmd.Wait()
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}

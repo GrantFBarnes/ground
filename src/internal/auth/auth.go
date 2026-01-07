@@ -59,12 +59,7 @@ func CredentialsAreValid(username string, password string) bool {
 		io.WriteString(stdin, password+"\n")
 	}()
 
-	err = cmd.Start()
-	if err != nil {
-		return false
-	}
-
-	return cmd.Wait() == nil
+	return cmd.Run() == nil
 }
 
 func IsAdmin(username string) bool {
