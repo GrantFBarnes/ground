@@ -16,6 +16,7 @@ import (
 type UserListItem struct {
 	Username  string
 	DiskUsage string
+	IsAdmin   bool
 }
 
 func GetUserListItems() ([]UserListItem, error) {
@@ -30,6 +31,7 @@ func GetUserListItems() ([]UserListItem, error) {
 			listItems = append(listItems, UserListItem{
 				Username:  e.Name(),
 				DiskUsage: system.GetDirectoryDiskUsage(path.Join("/home", e.Name())),
+				IsAdmin:   auth.IsAdmin(e.Name()),
 			})
 		}
 	}

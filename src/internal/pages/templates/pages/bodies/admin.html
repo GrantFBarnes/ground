@@ -28,6 +28,7 @@
         <tr>
             <th>Username</th>
             <th>Disk Usage</th>
+            <th>Is Admin</th>
             <th></th>
             <th></th>
             <th></th>
@@ -38,6 +39,13 @@
         <tr>
             <td>{{.Username}}</td>
             <td>{{.DiskUsage}}</td>
+            <td>
+                {{if .IsAdmin}}
+                Yes
+                {{else}}
+                No
+                {{end}}
+            </td>
             <td>
                 <button onclick="window.location.href='/user/{{.Username}}'">
                     Manage User
