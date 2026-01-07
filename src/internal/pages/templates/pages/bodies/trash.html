@@ -80,17 +80,19 @@
 </div>
 <script>
     function emptyTrash(filePath) {
-        if (confirm("Are you sure you want to empty the trash? This is permanent and cannot be undone.")) {
-            toggleLoading();
-            fetch("/api/trash", { method: "DELETE" }).then((response) => {
-                if (response.ok) {
-                    location.href = "/trash";
-                } else {
-                    response.text().then((text) => notifyError(text));
-                    toggleLoading();
-                }
-            });
-        }
+        customConfirm("Are you sure you want to empty the trash? This is permanent and cannot be undone.").then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                fetch("/api/trash", { method: "DELETE" }).then((response) => {
+                    if (response.ok) {
+                        location.href = "/trash";
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     }
 
     function compressDirectory(filePath) {

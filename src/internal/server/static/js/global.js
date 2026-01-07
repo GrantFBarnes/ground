@@ -55,8 +55,33 @@ function displayNotification(id, message, keepOpen) {
     }
 }
 
+function customConfirm(message) {
+    return new Promise((resolve) => {
+        const dialogElement = document.getElementById("confirm-dialog");
+        const messageElement = document.getElementById("confirm-message");
+        const okElement = document.getElementById("confirm-ok");
+        const cancelElement = document.getElementById("confirm-cancel");
+
+        messageElement.textContent = message;
+
+        okElement.onclick = () => {
+            resolve(true);
+            dialogElement.close();
+        }
+
+        cancelElement.onclick = () => {
+            resolve(false);
+            dialogElement.close();
+        }
+
+        dialogElement.showModal();
+    });
+}
+
 function logout() {
-    if (confirm("Are you sure you want to logout?")) {
-        fetch("/api/logout", { method: "POST" }).then(() => location.reload());
-    }
+    customConfirm("Are you sure you want to logout?").then(confirmed => {
+        if (confirmed) {
+            fetch("/api/logout", { method: "POST" }).then(() => location.reload());
+        }
+    });
 }

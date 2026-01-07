@@ -115,20 +115,26 @@
         contentElement.className = "";
     });
 
-    contentElement.addEventListener("drop", async (event) => {
+    contentElement.addEventListener("drop", (event) => {
         event.preventDefault();
         contentElement.className = "";
         const items = event.dataTransfer.items;
-        if (confirm("Are you sure you want to upload this file/directory?")) {
-            let files = [];
-            for (const item of items) {
-                const entry = item.webkitGetAsEntry();
-                if (!entry) continue;
-                files = files.concat(await traverseFileTree(entry));
+        customConfirm("Are you sure you want to upload this file/directory?").then(confirmed => {
+            if (confirmed) {
+                uploadDroppedFiles(items);
             }
-            upload(files);
-        }
+        });
     });
+
+    async function uploadDroppedFiles(items) {
+        let files = [];
+        for (const item of items) {
+            const entry = item.webkitGetAsEntry();
+            if (!entry) continue;
+            files = files.concat(await traverseFileTree(entry));
+        }
+        upload(files);
+    }
 
     function traverseFileTree(entry, path = "") {
         return new Promise((resolve, reject) => {
@@ -237,17 +243,19 @@
     }
 
     function moveToTrash(filePath) {
-        if (confirm("Are you sure you want to move this file/directory to the trash?")) {
-            toggleLoading();
-            fetch("/api/trash" + filePath, { method: "POST" }).then((response) => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    response.text().then((text) => notifyError(text));
-                    toggleLoading();
-                }
-            });
-        }
+        customConfirm("Are you sure you want to move this file/directory to the trash?").then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                fetch("/api/trash" + filePath, { method: "POST" }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     }
 </script>
 {{end}}

@@ -49,6 +49,17 @@
     <div id="bottom-view">
         <div id="content">{{template "body" .}}</div>
     </div>
+    <dialog id="confirm-dialog">
+        <p id="confirm-message"></p>
+        <div style="display: grid; grid-auto-flow: column">
+            <div style="text-align: center;">
+                <button id="confirm-ok">OK</button>
+            </div>
+            <div style="text-align: center;">
+                <button id="confirm-cancel">Cancel</button>
+            </div>
+        </div>
+    </dialog>
 </body>
 
 </html>

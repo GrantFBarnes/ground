@@ -91,65 +91,73 @@
 </dialog>
 <script>
     function systemCall(callMethod) {
-        if (confirm(`Are you sure you want to ${callMethod} the system?`)) {
-            toggleLoading();
-            const reloadTimeout = setTimeout(() => location.reload(), 5000);
-            fetch(`/api/system/${callMethod}`, { method: "POST" }).then((response) => {
-                if (response.ok) {
-                    // success, wait for timeout reload
-                } else {
-                    clearTimeout(reloadTimeout);
-                    response.text().then((text) => notifyError(text));
-                    toggleLoading();
-                }
-            });
-        }
+        customConfirm(`Are you sure you want to ${callMethod} the system?`).then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                const reloadTimeout = setTimeout(() => location.reload(), 5000);
+                fetch(`/api/system/${callMethod}`, { method: "POST" }).then((response) => {
+                    if (response.ok) {
+                        // success, wait for timeout reload
+                    } else {
+                        clearTimeout(reloadTimeout);
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     }
 
     document.getElementById("create-user-form").addEventListener("submit", function (event) {
         event.preventDefault();
         const formData = new FormData(this);
         const username = formData.get("username");
-        if (confirm(`Are you sure you want to create user '${username}'?`)) {
-            document.getElementById("create-user-dialog").close();
-            toggleLoading();
-            fetch(`/api/user/${username}/create`, { method: "POST" }).then((response) => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    response.text().then((text) => notifyError(text));
-                    toggleLoading();
-                }
-            });
-        }
+        customConfirm(`Are you sure you want to create user '${username}'?`).then(confirmed => {
+            if (confirmed) {
+                document.getElementById("create-user-dialog").close();
+                toggleLoading();
+                fetch(`/api/user/${username}/create`, { method: "POST" }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     });
 
     function resetPassword(username) {
-        if (confirm(`Are you sure you want to reset the password for '${username}'?`)) {
-            toggleLoading();
-            fetch(`/api/user/${username}/password/reset`, { method: "POST" }).then((response) => {
-                if (response.ok) {
-                    toggleLoading();
-                } else {
-                    response.text().then((text) => notifyError(text));
-                    toggleLoading();
-                }
-            });
-        }
+        customConfirm(`Are you sure you want to reset the password for '${username}'?`).then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                fetch(`/api/user/${username}/password/reset`, { method: "POST" }).then((response) => {
+                    if (response.ok) {
+                        toggleLoading();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     }
 
     function deleteUser(username) {
-        if (confirm(`Are you sure you want to delete user '${username}'?`)) {
-            toggleLoading();
-            fetch(`/api/user/${username}`, { method: "DELETE" }).then((response) => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    response.text().then((text) => notifyError(text));
-                    toggleLoading();
-                }
-            });
-        }
+        customConfirm(`Are you sure you want to delete user '${username}'?`).then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                fetch(`/api/user/${username}`, { method: "DELETE" }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     }
 </script>
 {{end}}
