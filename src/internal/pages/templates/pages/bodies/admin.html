@@ -49,6 +49,15 @@
                     Manage User
                 </button>
             </td>
+            <td>
+                {{if ne $.Username .Username}}
+                <button onclick="impersonateUser('{{.Username}}')">
+                    Impersonate User
+                </button>
+                {{else}}
+                (current user)
+                {{end}}
+            </td>
         </tr>
         {{end}}
     </tbody>
@@ -123,5 +132,21 @@
             }
         });
     });
+
+    function impersonateUser(username) {
+        customConfirm(`Are you sure you want to impersonate user '${username}'?`).then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                fetch(`/api/user/${username}/impersonate`, { method: "POST" }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
+    }
 </script>
 {{end}}

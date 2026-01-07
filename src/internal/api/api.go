@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -63,15 +64,37 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filesystem.CreateTrashDirectory(body.Username)
-
-	auth.RemoveUsername(w)
-	auth.SetUsername(w, body.Username)
-	w.WriteHeader(http.StatusOK)
+	login(w, body.Username)
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	auth.RemoveUsername(w)
+	w.WriteHeader(http.StatusOK)
+}
+
+func Impersonate(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to impersonate.", http.StatusUnauthorized)
+		return
+	}
+
+	targetUsername := r.PathValue("username")
+
+	err := users.Validate(targetUsername)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("User '%s' does not exist.", targetUsername), http.StatusBadRequest)
+		return
+	}
+
+	login(w, targetUsername)
+}
+
+func login(w http.ResponseWriter, username string) {
+	filesystem.CreateTrashDirectory(username)
+	auth.RemoveUsername(w)
+	auth.SetUsername(w, username)
 	w.WriteHeader(http.StatusOK)
 }
 
