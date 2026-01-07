@@ -277,7 +277,7 @@ func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := filesystem.DeleteUserSshKey(username, r.PathValue("username"), r.PathValue("lineNumber"))
+	err := filesystem.DeleteUserSshKey(username, r.PathValue("username"), r.PathValue("index"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

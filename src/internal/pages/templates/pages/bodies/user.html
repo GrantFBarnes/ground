@@ -81,8 +81,7 @@
         customConfirm("Are you sure you want to delete this SSH Key?").then(confirmed => {
             if (confirmed) {
                 toggleLoading();
-                const lineNumber = Number(index) + 1;
-                fetch(`/api/user/{{.TargetUsername}}/ssh-key/${lineNumber}`, { method: "DELETE" }).then((response) => {
+                fetch(`/api/user/{{.TargetUsername}}/ssh-key/${index}`, { method: "DELETE" }).then((response) => {
                     if (response.ok) {
                         location.reload();
                     } else {

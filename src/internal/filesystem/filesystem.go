@@ -206,18 +206,18 @@ func AddUserSshKey(username string, targetUsername string, sshKey string) error 
 	return nil
 }
 
-func DeleteUserSshKey(username string, targetUsername string, lineNumberString string) error {
+func DeleteUserSshKey(username string, targetUsername string, indexString string) error {
 	if !auth.IsAdmin(username) {
 		return errors.New("Must be admin to delete user SSH Keys.")
 	}
 
-	lineNumber, err := strconv.Atoi(lineNumberString)
+	index, err := strconv.Atoi(indexString)
 	if err != nil {
-		return errors.New("Line number is not a number.")
+		return errors.New("Index is not a number.")
 	}
 
-	if lineNumber < 1 {
-		return errors.New("Line number is not valid.")
+	if index < 0 {
+		return errors.New("Index is not valid.")
 	}
 
 	homePath := path.Join("/home", targetUsername)
@@ -227,7 +227,7 @@ func DeleteUserSshKey(username string, targetUsername string, lineNumberString s
 		return errors.New("SSH file does not exist.")
 	}
 
-	cmd := exec.Command("sed", "-i", fmt.Sprintf("%dd", lineNumber), sshKeyPath)
+	cmd := exec.Command("sed", "-i", fmt.Sprintf("%dd", index+1), sshKeyPath)
 
 	err = cmd.Start()
 	if err != nil {
