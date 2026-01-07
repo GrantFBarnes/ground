@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -19,11 +20,23 @@ const cookieNameUserToken string = "GROUND-USER-TOKEN"
 const cookieNameRedirectURL string = "GROUND-REDIRECT-URL"
 
 var secret []byte = getRandomBytes()
+var adminGroup string = getAdminGroup()
 
 func getRandomBytes() []byte {
 	bytes := make([]byte, 32)
 	rand.Read(bytes)
 	return bytes
+}
+
+func getAdminGroup() string {
+	groups := []string{"sudo", "wheel"}
+	for _, group := range groups {
+		cmd := exec.Command("grep", "-E", "^%"+group+".*ALL", "/etc/sudoers")
+		if cmd.Run() == nil {
+			return group
+		}
+	}
+	return ""
 }
 
 func CredentialsAreValid(username string, password string) bool {
@@ -50,12 +63,18 @@ func CredentialsAreValid(username string, password string) bool {
 }
 
 func IsAdmin(username string) bool {
-	cmd := exec.Command("sudo", "-l", "-U", username)
+	if adminGroup == "" {
+		return false
+	}
+
+	cmd := exec.Command("groups", username)
 	outputBytes, err := cmd.Output()
 	if err != nil {
 		return false
 	}
-	return !strings.Contains(string(outputBytes), "not allowed to run sudo")
+
+	userGroups := strings.Fields(string(outputBytes))
+	return slices.Contains(userGroups, adminGroup)
 }
 
 func GetUsername(r *http.Request) (string, error) {

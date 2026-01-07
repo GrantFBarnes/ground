@@ -97,11 +97,11 @@ func healthCheck() error {
 	dependencies := []string{
 		"df",
 		"du",
+		"groups",
 		"mv",
 		"passwd",
 		"sed",
 		"su",
-		"sudo",
 		"systemctl",
 		"tar",
 		"uptime",
