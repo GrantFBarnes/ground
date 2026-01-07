@@ -3,7 +3,6 @@ package pages
 import (
 	"context"
 	"embed"
-	"fmt"
 	"html/template"
 	"net/http"
 	"os"
@@ -210,7 +209,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 
 	err := users.Validate(targetUsername)
 	if err != nil {
-		getProblemPage(w, r, fmt.Sprintf("user '%s' does not exist", targetUsername))
+		getProblemPage(w, r, "user does not exist")
 		return
 	}
 

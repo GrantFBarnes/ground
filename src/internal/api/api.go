@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -29,6 +28,16 @@ func Middleware(next http.Handler) http.Handler {
 			http.Error(w, "No login credentials found.", http.StatusUnauthorized)
 			return
 		}
+
+		targetUsername := r.PathValue("username")
+		if targetUsername != "" {
+			err = users.Validate(targetUsername)
+			if err != nil {
+				http.Error(w, "Username is not valid.", http.StatusBadRequest)
+				return
+			}
+		}
+
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CONTEXT_KEY_USERNAME, username)))
 	})
 }
@@ -80,15 +89,7 @@ func Impersonate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetUsername := r.PathValue("username")
-
-	err := users.Validate(targetUsername)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("User '%s' does not exist.", targetUsername), http.StatusBadRequest)
-		return
-	}
-
-	login(w, targetUsername)
+	login(w, r.PathValue("username"))
 }
 
 func login(w http.ResponseWriter, username string) {
@@ -106,15 +107,7 @@ func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	targetUsername := r.PathValue("username")
-
-	err := users.Validate(targetUsername)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("User '%s' does not exist.", targetUsername), http.StatusBadRequest)
-		return
-	}
-
-	err = auth.ToggleAdmin(targetUsername)
+	err := auth.ToggleAdmin(r.PathValue("username"))
 	if err != nil {
 		http.Error(w, "Failed to change admin status.", http.StatusInternalServerError)
 		return
