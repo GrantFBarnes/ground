@@ -100,6 +100,7 @@ func healthCheck() (err error) {
 	dependencies := []string{
 		"df",
 		"du",
+		"gpasswd",
 		"groups",
 		"mv",
 		"passwd",

@@ -38,11 +38,21 @@
             <td>{{.Username}}</td>
             <td>{{.DiskUsage}}</td>
             <td>
-                {{if .IsAdmin}}
-                Yes
-                {{else}}
-                No
-                {{end}}
+                <select onchange="toggleAdmin(this, '{{.Username}}')">
+                    {{if .IsAdmin}}
+                    <option
+                        value="yes"
+                        selected
+                    >Yes</option>
+                    <option value="no">No</option>
+                    {{else}}
+                    <option value="yes">Yes</option>
+                    <option
+                        value="no"
+                        selected
+                    >No</option>
+                    {{end}}
+                </select>
             </td>
             <td>
                 <button onclick="window.location.href='/user/{{.Username}}'">
@@ -132,6 +142,24 @@
             }
         });
     });
+
+    function toggleAdmin(selectElement, username) {
+        customConfirm(`Are you sure you want to change the admin status for '${username}'?`).then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                fetch(`/api/user/${username}/toggle-admin`, { method: "POST" }).then((response) => {
+                    if (response.ok) {
+                        location.reload(true);
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            } else {
+                selectElement.value = selectElement.value == "yes" ? "no" : "yes";
+            }
+        });
+    }
 
     function impersonateUser(username) {
         customConfirm(`Are you sure you want to impersonate user '${username}'?`).then(confirmed => {

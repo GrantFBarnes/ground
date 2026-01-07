@@ -73,6 +73,17 @@ func IsAdmin(username string) bool {
 	return slices.Contains(userGroups, adminGroup)
 }
 
+func ToggleAdmin(username string) (err error) {
+	if IsAdmin(username) {
+		cmd := exec.Command("gpasswd", "-d", username, adminGroup)
+		err = cmd.Run()
+	} else {
+		cmd := exec.Command("gpasswd", "-a", username, adminGroup)
+		err = cmd.Run()
+	}
+	return err
+}
+
 func GetUsername(r *http.Request) (string, error) {
 	token, err := getCookieValue(r, cookieNameUserToken)
 	if err != nil {

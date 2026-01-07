@@ -98,6 +98,31 @@ func login(w http.ResponseWriter, username string) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+
+	if !auth.IsAdmin(username) {
+		http.Error(w, "Must be admin to change admin status.", http.StatusUnauthorized)
+		return
+	}
+
+	targetUsername := r.PathValue("username")
+
+	err := users.Validate(targetUsername)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("User '%s' does not exist.", targetUsername), http.StatusBadRequest)
+		return
+	}
+
+	err = auth.ToggleAdmin(targetUsername)
+	if err != nil {
+		http.Error(w, "Failed to change admin status.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/compress")

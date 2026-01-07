@@ -78,6 +78,11 @@ input[type="submit"]:hover {
     background-color: var(--color-bg2);
 }
 
+select {
+    color: var(--color-fg0);
+    background: var(--color-bg0);
+}
+
 tbody>tr:hover {
     background-color: var(--color-bg1);
 }
