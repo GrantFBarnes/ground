@@ -206,16 +206,16 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 func User(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
-	if !auth.IsAdmin(username) {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
 	targetUsername := r.PathValue("username")
 
 	err := users.Validate(targetUsername)
 	if err != nil {
 		getProblemPage(w, r, fmt.Sprintf("user '%s' does not exist", targetUsername))
+		return
+	}
+
+	if username != targetUsername && !auth.IsAdmin(username) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 

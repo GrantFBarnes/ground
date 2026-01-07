@@ -111,7 +111,12 @@
                 toggleLoading();
                 fetch(`/api/user/{{.TargetUsername}}/password/reset`, { method: "POST" }).then((response) => {
                     if (response.ok) {
+                        //{{if eq .Username .TargetUsername}}
+                        logout();
+                        //{{else}}
                         toggleLoading();
+                        notifyInfo("Password reset successfully.");
+                        //{{end}}
                     } else {
                         response.text().then((text) => notifyError(text));
                         toggleLoading();
@@ -127,7 +132,11 @@
                 toggleLoading();
                 fetch(`/api/user/{{.TargetUsername}}`, { method: "DELETE" }).then((response) => {
                     if (response.ok) {
+                        //{{if eq .Username .TargetUsername}}
+                        logout();
+                        //{{else}}
                         location.href = "/admin";
+                        //{{end}}
                     } else {
                         response.text().then((text) => notifyError(text));
                         toggleLoading();

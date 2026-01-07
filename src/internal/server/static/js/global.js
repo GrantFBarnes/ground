@@ -78,10 +78,14 @@ function customConfirm(message) {
     });
 }
 
-function logout() {
+function confirmLogout() {
     customConfirm("Are you sure you want to logout?").then(confirmed => {
         if (confirmed) {
-            fetch("/api/logout", { method: "POST" }).then(() => location.reload());
+            logout();
         }
     });
+}
+
+function logout() {
+    fetch("/api/logout", { method: "POST" }).then(() => location.reload());
 }

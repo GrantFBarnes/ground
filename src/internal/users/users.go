@@ -118,8 +118,8 @@ func CreateUser(username string, newUsername string) error {
 }
 
 func DeleteUser(username string, targetUsername string) error {
-	if !auth.IsAdmin(username) {
-		return errors.New("Must be admin to delete users.")
+	if username != targetUsername && !auth.IsAdmin(username) {
+		return errors.New("Must be admin to delete other users.")
 	}
 
 	cmd := exec.Command("userdel", "--remove", targetUsername)
@@ -138,8 +138,8 @@ func DeleteUser(username string, targetUsername string) error {
 }
 
 func ResetUserPassword(username string, targetUsername string) error {
-	if !auth.IsAdmin(username) {
-		return errors.New("Must be admin to reset user passwords.")
+	if username != targetUsername && !auth.IsAdmin(username) {
+		return errors.New("Must be admin to reset other user passwords.")
 	}
 
 	err := setUserPassword(targetUsername, "password")

@@ -164,8 +164,8 @@ func getFileLines(filePath string) ([]string, error) {
 }
 
 func AddUserSshKey(username string, targetUsername string, sshKey string) error {
-	if !auth.IsAdmin(username) {
-		return errors.New("Must be admin to add user SSH Keys.")
+	if username != targetUsername && !auth.IsAdmin(username) {
+		return errors.New("Must be admin to add other user SSH Keys.")
 	}
 
 	if sshKey == "" {
@@ -207,8 +207,8 @@ func AddUserSshKey(username string, targetUsername string, sshKey string) error 
 }
 
 func DeleteUserSshKey(username string, targetUsername string, indexString string) error {
-	if !auth.IsAdmin(username) {
-		return errors.New("Must be admin to delete user SSH Keys.")
+	if username != targetUsername && !auth.IsAdmin(username) {
+		return errors.New("Must be admin to delete other user SSH Keys.")
 	}
 
 	index, err := strconv.Atoi(indexString)
