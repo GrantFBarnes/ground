@@ -18,7 +18,7 @@
         <tr>
             <td>{{$sshKey}}</td>
             <td>
-                <button onclick="deleteSshKeyLine({{$index}}+1)">
+                <button onclick="deleteSshKeyLine('{{$index}}')">
                     Delete SSH Key
                 </button>
             </td>
@@ -77,10 +77,11 @@
         });
     });
 
-    function deleteSshKeyLine(lineNumber) {
+    function deleteSshKeyLine(index) {
         customConfirm("Are you sure you want to delete this SSH Key?").then(confirmed => {
             if (confirmed) {
                 toggleLoading();
+                const lineNumber = Number(index) + 1;
                 fetch(`/api/user/{{.TargetUsername}}/ssh-key/${lineNumber}`, { method: "DELETE" }).then((response) => {
                     if (response.ok) {
                         location.reload();
