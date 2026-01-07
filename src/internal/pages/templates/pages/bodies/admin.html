@@ -30,8 +30,6 @@
             <th>Disk Usage</th>
             <th>Is Admin</th>
             <th></th>
-            <th></th>
-            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -49,16 +47,6 @@
             <td>
                 <button onclick="window.location.href='/user/{{.Username}}'">
                     Manage User
-                </button>
-            </td>
-            <td>
-                <button onclick="resetPassword('{{.Username}}')">
-                    Reset Password
-                </button>
-            </td>
-            <td>
-                <button onclick="deleteUser('{{.Username}}')">
-                    Delete User
                 </button>
             </td>
         </tr>
@@ -126,7 +114,7 @@
                 toggleLoading();
                 fetch(`/api/user/${username}/create`, { method: "POST" }).then((response) => {
                     if (response.ok) {
-                        location.reload();
+                        location.href = `/user/${username}`;
                     } else {
                         response.text().then((text) => notifyError(text));
                         toggleLoading();
@@ -135,37 +123,5 @@
             }
         });
     });
-
-    function resetPassword(username) {
-        customConfirm(`Are you sure you want to reset the password for '${username}'?`).then(confirmed => {
-            if (confirmed) {
-                toggleLoading();
-                fetch(`/api/user/${username}/password/reset`, { method: "POST" }).then((response) => {
-                    if (response.ok) {
-                        toggleLoading();
-                    } else {
-                        response.text().then((text) => notifyError(text));
-                        toggleLoading();
-                    }
-                });
-            }
-        });
-    }
-
-    function deleteUser(username) {
-        customConfirm(`Are you sure you want to delete user '${username}'?`).then(confirmed => {
-            if (confirmed) {
-                toggleLoading();
-                fetch(`/api/user/${username}`, { method: "DELETE" }).then((response) => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        response.text().then((text) => notifyError(text));
-                        toggleLoading();
-                    }
-                });
-            }
-        });
-    }
 </script>
 {{end}}
