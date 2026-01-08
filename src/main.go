@@ -13,7 +13,7 @@ import (
 	"github.com/grantfbarnes/ground/internal/users"
 )
 
-const VERSION string = "v1.5.0"
+const VERSION string = "v1.6.0"
 
 const COLOR_RED string = "\x1b[31m"
 const COLOR_GREEN string = "\x1b[32m"
