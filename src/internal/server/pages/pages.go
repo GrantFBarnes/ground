@@ -1,7 +1,6 @@
 package pages
 
 import (
-	"context"
 	"embed"
 	"html/template"
 	"log/slog"
@@ -10,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grantfbarnes/ground/internal/server/common"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
 	"github.com/grantfbarnes/ground/internal/system/filesystem"
 	"github.com/grantfbarnes/ground/internal/system/monitor"
@@ -38,12 +38,12 @@ func Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "requestor", username)))
+		next.ServeHTTP(w, common.GetRequestWithRequestor(r, username))
 	})
 }
 
 func Files(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/files")
 	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
@@ -99,7 +99,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 }
 
 func File(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/file")
 	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
@@ -118,7 +118,7 @@ func File(w http.ResponseWriter, r *http.Request) {
 }
 
 func Trash(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/trash")
 	urlRootPath := path.Join("/home", requestor, filesystem.TRASH_HOME_PATH, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
@@ -163,7 +163,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 }
 
 func Admin(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 
 	if !users.IsAdmin(requestor) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -211,7 +211,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 }
 
 func User(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 
 	targetUsername := r.PathValue("username")
 
@@ -286,7 +286,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 
 	tmpl, err := template.ParseFS(
 		templates,
@@ -315,7 +315,7 @@ func NotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage string) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 
 	tmpl, err := template.ParseFS(
 		templates,

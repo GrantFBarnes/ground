@@ -2,7 +2,6 @@ package users
 
 import (
 	"errors"
-	"net/http"
 	"os"
 	"os/user"
 	"path"
@@ -54,8 +53,4 @@ func GetUserIds(username string) (uid int, gid int, err error) {
 	}
 
 	return uid, gid, nil
-}
-
-func GetRequestor(r *http.Request) string {
-	return r.Context().Value("requestor").(string)
 }

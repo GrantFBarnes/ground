@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"io"
 	"mime"
@@ -11,6 +10,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/grantfbarnes/ground/internal/server/common"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
 	"github.com/grantfbarnes/ground/internal/system/filesystem"
 	"github.com/grantfbarnes/ground/internal/system/power"
@@ -26,7 +26,7 @@ func Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "requestor", username)))
+		next.ServeHTTP(w, common.GetRequestWithRequestor(r, username))
 	})
 }
 
@@ -63,7 +63,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Impersonate(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")
 
 	if !users.IsAdmin(requestor) {
@@ -92,7 +92,7 @@ func login(w http.ResponseWriter, username string) {
 }
 
 func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")
 
 	if !users.IsAdmin(requestor) {
@@ -115,7 +115,7 @@ func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func CompressDirectory(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
 	err := filesystem.CompressDirectory(requestor, urlRelativePath)
 	if err != nil {
@@ -127,7 +127,7 @@ func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 }
 
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
 
 	urlRootPath := path.Join("/home", requestor, urlRelativePath)
@@ -214,7 +214,7 @@ func createFileFromPart(part *multipart.Part, urlRootPath string, uid int, gid i
 }
 
 func DownloadFile(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/download")
 
 	urlRootPath := path.Join("/home", requestor, urlRelativePath)
@@ -237,7 +237,7 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func Trash(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/trash")
 	err := filesystem.Trash(requestor, urlRelativePath)
 	if err != nil {
@@ -249,7 +249,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 }
 
 func EmptyTrash(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	err := filesystem.EmptyTrash(requestor)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -260,7 +260,7 @@ func EmptyTrash(w http.ResponseWriter, r *http.Request) {
 }
 
 func SystemReboot(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 
 	if !users.IsAdmin(requestor) {
 		http.Error(w, "must be admin to reboot", http.StatusUnauthorized)
@@ -277,7 +277,7 @@ func SystemReboot(w http.ResponseWriter, r *http.Request) {
 }
 
 func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 
 	if !users.IsAdmin(requestor) {
 		http.Error(w, "must be admin to poweroff", http.StatusUnauthorized)
@@ -294,7 +294,7 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")
 
 	if !users.IsAdmin(requestor) {
@@ -323,7 +323,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")
 
 	if requestor != username && !users.IsAdmin(requestor) {
@@ -346,7 +346,7 @@ func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")
 	sshKey := r.FormValue("sshKey")
 
@@ -370,7 +370,7 @@ func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")
 	index := r.FormValue("index")
 
@@ -394,7 +394,7 @@ func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	requestor := users.GetRequestor(r)
+	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")
 
 	if requestor != username && !users.IsAdmin(requestor) {
