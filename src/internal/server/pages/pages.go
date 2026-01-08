@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/grantfbarnes/ground/internal/filesystem"
+	"github.com/grantfbarnes/ground/internal/monitor"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
-	"github.com/grantfbarnes/ground/internal/system"
 	"github.com/grantfbarnes/ground/internal/users"
 )
 
@@ -89,7 +89,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		Username:            requestor,
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("home", urlRelativePath),
-		DiskUsage:           system.GetDirectoryDiskUsage(urlRootPath),
+		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
@@ -150,7 +150,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		Username:            requestor,
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("trash", urlRelativePath),
-		DiskUsage:           system.GetDirectoryDiskUsage(urlRootPath),
+		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
@@ -163,7 +163,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uptime, err := system.GetUptime()
+	uptime, err := monitor.GetUptime()
 	if err != nil {
 		getProblemPage(w, r, "failed to get server uptime")
 		return
@@ -194,7 +194,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle:     "Ground - Admin",
 		Username:      requestor,
-		DiskUsage:     system.GetDirectoryDiskUsage("/home"),
+		DiskUsage:     monitor.GetDirectoryDiskUsage("/home"),
 		Uptime:        uptime,
 		UserListItems: userListItems,
 	})

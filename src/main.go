@@ -7,9 +7,9 @@ import (
 	"os/exec"
 
 	"github.com/grantfbarnes/ground/internal/filesystem"
+	"github.com/grantfbarnes/ground/internal/monitor"
 	"github.com/grantfbarnes/ground/internal/server"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
-	"github.com/grantfbarnes/ground/internal/system"
 	"github.com/grantfbarnes/ground/internal/users"
 )
 
@@ -134,7 +134,7 @@ func healthCheck() (err error) {
 		return errors.Join(errors.New("failed to setup ssh key regex"), err)
 	}
 
-	err = system.SetupDiskSize()
+	err = monitor.SetupDiskSize()
 	if err != nil {
 		return errors.Join(errors.New("failed to setup disk size"), err)
 	}

@@ -13,8 +13,8 @@ import (
 	"strings"
 
 	"github.com/grantfbarnes/ground/internal/filesystem"
+	"github.com/grantfbarnes/ground/internal/power"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
-	"github.com/grantfbarnes/ground/internal/system"
 	"github.com/grantfbarnes/ground/internal/users"
 )
 
@@ -270,7 +270,7 @@ func SystemReboot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := system.Reboot()
+	err := power.Reboot()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -287,7 +287,7 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := system.Poweroff()
+	err := power.Poweroff()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

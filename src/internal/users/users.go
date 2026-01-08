@@ -8,7 +8,7 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grantfbarnes/ground/internal/system"
+	"github.com/grantfbarnes/ground/internal/monitor"
 )
 
 type UserListItem struct {
@@ -28,7 +28,7 @@ func GetUserListItems() ([]UserListItem, error) {
 		if e.IsDir() {
 			listItems = append(listItems, UserListItem{
 				Username:  e.Name(),
-				DiskUsage: system.GetDirectoryDiskUsage(path.Join("/home", e.Name())),
+				DiskUsage: monitor.GetDirectoryDiskUsage(path.Join("/home", e.Name())),
 				IsAdmin:   IsAdmin(e.Name()),
 			})
 		}
