@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-
-	"github.com/grantfbarnes/ground/internal/auth"
 )
 
 var diskSize string
@@ -62,11 +60,7 @@ func getDirectorySize(dirPath string) string {
 	return fields[0]
 }
 
-func Reboot(username string) error {
-	if !auth.IsAdmin(username) {
-		return errors.New("Must be admin to reboot.")
-	}
-
+func Reboot() error {
 	cmd := exec.Command("systemctl", "reboot")
 	err := cmd.Run()
 	if err != nil {
@@ -76,11 +70,7 @@ func Reboot(username string) error {
 	return nil
 }
 
-func Poweroff(username string) error {
-	if !auth.IsAdmin(username) {
-		return errors.New("Must be admin to poweroff.")
-	}
-
+func Poweroff() error {
 	cmd := exec.Command("systemctl", "poweroff")
 	err := cmd.Run()
 	if err != nil {

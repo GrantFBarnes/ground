@@ -1,4 +1,4 @@
-package auth
+package cookie
 
 import (
 	"crypto/hmac"
@@ -7,10 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"os/exec"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -20,7 +17,6 @@ const cookieNameUserToken string = "GROUND-USER-TOKEN"
 const cookieNameRedirectURL string = "GROUND-REDIRECT-URL"
 
 var hashSecret []byte
-var adminGroup string
 
 func SetupHashSecret() error {
 	bytes := make([]byte, 32)
@@ -30,58 +26,6 @@ func SetupHashSecret() error {
 	}
 	hashSecret = bytes
 	return nil
-}
-
-func SetupAdminGroup() error {
-	groups := []string{"sudo", "wheel"}
-	for _, group := range groups {
-		cmd := exec.Command("grep", "-E", "^%"+group+".*ALL", "/etc/sudoers")
-		if cmd.Run() == nil {
-			adminGroup = group
-			return nil
-		}
-	}
-	return errors.New("no admin group found")
-}
-
-func CredentialsAreValid(username string, password string) bool {
-	// since program is run as root, standard su doesn't require password
-	// use su to run su as that user checking for password
-	cmd := exec.Command("su", "-c", "su -c exit "+username, username)
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return false
-	}
-
-	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, password+"\n")
-	}()
-
-	return cmd.Run() == nil
-}
-
-func IsAdmin(username string) bool {
-	cmd := exec.Command("groups", username)
-	outputBytes, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-
-	userGroups := strings.Fields(string(outputBytes))
-	return slices.Contains(userGroups, adminGroup)
-}
-
-func ToggleAdmin(username string) (err error) {
-	if IsAdmin(username) {
-		cmd := exec.Command("gpasswd", "-d", username, adminGroup)
-		err = cmd.Run()
-	} else {
-		cmd := exec.Command("gpasswd", "-a", username, adminGroup)
-		err = cmd.Run()
-	}
-	return err
 }
 
 func GetUsername(r *http.Request) (string, error) {

@@ -12,7 +12,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grantfbarnes/ground/internal/auth"
+	"github.com/grantfbarnes/ground/internal/cookie"
 	"github.com/grantfbarnes/ground/internal/filesystem"
 	"github.com/grantfbarnes/ground/internal/system"
 	"github.com/grantfbarnes/ground/internal/users"
@@ -22,9 +22,9 @@ const CONTEXT_KEY_USERNAME string = "username"
 
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, err := auth.GetUsername(r)
+		username, err := cookie.GetUsername(r)
 		if err != nil {
-			auth.RemoveUsername(w)
+			cookie.RemoveUsername(w)
 			http.Error(w, "No login credentials found.", http.StatusUnauthorized)
 			return
 		}
@@ -77,14 +77,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-	auth.RemoveUsername(w)
+	cookie.RemoveUsername(w)
 	w.WriteHeader(http.StatusOK)
 }
 
 func Impersonate(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
-	if !auth.IsAdmin(username) {
+	if !users.IsAdmin(username) {
 		http.Error(w, "Must be admin to impersonate.", http.StatusUnauthorized)
 		return
 	}
@@ -94,20 +94,20 @@ func Impersonate(w http.ResponseWriter, r *http.Request) {
 
 func login(w http.ResponseWriter, username string) {
 	filesystem.CreateTrashDirectory(username)
-	auth.RemoveUsername(w)
-	auth.SetUsername(w, username)
+	cookie.RemoveUsername(w)
+	cookie.SetUsername(w, username)
 	w.WriteHeader(http.StatusOK)
 }
 
 func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
-	if !auth.IsAdmin(username) {
+	if !users.IsAdmin(username) {
 		http.Error(w, "Must be admin to change admin status.", http.StatusUnauthorized)
 		return
 	}
 
-	err := auth.ToggleAdmin(r.PathValue("username"))
+	err := users.ToggleAdmin(r.PathValue("username"))
 	if err != nil {
 		http.Error(w, "Failed to change admin status.", http.StatusInternalServerError)
 		return
@@ -263,7 +263,13 @@ func EmptyTrash(w http.ResponseWriter, r *http.Request) {
 
 func SystemReboot(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := system.Reboot(username)
+
+	if !users.IsAdmin(username) {
+		http.Error(w, "Must be admin to reboot.", http.StatusUnauthorized)
+		return
+	}
+
+	err := system.Reboot()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -274,7 +280,13 @@ func SystemReboot(w http.ResponseWriter, r *http.Request) {
 
 func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := system.Poweroff(username)
+
+	if !users.IsAdmin(username) {
+		http.Error(w, "Must be admin to reboot.", http.StatusUnauthorized)
+		return
+	}
+
+	err := system.Poweroff()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

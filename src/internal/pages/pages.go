@@ -9,7 +9,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grantfbarnes/ground/internal/auth"
+	"github.com/grantfbarnes/ground/internal/cookie"
 	"github.com/grantfbarnes/ground/internal/filesystem"
 	"github.com/grantfbarnes/ground/internal/system"
 	"github.com/grantfbarnes/ground/internal/users"
@@ -22,19 +22,19 @@ var templates embed.FS
 
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, err := auth.GetUsername(r)
+		username, err := cookie.GetUsername(r)
 		loggedIn := err == nil
 		if !loggedIn {
-			auth.RemoveUsername(w)
+			cookie.RemoveUsername(w)
 		}
 
 		if r.URL.Path == "/login" {
 			if loggedIn {
-				http.Redirect(w, r, auth.GetRedirectUrl(r), http.StatusSeeOther)
+				http.Redirect(w, r, cookie.GetRedirectUrl(r), http.StatusSeeOther)
 				return
 			}
 		} else if !loggedIn {
-			auth.SetRedirectUrl(w, r.URL.Path)
+			cookie.SetRedirectUrl(w, r.URL.Path)
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
@@ -160,7 +160,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 func Admin(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
 
-	if !auth.IsAdmin(username) {
+	if !users.IsAdmin(username) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -213,7 +213,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if username != targetUsername && !auth.IsAdmin(username) {
+	if username != targetUsername && !users.IsAdmin(username) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -281,7 +281,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle: "Ground - Home",
 		Username:  username,
-		IsAdmin:   auth.IsAdmin(username),
+		IsAdmin:   users.IsAdmin(username),
 	})
 }
 

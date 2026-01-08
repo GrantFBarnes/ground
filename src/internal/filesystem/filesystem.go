@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grantfbarnes/ground/internal/auth"
 	"github.com/grantfbarnes/ground/internal/users"
 )
 
@@ -183,7 +182,7 @@ func getFileLines(filePath string) ([]string, error) {
 }
 
 func AddUserSshKey(username string, targetUsername string, sshKey string) error {
-	if username != targetUsername && !auth.IsAdmin(username) {
+	if username != targetUsername && !users.IsAdmin(username) {
 		return errors.New("Must be admin to add other user SSH Keys.")
 	}
 
@@ -226,7 +225,7 @@ func AddUserSshKey(username string, targetUsername string, sshKey string) error 
 }
 
 func DeleteUserSshKey(username string, targetUsername string, indexString string) error {
-	if username != targetUsername && !auth.IsAdmin(username) {
+	if username != targetUsername && !users.IsAdmin(username) {
 		return errors.New("Must be admin to delete other user SSH Keys.")
 	}
 

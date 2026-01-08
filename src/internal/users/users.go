@@ -8,13 +8,15 @@ import (
 	"os/user"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
+	"strings"
 
-	"github.com/grantfbarnes/ground/internal/auth"
 	"github.com/grantfbarnes/ground/internal/system"
 )
 
 var usernameRegex *regexp.Regexp
+var adminGroup string
 
 type UserListItem struct {
 	Username  string
@@ -36,6 +38,40 @@ func SetupUsernameRegex() error {
 	return nil
 }
 
+func SetupAdminGroup() error {
+	groups := []string{"sudo", "wheel"}
+	for _, group := range groups {
+		cmd := exec.Command("grep", "-E", "^%"+group+".*ALL", "/etc/sudoers")
+		if cmd.Run() == nil {
+			adminGroup = group
+			return nil
+		}
+	}
+	return errors.New("no admin group found")
+}
+
+func IsAdmin(username string) bool {
+	cmd := exec.Command("groups", username)
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	userGroups := strings.Fields(string(outputBytes))
+	return slices.Contains(userGroups, adminGroup)
+}
+
+func ToggleAdmin(username string) (err error) {
+	if IsAdmin(username) {
+		cmd := exec.Command("gpasswd", "-d", username, adminGroup)
+		err = cmd.Run()
+	} else {
+		cmd := exec.Command("gpasswd", "-a", username, adminGroup)
+		err = cmd.Run()
+	}
+	return err
+}
+
 func GetUserListItems() ([]UserListItem, error) {
 	homeEntries, err := os.ReadDir("/home")
 	if err != nil {
@@ -48,7 +84,7 @@ func GetUserListItems() ([]UserListItem, error) {
 			listItems = append(listItems, UserListItem{
 				Username:  e.Name(),
 				DiskUsage: system.GetDirectoryDiskUsage(path.Join("/home", e.Name())),
-				IsAdmin:   auth.IsAdmin(e.Name()),
+				IsAdmin:   IsAdmin(e.Name()),
 			})
 		}
 	}
@@ -81,7 +117,7 @@ func Login(username string, password string) error {
 		return err
 	}
 
-	if !auth.CredentialsAreValid(username, password) {
+	if !credentialsAreValid(username, password) {
 		return errors.New("Invalid credentials provided.")
 	}
 
@@ -107,8 +143,26 @@ func Validate(username string) error {
 	return nil
 }
 
+func credentialsAreValid(username string, password string) bool {
+	// since program is run as root, standard su doesn't require password
+	// use su to run su as that user checking for password
+	cmd := exec.Command("su", "-c", "su -c exit "+username, username)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return false
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, password+"\n")
+	}()
+
+	return cmd.Run() == nil
+}
+
 func CreateUser(username string, newUsername string) error {
-	if !auth.IsAdmin(username) {
+	if !IsAdmin(username) {
 		return errors.New("Must be admin to create new users.")
 	}
 
@@ -134,7 +188,7 @@ func CreateUser(username string, newUsername string) error {
 }
 
 func DeleteUser(username string, targetUsername string) error {
-	if username != targetUsername && !auth.IsAdmin(username) {
+	if username != targetUsername && !IsAdmin(username) {
 		return errors.New("Must be admin to delete other users.")
 	}
 
@@ -149,7 +203,7 @@ func DeleteUser(username string, targetUsername string) error {
 }
 
 func ResetUserPassword(username string, targetUsername string) error {
-	if username != targetUsername && !auth.IsAdmin(username) {
+	if username != targetUsername && !IsAdmin(username) {
 		return errors.New("Must be admin to reset other user passwords.")
 	}
 

@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/grantfbarnes/ground/internal/auth"
+	"github.com/grantfbarnes/ground/internal/cookie"
 	"github.com/grantfbarnes/ground/internal/filesystem"
 	"github.com/grantfbarnes/ground/internal/server"
 	"github.com/grantfbarnes/ground/internal/system"
@@ -119,14 +119,9 @@ func healthCheck() (err error) {
 		}
 	}
 
-	err = auth.SetupHashSecret()
+	err = cookie.SetupHashSecret()
 	if err != nil {
 		return errors.Join(errors.New("failed to setup hash secret"), err)
-	}
-
-	err = auth.SetupAdminGroup()
-	if err != nil {
-		return errors.Join(errors.New("failed to setup admin group"), err)
 	}
 
 	err = filesystem.SetupFileCopyNameRegex()
@@ -147,6 +142,11 @@ func healthCheck() (err error) {
 	err = users.SetupUsernameRegex()
 	if err != nil {
 		return errors.Join(errors.New("failed to setup username regex"), err)
+	}
+
+	err = users.SetupAdminGroup()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup admin group"), err)
 	}
 
 	return nil
