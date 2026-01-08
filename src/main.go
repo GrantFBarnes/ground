@@ -6,11 +6,11 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/grantfbarnes/ground/internal/filesystem"
-	"github.com/grantfbarnes/ground/internal/monitor"
 	"github.com/grantfbarnes/ground/internal/server"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
-	"github.com/grantfbarnes/ground/internal/users"
+	"github.com/grantfbarnes/ground/internal/system/filesystem"
+	"github.com/grantfbarnes/ground/internal/system/monitor"
+	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
 const VERSION string = "v1.6.0"

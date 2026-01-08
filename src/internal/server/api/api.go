@@ -12,10 +12,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grantfbarnes/ground/internal/filesystem"
-	"github.com/grantfbarnes/ground/internal/power"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
-	"github.com/grantfbarnes/ground/internal/users"
+	"github.com/grantfbarnes/ground/internal/system/filesystem"
+	"github.com/grantfbarnes/ground/internal/system/power"
+	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
 func Middleware(next http.Handler) http.Handler {

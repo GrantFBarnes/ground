@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grantfbarnes/ground/internal/users"
+	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
 func CompressDirectory(username string, urlRelativePath string) error {

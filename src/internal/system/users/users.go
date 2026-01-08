@@ -8,7 +8,7 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/grantfbarnes/ground/internal/monitor"
+	"github.com/grantfbarnes/ground/internal/system/monitor"
 )
 
 type UserListItem struct {

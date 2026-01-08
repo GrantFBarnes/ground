@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/grantfbarnes/ground/internal/users"
+	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
 var sshKeyRegex *regexp.Regexp
