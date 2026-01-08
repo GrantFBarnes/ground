@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grantfbarnes/ground/internal/api"
-	"github.com/grantfbarnes/ground/internal/pages"
+	"github.com/grantfbarnes/ground/internal/server/api"
+	"github.com/grantfbarnes/ground/internal/server/pages"
 )
 
 //go:embed static

@@ -12,8 +12,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/grantfbarnes/ground/internal/cookie"
 	"github.com/grantfbarnes/ground/internal/filesystem"
+	"github.com/grantfbarnes/ground/internal/server/cookie"
 	"github.com/grantfbarnes/ground/internal/system"
 	"github.com/grantfbarnes/ground/internal/users"
 )
