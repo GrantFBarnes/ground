@@ -4,25 +4,18 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/grantfbarnes/ground/internal/users"
 )
 
 const TRASH_HOME_PATH string = ".local/share/ground/trash"
 
 var fileCopyNameRegex *regexp.Regexp
-var sshKeyRegex *regexp.Regexp
 
 func SetupFileCopyNameRegex() error {
 	re, err := regexp.Compile(`(.*)\(([0-9]+)\)$`)
@@ -30,15 +23,6 @@ func SetupFileCopyNameRegex() error {
 		return errors.Join(errors.New("regex compile failed"), err)
 	}
 	fileCopyNameRegex = re
-	return nil
-}
-
-func SetupSshKeyRegex() error {
-	re, err := regexp.Compile(`^ssh-(rsa|ed25519) [a-zA-Z0-9+/]+[=]{0,3}( [^@]+@[^@]+)?$`)
-	if err != nil {
-		return errors.Join(errors.New("regex compile failed"), err)
-	}
-	sshKeyRegex = re
 	return nil
 }
 
@@ -60,106 +44,6 @@ type FilePathBreadcrumb struct {
 	IsHome bool
 }
 
-func CompressDirectory(username string, urlRelativePath string) error {
-	urlRootPath := path.Join("/home", username, urlRelativePath)
-	urlPathInfo, err := os.Stat(urlRootPath)
-	if err != nil {
-		return errors.New("Path not found.")
-	}
-
-	if !urlPathInfo.IsDir() {
-		return errors.New("Path is not a directory.")
-	}
-
-	dirPath, dirName := path.Split(urlRootPath)
-	fileName, err := GetAvailableFileName(dirPath, dirName+".tar.gz")
-	if err != nil {
-		return errors.New("Failed to find available file name.")
-	}
-	filePath := path.Join(dirPath, fileName)
-
-	_, err = os.Stat(filePath)
-	if err == nil {
-		return errors.New("File already exists.")
-	}
-
-	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+urlRootPath+"' .", username)
-	err = cmd.Run()
-	if err != nil {
-		return errors.New("Failed to compress directory.")
-	}
-
-	return nil
-}
-
-func CreateTrashDirectory(username string) error {
-	uid, gid, err := users.GetUserIds(username)
-	if err != nil {
-		return err
-	}
-
-	homePath := path.Join("/home", username)
-	err = CreateMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
-	if err != nil {
-		return errors.New("Failed to create ground trash.")
-	}
-
-	return nil
-}
-
-func Trash(username string, urlRelativePath string) error {
-	urlRootPath := path.Join("/home", username, urlRelativePath)
-	_, err := os.Stat(urlRootPath)
-	if err != nil {
-		return errors.New("Path not found.")
-	}
-
-	uid, gid, err := users.GetUserIds(username)
-	if err != nil {
-		return err
-	}
-
-	homePath := path.Join("/home", username)
-	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlRelativePath))
-	err = CreateMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
-	if err != nil {
-		return errors.New("Failed to create missing directories.")
-	}
-
-	cmd := exec.Command("mv", urlRootPath, path.Join(homePath, trashTimestampHomePath))
-	err = cmd.Run()
-	if err != nil {
-		return errors.New("Failed to move to trash.")
-	}
-
-	return nil
-}
-
-func EmptyTrash(username string) error {
-	trashRootPath := path.Join("/home", username, TRASH_HOME_PATH)
-
-	dirEntries, err := os.ReadDir(trashRootPath)
-	if err != nil {
-		return errors.New("Failed to read trash.")
-	}
-
-	for _, entry := range dirEntries {
-		entryFullPath := path.Join(trashRootPath, entry.Name())
-		err = os.RemoveAll(entryFullPath)
-		if err != nil {
-			return errors.New("Failed empty trash.")
-		}
-	}
-
-	return nil
-}
-
-func GetUserSshKeys(username string) []string {
-	sshKeyPath := path.Join("/home", username, ".ssh", "authorized_keys")
-	sshKeys, _ := getFileLines(sshKeyPath)
-	return sshKeys
-}
-
 func getFileLines(filePath string) ([]string, error) {
 	var lines []string
 
@@ -179,80 +63,6 @@ func getFileLines(filePath string) ([]string, error) {
 	}
 
 	return lines, nil
-}
-
-func AddUserSshKey(username string, targetUsername string, sshKey string) error {
-	if username != targetUsername && !users.IsAdmin(username) {
-		return errors.New("Must be admin to add other user SSH Keys.")
-	}
-
-	if !sshKeyRegex.MatchString(sshKey) {
-		return errors.New("SSH Key is not valid.")
-	}
-
-	homePath := path.Join("/home", targetUsername)
-	sshKeyPath := path.Join(homePath, ".ssh", "authorized_keys")
-	_, err := os.Stat(sshKeyPath)
-	if err != nil {
-		uid, gid, err := users.GetUserIds(targetUsername)
-		if err != nil {
-			return err
-		}
-
-		err = CreateMissingDirectories(homePath, ".ssh", uid, gid)
-		if err != nil {
-			return errors.New("Failed to create SSH folder.")
-		}
-
-		err = createMissingFile(sshKeyPath, uid, gid)
-		if err != nil {
-			return errors.New("Failed to create SSH file.")
-		}
-	}
-
-	sshKeyFile, err := os.OpenFile(sshKeyPath, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return errors.New("Failed to open SSH file.")
-	}
-	defer sshKeyFile.Close()
-
-	_, err = sshKeyFile.WriteString(sshKey + "\n")
-	if err != nil {
-		return errors.New("Failed to write to SSH file.")
-	}
-
-	return nil
-}
-
-func DeleteUserSshKey(username string, targetUsername string, indexString string) error {
-	if username != targetUsername && !users.IsAdmin(username) {
-		return errors.New("Must be admin to delete other user SSH Keys.")
-	}
-
-	index, err := strconv.Atoi(indexString)
-	if err != nil {
-		return errors.New("Index is not a number.")
-	}
-
-	if index < 0 {
-		return errors.New("Index is not valid.")
-	}
-
-	homePath := path.Join("/home", targetUsername)
-	sshKeyPath := path.Join(homePath, ".ssh", "authorized_keys")
-	_, err = os.Stat(sshKeyPath)
-	if err != nil {
-		return errors.New("SSH file does not exist.")
-	}
-
-	cmd := exec.Command("sed", "-i", fmt.Sprintf("%dd", index+1), sshKeyPath)
-
-	err = cmd.Run()
-	if err != nil {
-		return errors.New("Failed to delete SSH Key.")
-	}
-
-	return nil
 }
 
 func GetAvailableFileName(fileDirPath string, fileName string) (string, error) {
@@ -314,76 +124,6 @@ func getFileExtension(fileName string) (string, string) {
 	}
 
 	return coreFileName, fileExtension
-}
-
-func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
-	relDirPathBuildUp := ""
-	for dirName := range strings.SplitSeq(relDirPath, string(filepath.Separator)) {
-		if dirName == "" {
-			continue
-		}
-
-		relDirPathBuildUp = path.Join(relDirPathBuildUp, dirName)
-		dirPath := path.Join(rootPath, relDirPathBuildUp)
-
-		_, err := os.Stat(dirPath)
-		if err == nil {
-			// directory already exists
-			continue
-		}
-
-		err = os.MkdirAll(dirPath, os.FileMode(0755))
-		if err != nil {
-			return err
-		}
-
-		err = os.Chown(dirPath, uid, gid)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func createMissingFile(filePath string, uid int, gid int) error {
-	_, err := os.Stat(filePath)
-	if err == nil {
-		// file already exists
-		return nil
-	}
-
-	createdFile, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer createdFile.Close()
-
-	err = os.Chown(filePath, uid, gid)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func CreateMultipartFile(part *multipart.Part, filePath string, uid int, gid int) error {
-	osFile, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer osFile.Close()
-
-	_, err = io.Copy(osFile, part)
-	if err != nil {
-		return err
-	}
-
-	err = os.Chown(filePath, uid, gid)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func GetDirectoryEntries(urlRelativePath string, urlRootPath string, isTrash bool) ([]DirectoryEntryData, error) {

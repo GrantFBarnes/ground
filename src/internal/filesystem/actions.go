@@ -1,0 +1,179 @@
+package filesystem
+
+import (
+	"errors"
+	"io"
+	"mime/multipart"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/grantfbarnes/ground/internal/users"
+)
+
+func CompressDirectory(username string, urlRelativePath string) error {
+	urlRootPath := path.Join("/home", username, urlRelativePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
+	if err != nil {
+		return errors.New("Path not found.")
+	}
+
+	if !urlPathInfo.IsDir() {
+		return errors.New("Path is not a directory.")
+	}
+
+	dirPath, dirName := path.Split(urlRootPath)
+	fileName, err := GetAvailableFileName(dirPath, dirName+".tar.gz")
+	if err != nil {
+		return errors.New("Failed to find available file name.")
+	}
+	filePath := path.Join(dirPath, fileName)
+
+	_, err = os.Stat(filePath)
+	if err == nil {
+		return errors.New("File already exists.")
+	}
+
+	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+urlRootPath+"' .", username)
+	err = cmd.Run()
+	if err != nil {
+		return errors.New("Failed to compress directory.")
+	}
+
+	return nil
+}
+
+func CreateTrashDirectory(username string) error {
+	uid, gid, err := users.GetUserIds(username)
+	if err != nil {
+		return err
+	}
+
+	homePath := path.Join("/home", username)
+	err = CreateMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
+	if err != nil {
+		return errors.New("Failed to create ground trash.")
+	}
+
+	return nil
+}
+
+func Trash(username string, urlRelativePath string) error {
+	urlRootPath := path.Join("/home", username, urlRelativePath)
+	_, err := os.Stat(urlRootPath)
+	if err != nil {
+		return errors.New("Path not found.")
+	}
+
+	uid, gid, err := users.GetUserIds(username)
+	if err != nil {
+		return err
+	}
+
+	homePath := path.Join("/home", username)
+	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlRelativePath))
+	err = CreateMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
+	if err != nil {
+		return errors.New("Failed to create missing directories.")
+	}
+
+	cmd := exec.Command("mv", urlRootPath, path.Join(homePath, trashTimestampHomePath))
+	err = cmd.Run()
+	if err != nil {
+		return errors.New("Failed to move to trash.")
+	}
+
+	return nil
+}
+
+func EmptyTrash(username string) error {
+	trashRootPath := path.Join("/home", username, TRASH_HOME_PATH)
+
+	dirEntries, err := os.ReadDir(trashRootPath)
+	if err != nil {
+		return errors.New("Failed to read trash.")
+	}
+
+	for _, entry := range dirEntries {
+		entryFullPath := path.Join(trashRootPath, entry.Name())
+		err = os.RemoveAll(entryFullPath)
+		if err != nil {
+			return errors.New("Failed empty trash.")
+		}
+	}
+
+	return nil
+}
+
+func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
+	relDirPathBuildUp := ""
+	for dirName := range strings.SplitSeq(relDirPath, string(filepath.Separator)) {
+		if dirName == "" {
+			continue
+		}
+
+		relDirPathBuildUp = path.Join(relDirPathBuildUp, dirName)
+		dirPath := path.Join(rootPath, relDirPathBuildUp)
+
+		_, err := os.Stat(dirPath)
+		if err == nil {
+			// directory already exists
+			continue
+		}
+
+		err = os.MkdirAll(dirPath, os.FileMode(0755))
+		if err != nil {
+			return err
+		}
+
+		err = os.Chown(dirPath, uid, gid)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func createMissingFile(filePath string, uid int, gid int) error {
+	_, err := os.Stat(filePath)
+	if err == nil {
+		// file already exists
+		return nil
+	}
+
+	createdFile, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer createdFile.Close()
+
+	err = os.Chown(filePath, uid, gid)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateMultipartFile(part *multipart.Part, filePath string, uid int, gid int) error {
+	osFile, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer osFile.Close()
+
+	_, err = io.Copy(osFile, part)
+	if err != nil {
+		return err
+	}
+
+	err = os.Chown(filePath, uid, gid)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
