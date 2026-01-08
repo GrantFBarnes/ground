@@ -134,6 +134,11 @@ func healthCheck() (err error) {
 		return errors.Join(errors.New("failed to setup file copy name regex"), err)
 	}
 
+	err = filesystem.SetupSshKeyRegex()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup ssh key regex"), err)
+	}
+
 	err = system.SetupDiskSize()
 	if err != nil {
 		return errors.Join(errors.New("failed to setup disk size"), err)

@@ -23,6 +23,7 @@ import (
 const TRASH_HOME_PATH string = ".local/share/ground/trash"
 
 var fileCopyNameRegex *regexp.Regexp
+var sshKeyRegex *regexp.Regexp
 
 func SetupFileCopyNameRegex() error {
 	re, err := regexp.Compile(`(.*)\(([0-9]+)\)$`)
@@ -30,6 +31,15 @@ func SetupFileCopyNameRegex() error {
 		return errors.Join(errors.New("regex compile failed"), err)
 	}
 	fileCopyNameRegex = re
+	return nil
+}
+
+func SetupSshKeyRegex() error {
+	re, err := regexp.Compile(`^ssh-(rsa|ed25519) [a-zA-Z0-9+/]+[=]{0,3}( [^@]+@[^@]+)?$`)
+	if err != nil {
+		return errors.Join(errors.New("regex compile failed"), err)
+	}
+	sshKeyRegex = re
 	return nil
 }
 
@@ -177,8 +187,8 @@ func AddUserSshKey(username string, targetUsername string, sshKey string) error 
 		return errors.New("Must be admin to add other user SSH Keys.")
 	}
 
-	if sshKey == "" {
-		return errors.New("SSH Key was not provided.")
+	if !sshKeyRegex.MatchString(sshKey) {
+		return errors.New("SSH Key is not valid.")
 	}
 
 	homePath := path.Join("/home", targetUsername)
