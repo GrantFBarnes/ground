@@ -131,7 +131,7 @@ func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 	err := filesystem.CompressDirectory(requestor, urlRelativePath)
 	if err != nil {
 		slog.Error("failed to compress directory", "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to compress directory", http.StatusInternalServerError)
 		return
 	}
 
@@ -191,8 +191,8 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 
 		err = createFileFromPart(part, urlRootPath, uid, gid)
 		if err != nil {
-			slog.Error("failed to create file from part", "request", r.URL.Path, "requestor", requestor, "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			slog.Error("failed to create file", "request", r.URL.Path, "requestor", requestor, "error", err)
+			http.Error(w, "failed to create file", http.StatusInternalServerError)
 			return
 		}
 	}
@@ -263,7 +263,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	err := filesystem.Trash(requestor, urlRelativePath)
 	if err != nil {
 		slog.Error("failed to trash", "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to trash", http.StatusInternalServerError)
 		return
 	}
 
@@ -275,7 +275,7 @@ func EmptyTrash(w http.ResponseWriter, r *http.Request) {
 	err := filesystem.EmptyTrash(requestor)
 	if err != nil {
 		slog.Error("failed to emtpy trash", "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to emtpy trash", http.StatusInternalServerError)
 		return
 	}
 
@@ -294,7 +294,7 @@ func SystemReboot(w http.ResponseWriter, r *http.Request) {
 	err := power.Reboot()
 	if err != nil {
 		slog.Error("failed to reboot", "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to reboot", http.StatusInternalServerError)
 		return
 	}
 
@@ -313,7 +313,7 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 	err := power.Poweroff()
 	if err != nil {
 		slog.Error("failed to poweroff", "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to poweroff", http.StatusInternalServerError)
 		return
 	}
 
@@ -339,14 +339,14 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	err := users.CreateUser(username)
 	if err != nil {
 		slog.Error("failed to create user", "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to create user", http.StatusInternalServerError)
 		return
 	}
 
 	err = filesystem.CreateRequiredFiles(username)
 	if err != nil {
 		slog.Error("failed to create required files", "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to create required files", http.StatusInternalServerError)
 		return
 	}
 
@@ -372,7 +372,7 @@ func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 	err := users.ResetUserPassword(username)
 	if err != nil {
 		slog.Error("failed to reset password", "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to reset password", http.StatusInternalServerError)
 		return
 	}
 
@@ -399,7 +399,7 @@ func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 	err := filesystem.AddUserSshKey(username, sshKey)
 	if err != nil {
 		slog.Error("failed to add ssh key", "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to add ssh key", http.StatusInternalServerError)
 		return
 	}
 
@@ -426,7 +426,7 @@ func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 	err := filesystem.DeleteUserSshKey(username, index)
 	if err != nil {
 		slog.Error("failed to delete ssh key", "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to delete ssh key", http.StatusInternalServerError)
 		return
 	}
 
@@ -452,7 +452,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	err := users.DeleteUser(username)
 	if err != nil {
 		slog.Error("failed to delete user", "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to delete user", http.StatusInternalServerError)
 		return
 	}
 

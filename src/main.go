@@ -38,7 +38,7 @@ func main() {
 	if settings.service {
 		err = printService()
 		if err != nil {
-			printErrorMessage(err.Error())
+			printErrorMessage(errors.Join(errors.New("failed to print service"), err).Error())
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -51,7 +51,7 @@ func main() {
 
 	err = healthCheck()
 	if err != nil {
-		printErrorMessage(err.Error())
+		printErrorMessage(errors.Join(errors.New("failed health check"), err).Error())
 		os.Exit(1)
 	}
 
