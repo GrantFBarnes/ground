@@ -31,8 +31,7 @@ func Middleware(next http.Handler) http.Handler {
 
 		targetUsername := r.PathValue("username")
 		if targetUsername != "" {
-			err = users.Validate(targetUsername)
-			if err != nil {
+			if !users.UserIsValid(targetUsername) {
 				http.Error(w, "Username is not valid.", http.StatusBadRequest)
 				return
 			}
@@ -67,9 +66,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = users.Login(body.Username, body.Password)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if !users.UserIsValid(body.Username) {
+		http.Error(w, "Username not valid.", http.StatusBadRequest)
+		return
+	}
+
+	if !users.CredentialsAreValid(body.Username, body.Password) {
+		http.Error(w, "Credentials not valid.", http.StatusBadRequest)
 		return
 	}
 

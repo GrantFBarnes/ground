@@ -207,9 +207,8 @@ func User(w http.ResponseWriter, r *http.Request) {
 
 	targetUsername := r.PathValue("username")
 
-	err := users.Validate(targetUsername)
-	if err != nil {
-		getProblemPage(w, r, "user does not exist")
+	if !users.UserIsValid(targetUsername) {
+		getProblemPage(w, r, "requested user is not valid")
 		return
 	}
 
