@@ -20,7 +20,7 @@ type UserListItem struct {
 func GetUserListItems() ([]UserListItem, error) {
 	homeEntries, err := os.ReadDir("/home")
 	if err != nil {
-		return nil, errors.New("Failed to read home directory.")
+		return nil, errors.Join(errors.New("failed to read directory"), err)
 	}
 
 	listItems := []UserListItem{}
@@ -40,17 +40,17 @@ func GetUserListItems() ([]UserListItem, error) {
 func GetUserIds(username string) (uid int, gid int, err error) {
 	user, err := user.Lookup(username)
 	if err != nil {
-		return 0, 0, errors.New("Failed to lookup user.")
+		return 0, 0, errors.Join(errors.New("failed to lookup user"), err)
 	}
 
 	uid, err = strconv.Atoi(user.Uid)
 	if err != nil {
-		return 0, 0, errors.New("Uid is invalid.")
+		return 0, 0, errors.Join(errors.New("failed to convert uid"), err)
 	}
 
 	gid, err = strconv.Atoi(user.Gid)
 	if err != nil {
-		return 0, 0, errors.New("Gid is invalid.")
+		return 0, 0, errors.Join(errors.New("failed to convert gid"), err)
 	}
 
 	return uid, gid, nil

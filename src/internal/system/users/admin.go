@@ -40,5 +40,5 @@ func ToggleAdmin(username string) (err error) {
 		cmd := exec.Command("gpasswd", "-a", username, adminGroup)
 		err = cmd.Run()
 	}
-	return err
+	return errors.Join(errors.New("failed to run gpasswd"), err)
 }

@@ -8,55 +8,43 @@ import (
 	"path"
 )
 
-func CreateUser(username string, newUsername string) error {
-	if !IsAdmin(username) {
-		return errors.New("Must be admin to create new users.")
-	}
-
-	homePath := path.Join("/home", newUsername)
+func CreateUser(username string) error {
+	homePath := path.Join("/home", username)
 	_, err := os.Stat(homePath)
 	if err == nil {
-		return errors.New("User already exists.")
+		return errors.New("user already exists")
 	}
 
-	cmd := exec.Command("useradd", "--create-home", newUsername)
+	cmd := exec.Command("useradd", "--create-home", username)
 
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("Failed to create user.")
+		return errors.Join(errors.New("failed to create user"), err)
 	}
 
-	err = setUserPassword(newUsername, "password")
+	err = setUserPassword(username, "password")
 	if err != nil {
-		return errors.New("Failed to set password.")
+		return errors.Join(errors.New("failed to set user password"), err)
 	}
 
 	return nil
 }
 
-func DeleteUser(username string, targetUsername string) error {
-	if username != targetUsername && !IsAdmin(username) {
-		return errors.New("Must be admin to delete other users.")
-	}
-
-	cmd := exec.Command("userdel", "--remove", targetUsername)
+func DeleteUser(username string) error {
+	cmd := exec.Command("userdel", "--remove", username)
 
 	err := cmd.Run()
 	if err != nil {
-		return errors.New("Failed to delete user.")
+		return errors.Join(errors.New("failed to delete user"), err)
 	}
 
 	return nil
 }
 
-func ResetUserPassword(username string, targetUsername string) error {
-	if username != targetUsername && !IsAdmin(username) {
-		return errors.New("Must be admin to reset other user passwords.")
-	}
-
-	err := setUserPassword(targetUsername, "password")
+func ResetUserPassword(username string) error {
+	err := setUserPassword(username, "password")
 	if err != nil {
-		return errors.New("Failed to set password.")
+		return errors.Join(errors.New("failed to set user password"), err)
 	}
 
 	return nil
@@ -67,7 +55,7 @@ func setUserPassword(username string, password string) error {
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to read stdin"), err)
 	}
 
 	go func() {
@@ -77,7 +65,7 @@ func setUserPassword(username string, password string) error {
 
 	err = cmd.Run()
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to run passwd"), err)
 	}
 
 	return nil

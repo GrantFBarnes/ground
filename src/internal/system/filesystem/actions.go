@@ -18,29 +18,29 @@ func CompressDirectory(username string, urlRelativePath string) error {
 	urlRootPath := path.Join("/home", username, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
-		return errors.New("Path not found.")
+		return errors.Join(errors.New("failed to get path stat"), err)
 	}
 
 	if !urlPathInfo.IsDir() {
-		return errors.New("Path is not a directory.")
+		return errors.New("path is not a directory")
 	}
 
 	dirPath, dirName := path.Split(urlRootPath)
 	fileName, err := GetAvailableFileName(dirPath, dirName+".tar.gz")
 	if err != nil {
-		return errors.New("Failed to find available file name.")
+		return errors.Join(errors.New("failed to find available file name"), err)
 	}
 	filePath := path.Join(dirPath, fileName)
 
 	_, err = os.Stat(filePath)
 	if err == nil {
-		return errors.New("File already exists.")
+		return errors.New("file already exists")
 	}
 
 	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+urlRootPath+"' .", username)
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("Failed to compress directory.")
+		return errors.Join(errors.New("failed to compress directory"), err)
 	}
 
 	return nil
@@ -49,13 +49,13 @@ func CompressDirectory(username string, urlRelativePath string) error {
 func CreateTrashDirectory(username string) error {
 	uid, gid, err := users.GetUserIds(username)
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to get user ids"), err)
 	}
 
 	homePath := path.Join("/home", username)
 	err = CreateMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
 	if err != nil {
-		return errors.New("Failed to create ground trash.")
+		return errors.Join(errors.New("failed to create missing directories"), err)
 	}
 
 	return nil
@@ -65,25 +65,25 @@ func Trash(username string, urlRelativePath string) error {
 	urlRootPath := path.Join("/home", username, urlRelativePath)
 	_, err := os.Stat(urlRootPath)
 	if err != nil {
-		return errors.New("Path not found.")
+		return errors.Join(errors.New("failed to get path stat"), err)
 	}
 
 	uid, gid, err := users.GetUserIds(username)
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to get user ids"), err)
 	}
 
 	homePath := path.Join("/home", username)
 	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlRelativePath))
 	err = CreateMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
 	if err != nil {
-		return errors.New("Failed to create missing directories.")
+		return errors.Join(errors.New("failed to create missing directories"), err)
 	}
 
 	cmd := exec.Command("mv", urlRootPath, path.Join(homePath, trashTimestampHomePath))
 	err = cmd.Run()
 	if err != nil {
-		return errors.New("Failed to move to trash.")
+		return errors.Join(errors.New("failed to move files"), err)
 	}
 
 	return nil
@@ -94,14 +94,14 @@ func EmptyTrash(username string) error {
 
 	dirEntries, err := os.ReadDir(trashRootPath)
 	if err != nil {
-		return errors.New("Failed to read trash.")
+		return errors.Join(errors.New("failed to read directory"), err)
 	}
 
 	for _, entry := range dirEntries {
 		entryFullPath := path.Join(trashRootPath, entry.Name())
 		err = os.RemoveAll(entryFullPath)
 		if err != nil {
-			return errors.New("Failed empty trash.")
+			return errors.Join(errors.New("failed to remove all files"), err)
 		}
 	}
 
@@ -126,12 +126,12 @@ func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid i
 
 		err = os.MkdirAll(dirPath, os.FileMode(0755))
 		if err != nil {
-			return err
+			return errors.Join(errors.New("failed to make directories"), err)
 		}
 
 		err = os.Chown(dirPath, uid, gid)
 		if err != nil {
-			return err
+			return errors.Join(errors.New("failed to change ownership"), err)
 		}
 	}
 	return nil
@@ -146,13 +146,13 @@ func createMissingFile(filePath string, uid int, gid int) error {
 
 	createdFile, err := os.Create(filePath)
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to create file"), err)
 	}
 	defer createdFile.Close()
 
 	err = os.Chown(filePath, uid, gid)
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to change ownership"), err)
 	}
 
 	return nil
@@ -161,18 +161,18 @@ func createMissingFile(filePath string, uid int, gid int) error {
 func CreateMultipartFile(part *multipart.Part, filePath string, uid int, gid int) error {
 	osFile, err := os.Create(filePath)
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to create file"), err)
 	}
 	defer osFile.Close()
 
 	_, err = io.Copy(osFile, part)
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to copy file data"), err)
 	}
 
 	err = os.Chown(filePath, uid, gid)
 	if err != nil {
-		return err
+		return errors.Join(errors.New("failed to change ownership"), err)
 	}
 
 	return nil

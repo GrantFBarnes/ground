@@ -20,14 +20,18 @@ func SetupUsernameRegex() error {
 	// length between 1 and 256
 	re, err := regexp.Compile(`^([a-zA-Z0-9._]*[a-zA-Z._][a-zA-Z0-9._-]*[$]?){1,256}$`)
 	if err != nil {
-		return errors.Join(errors.New("regex compile failed"), err)
+		return errors.Join(errors.New("failed to compile regex"), err)
 	}
 	usernameRegex = re
 	return nil
 }
 
+func UsernameIsValid(username string) bool {
+	return usernameRegex.MatchString(username)
+}
+
 func UserIsValid(username string) bool {
-	if !usernameRegex.MatchString(username) {
+	if !UsernameIsValid(username) {
 		return false
 	}
 

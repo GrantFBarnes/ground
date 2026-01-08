@@ -20,7 +20,7 @@ var fileCopyNameRegex *regexp.Regexp
 func SetupFileCopyNameRegex() error {
 	re, err := regexp.Compile(`(.*)\(([0-9]+)\)$`)
 	if err != nil {
-		return errors.Join(errors.New("regex compile failed"), err)
+		return errors.Join(errors.New("failed to compile regex"), err)
 	}
 	fileCopyNameRegex = re
 	return nil
@@ -49,7 +49,7 @@ func getFileLines(filePath string) ([]string, error) {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		return lines, err
+		return lines, errors.Join(errors.New("failed to open file"), err)
 	}
 	defer file.Close()
 
@@ -59,7 +59,7 @@ func getFileLines(filePath string) ([]string, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return lines, err
+		return lines, errors.Join(errors.New("failed to scan file"), err)
 	}
 
 	return lines, nil
@@ -94,7 +94,7 @@ func GetAvailableFileName(fileDirPath string, fileName string) (string, error) {
 			})
 
 			if fileName == fileNameNoExt {
-				return "", errors.New("Failed to get copy file name.")
+				return "", errors.New("failed to get copy file name")
 			}
 		} else {
 			fileName = fmt.Sprintf("%s(1)%s", fileNameNoExt, fileExt)
@@ -129,7 +129,7 @@ func getFileExtension(fileName string) (string, string) {
 func GetDirectoryEntries(urlRelativePath string, urlRootPath string, isTrash bool) ([]DirectoryEntryData, error) {
 	dirEntries, err := os.ReadDir(urlRootPath)
 	if err != nil {
-		return nil, errors.New("entries in the requested directory could not be read")
+		return nil, errors.Join(errors.New("failed to read directory"), err)
 	}
 
 	var directoryEntries []DirectoryEntryData
@@ -147,7 +147,7 @@ func GetDirectoryEntries(urlRelativePath string, urlRootPath string, isTrash boo
 func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath string, isTrash bool) (DirectoryEntryData, error) {
 	entryInfo, err := entry.Info()
 	if err != nil {
-		return DirectoryEntryData{}, err
+		return DirectoryEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
 	}
 
 	directoryEntry := DirectoryEntryData{

@@ -283,7 +283,7 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
 
 	if !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to reboot.", http.StatusUnauthorized)
+		http.Error(w, "Must be admin to poweroff.", http.StatusUnauthorized)
 		return
 	}
 
@@ -298,7 +298,19 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	err := users.CreateUser(requestor, r.PathValue("username"))
+	username := r.PathValue("username")
+
+	if !users.IsAdmin(requestor) {
+		http.Error(w, "Must be admin to create users.", http.StatusUnauthorized)
+		return
+	}
+
+	if !users.UsernameIsValid(username) {
+		http.Error(w, "Username is not valid.", http.StatusBadRequest)
+		return
+	}
+
+	err := users.CreateUser(username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -309,7 +321,14 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	err := users.ResetUserPassword(requestor, r.PathValue("username"))
+	username := r.PathValue("username")
+
+	if requestor != username && !users.IsAdmin(requestor) {
+		http.Error(w, "Must be admin to reset passwords for other users.", http.StatusUnauthorized)
+		return
+	}
+
+	err := users.ResetUserPassword(username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -320,7 +339,14 @@ func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 
 func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	err := filesystem.AddUserSshKey(requestor, r.PathValue("username"), r.FormValue("sshKey"))
+	username := r.PathValue("username")
+
+	if requestor != username && !users.IsAdmin(requestor) {
+		http.Error(w, "Must be admin to add SSH keys for other users.", http.StatusUnauthorized)
+		return
+	}
+
+	err := filesystem.AddUserSshKey(username, r.FormValue("sshKey"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -331,7 +357,14 @@ func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	err := filesystem.DeleteUserSshKey(requestor, r.PathValue("username"), r.PathValue("index"))
+	username := r.PathValue("username")
+
+	if requestor != username && !users.IsAdmin(requestor) {
+		http.Error(w, "Must be admin to delete SSH keys for other users.", http.StatusUnauthorized)
+		return
+	}
+
+	err := filesystem.DeleteUserSshKey(username, r.PathValue("index"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -342,7 +375,14 @@ func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	err := users.DeleteUser(requestor, r.PathValue("username"))
+	username := r.PathValue("username")
+
+	if requestor != username && !users.IsAdmin(requestor) {
+		http.Error(w, "Must be admin to delete other users.", http.StatusUnauthorized)
+		return
+	}
+
+	err := users.DeleteUser(username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

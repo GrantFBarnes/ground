@@ -215,6 +215,12 @@ func User(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sshKeys, err := filesystem.GetUserSshKeys(targetUsername)
+	if err != nil {
+		getProblemPage(w, r, "failed to get ssh keys")
+		return
+	}
+
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
@@ -234,7 +240,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 		PageTitle:      "Ground - User Manage",
 		Username:       requestor,
 		TargetUsername: targetUsername,
-		SshKeys:        filesystem.GetUserSshKeys(targetUsername),
+		SshKeys:        sshKeys,
 	})
 }
 
