@@ -31,12 +31,12 @@ func SetupHashSecret() error {
 func GetUsername(r *http.Request) (string, error) {
 	token, err := getCookieValue(r, cookieNameUserToken)
 	if err != nil {
-		return "", errors.New("cookie not found")
+		return "", errors.Join(errors.New("cookie not found"), err)
 	}
 
 	username, err := getUsernameFromToken(token)
 	if err != nil {
-		return "", errors.New("user not logged in")
+		return "", errors.Join(errors.New("user not logged in"), err)
 	}
 
 	return username, nil
@@ -117,13 +117,13 @@ func getUsernameFromToken(token string) (string, error) {
 	valueBytesHashedEncoded := split[1]
 	valueBytesHashed, err := base64.URLEncoding.DecodeString(valueBytesHashedEncoded)
 	if err != nil {
-		return "", errors.New("failed to decode token")
+		return "", errors.Join(errors.New("failed to decode token"), err)
 	}
 
 	valueBytesEncoded := split[0]
 	valueBytes, err := base64.URLEncoding.DecodeString(valueBytesEncoded)
 	if err != nil {
-		return "", errors.New("failed to decode token")
+		return "", errors.Join(errors.New("failed to decode token"), err)
 	}
 
 	if !hmac.Equal(getHashedBytes(valueBytes), valueBytesHashed) {
