@@ -15,8 +15,6 @@ import (
 	"github.com/grantfbarnes/ground/internal/users"
 )
 
-const CONTEXT_KEY_USERNAME string = "username"
-
 //go:embed templates
 var templates embed.FS
 
@@ -39,14 +37,14 @@ func Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CONTEXT_KEY_USERNAME, username)))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "requestor", username)))
 	})
 }
 
 func Files(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/files")
-	urlRootPath := path.Join("/home", username, urlRelativePath)
+	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "the requested file path could not be found in your home directory")
@@ -88,7 +86,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		DirectoryEntries    []filesystem.DirectoryEntryData
 	}{
 		PageTitle:           "Ground - Files",
-		Username:            username,
+		Username:            requestor,
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("home", urlRelativePath),
 		DiskUsage:           system.GetDirectoryDiskUsage(urlRootPath),
@@ -97,9 +95,9 @@ func Files(w http.ResponseWriter, r *http.Request) {
 }
 
 func File(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/file")
-	urlRootPath := path.Join("/home", username, urlRelativePath)
+	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		getProblemPage(w, r, "the requested file path could not be found in your home directory")
@@ -115,9 +113,9 @@ func File(w http.ResponseWriter, r *http.Request) {
 }
 
 func Trash(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/trash")
-	urlRootPath := path.Join("/home", username, filesystem.TRASH_HOME_PATH, urlRelativePath)
+	urlRootPath := path.Join("/home", requestor, filesystem.TRASH_HOME_PATH, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil || !urlPathInfo.IsDir() {
 		http.Redirect(w, r, path.Join("/trash", path.Dir(urlRelativePath)), http.StatusSeeOther)
@@ -149,7 +147,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		DirectoryEntries    []filesystem.DirectoryEntryData
 	}{
 		PageTitle:           "Ground - Trash",
-		Username:            username,
+		Username:            requestor,
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("trash", urlRelativePath),
 		DiskUsage:           system.GetDirectoryDiskUsage(urlRootPath),
@@ -158,9 +156,9 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 }
 
 func Admin(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
-	if !users.IsAdmin(username) {
+	if !users.IsAdmin(requestor) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -195,7 +193,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 		UserListItems []users.UserListItem
 	}{
 		PageTitle:     "Ground - Admin",
-		Username:      username,
+		Username:      requestor,
 		DiskUsage:     system.GetDirectoryDiskUsage("/home"),
 		Uptime:        uptime,
 		UserListItems: userListItems,
@@ -203,7 +201,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 }
 
 func User(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
 	targetUsername := r.PathValue("username")
 
@@ -212,7 +210,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if username != targetUsername && !users.IsAdmin(username) {
+	if requestor != targetUsername && !users.IsAdmin(requestor) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
@@ -234,7 +232,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 		SshKeys        []string
 	}{
 		PageTitle:      "Ground - User Manage",
-		Username:       username,
+		Username:       requestor,
 		TargetUsername: targetUsername,
 		SshKeys:        filesystem.GetUserSshKeys(targetUsername),
 	})
@@ -261,7 +259,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
 	tmpl, err := template.ParseFS(
 		templates,
@@ -279,8 +277,8 @@ func Home(w http.ResponseWriter, r *http.Request) {
 		IsAdmin   bool
 	}{
 		PageTitle: "Ground - Home",
-		Username:  username,
-		IsAdmin:   users.IsAdmin(username),
+		Username:  requestor,
+		IsAdmin:   users.IsAdmin(requestor),
 	})
 }
 
@@ -289,7 +287,7 @@ func NotFound(w http.ResponseWriter, r *http.Request) {
 }
 
 func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage string) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
 	tmpl, err := template.ParseFS(
 		templates,
@@ -307,7 +305,7 @@ func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage strin
 		ProblemMessage string
 	}{
 		PageTitle:      "Ground - Error",
-		Username:       username,
+		Username:       requestor,
 		ProblemMessage: problemMessage,
 	})
 }

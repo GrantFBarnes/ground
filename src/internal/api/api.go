@@ -18,8 +18,6 @@ import (
 	"github.com/grantfbarnes/ground/internal/users"
 )
 
-const CONTEXT_KEY_USERNAME string = "username"
-
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, err := cookie.GetUsername(r)
@@ -37,7 +35,7 @@ func Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), CONTEXT_KEY_USERNAME, username)))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "requestor", username)))
 	})
 }
 
@@ -85,9 +83,9 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Impersonate(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
-	if !users.IsAdmin(username) {
+	if !users.IsAdmin(requestor) {
 		http.Error(w, "Must be admin to impersonate.", http.StatusUnauthorized)
 		return
 	}
@@ -103,9 +101,9 @@ func login(w http.ResponseWriter, username string) {
 }
 
 func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
-	if !users.IsAdmin(username) {
+	if !users.IsAdmin(requestor) {
 		http.Error(w, "Must be admin to change admin status.", http.StatusUnauthorized)
 		return
 	}
@@ -120,9 +118,9 @@ func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 func CompressDirectory(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
-	err := filesystem.CompressDirectory(username, urlRelativePath)
+	err := filesystem.CompressDirectory(requestor, urlRelativePath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -132,10 +130,10 @@ func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 }
 
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
 
-	urlRootPath := path.Join("/home", username, urlRelativePath)
+	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusBadRequest)
@@ -147,7 +145,7 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid, gid, err := users.GetUserIds(username)
+	uid, gid, err := users.GetUserIds(requestor)
 	if err != nil {
 		http.Error(w, "Failed to get user ids.", http.StatusInternalServerError)
 		return
@@ -219,10 +217,10 @@ func createFileFromPart(part *multipart.Part, urlRootPath string, uid int, gid i
 }
 
 func DownloadFile(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/download")
 
-	urlRootPath := path.Join("/home", username, urlRelativePath)
+	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		http.Error(w, "Path not found.", http.StatusBadRequest)
@@ -242,9 +240,9 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func Trash(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/trash")
-	err := filesystem.Trash(username, urlRelativePath)
+	err := filesystem.Trash(requestor, urlRelativePath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -254,8 +252,8 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 }
 
 func EmptyTrash(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := filesystem.EmptyTrash(username)
+	requestor := users.GetRequestor(r)
+	err := filesystem.EmptyTrash(requestor)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -265,9 +263,9 @@ func EmptyTrash(w http.ResponseWriter, r *http.Request) {
 }
 
 func SystemReboot(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
-	if !users.IsAdmin(username) {
+	if !users.IsAdmin(requestor) {
 		http.Error(w, "Must be admin to reboot.", http.StatusUnauthorized)
 		return
 	}
@@ -282,9 +280,9 @@ func SystemReboot(w http.ResponseWriter, r *http.Request) {
 }
 
 func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
+	requestor := users.GetRequestor(r)
 
-	if !users.IsAdmin(username) {
+	if !users.IsAdmin(requestor) {
 		http.Error(w, "Must be admin to reboot.", http.StatusUnauthorized)
 		return
 	}
@@ -299,8 +297,8 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := users.CreateUser(username, r.PathValue("username"))
+	requestor := users.GetRequestor(r)
+	err := users.CreateUser(requestor, r.PathValue("username"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -310,8 +308,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := users.ResetUserPassword(username, r.PathValue("username"))
+	requestor := users.GetRequestor(r)
+	err := users.ResetUserPassword(requestor, r.PathValue("username"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -321,8 +319,8 @@ func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := filesystem.AddUserSshKey(username, r.PathValue("username"), r.FormValue("sshKey"))
+	requestor := users.GetRequestor(r)
+	err := filesystem.AddUserSshKey(requestor, r.PathValue("username"), r.FormValue("sshKey"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -332,8 +330,8 @@ func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := filesystem.DeleteUserSshKey(username, r.PathValue("username"), r.PathValue("index"))
+	requestor := users.GetRequestor(r)
+	err := filesystem.DeleteUserSshKey(requestor, r.PathValue("username"), r.PathValue("index"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -343,8 +341,8 @@ func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CONTEXT_KEY_USERNAME).(string)
-	err := users.DeleteUser(username, r.PathValue("username"))
+	requestor := users.GetRequestor(r)
+	err := users.DeleteUser(requestor, r.PathValue("username"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
