@@ -181,7 +181,7 @@ Arguments:
 func printService() error {
 	execPath, err := os.Executable()
 	if err != nil {
-		return errors.New("Failed to detect executable location")
+		return errors.Join(errors.New("failed to get executable"), err)
 	}
 
 	servicePath := "/etc/systemd/system/ground.service"

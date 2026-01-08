@@ -3,7 +3,8 @@ package server
 import (
 	"embed"
 	"errors"
-	"log"
+	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -19,7 +20,7 @@ var static embed.FS
 func Run() {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println("panic occurred:", err)
+			slog.Error("panic occured", "error", err)
 		}
 	}()
 
@@ -58,25 +59,27 @@ func Run() {
 
 	ip, err := getLocalIPv4()
 	if err != nil {
-		log.Fatalln(err)
+		slog.Error("failed to get local ip", "error", err)
+		os.Exit(1)
 	}
 	port := ":3478"
-	log.Printf("server is running on http://%s%s...\n", ip, port)
+	slog.Info("server is running", "url", fmt.Sprintf("http://%s%s", ip, port))
 	err = http.ListenAndServe(port, nil)
 	if err != nil {
-		log.Fatalln(err)
+		slog.Error("failed to run server", "error", err)
+		os.Exit(1)
 	}
 }
 
 func getLocalIPv4() (net.IP, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(errors.New("failed to get hostname"), err)
 	}
 
 	ips, err := net.LookupIP(hostname)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(errors.New("failed to get lookup ip"), err)
 	}
 
 	for _, ip := range ips {
@@ -85,5 +88,5 @@ func getLocalIPv4() (net.IP, error) {
 		}
 	}
 
-	return nil, errors.New("ip not found")
+	return nil, errors.New("failed to find ip")
 }
