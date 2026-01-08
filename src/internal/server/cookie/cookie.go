@@ -111,7 +111,7 @@ func getTokenFromUsername(username string) (string, time.Time) {
 func getUsernameFromToken(token string) (string, error) {
 	split := strings.Split(token, "|")
 	if len(split) != 2 {
-		return "", errors.New("invalid token")
+		return "", errors.New("token is not valid")
 	}
 
 	valueBytesHashedEncoded := split[1]
@@ -127,13 +127,13 @@ func getUsernameFromToken(token string) (string, error) {
 	}
 
 	if !hmac.Equal(getHashedBytes(valueBytes), valueBytesHashed) {
-		return "", errors.New("hash invalid")
+		return "", errors.New("hash is not valid")
 	}
 
 	value := string(valueBytes)
 	split = strings.Split(value, " ")
 	if len(split) != 2 {
-		return "", errors.New("invalid token")
+		return "", errors.New("token is not valid")
 	}
 
 	expiry, err := strconv.ParseInt(split[1], 10, 64)

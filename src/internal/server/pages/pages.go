@@ -216,7 +216,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 	targetUsername := r.PathValue("username")
 
 	if !users.UserIsValid(targetUsername) {
-		slog.Warn("user not valid", "request", r.URL.Path, "requestor", requestor)
+		slog.Warn("user is not valid", "request", r.URL.Path, "requestor", requestor)
 		getProblemPage(w, r, "requested user is not valid")
 		return
 	}
