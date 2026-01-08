@@ -150,12 +150,10 @@
                 const formData = new FormData();
                 formData.append("username", username);
                 fetch("/api/user/toggle-admin", { method: "POST", body: formData }).then((response) => {
-                    if (response.ok) {
-                        location.reload(true);
-                    } else {
+                    if (!response.ok) {
                         response.text().then((text) => notifyError(text));
-                        toggleLoading();
                     }
+                    toggleLoading();
                 });
             } else {
                 selectElement.value = selectElement.value == "yes" ? "no" : "yes";
