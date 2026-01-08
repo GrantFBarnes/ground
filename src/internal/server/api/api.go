@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"mime"
@@ -23,16 +22,8 @@ func Middleware(next http.Handler) http.Handler {
 		username, err := cookie.GetUsername(r)
 		if err != nil {
 			cookie.RemoveUsername(w)
-			http.Error(w, "No login credentials found.", http.StatusUnauthorized)
+			http.Error(w, "no login credentials found", http.StatusUnauthorized)
 			return
-		}
-
-		targetUsername := r.PathValue("username")
-		if targetUsername != "" {
-			if !users.UserIsValid(targetUsername) {
-				http.Error(w, "Username is not valid.", http.StatusBadRequest)
-				return
-			}
 		}
 
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "requestor", username)))
@@ -40,41 +31,30 @@ func Middleware(next http.Handler) http.Handler {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	type bodyStruct struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-	var body bodyStruct
+	username := r.FormValue("username")
+	password := r.FormValue("password")
 
-	defer r.Body.Close()
-
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		http.Error(w, "Invalid body provided.", http.StatusBadRequest)
+	if !users.UserIsValid(username) {
+		http.Error(w, "username is not valid", http.StatusBadRequest)
 		return
 	}
 
-	if body.Username == "" {
-		http.Error(w, "No username provided.", http.StatusBadRequest)
+	if password == "" {
+		http.Error(w, "password not provided", http.StatusBadRequest)
 		return
 	}
 
-	if body.Password == "" {
-		http.Error(w, "No password provided.", http.StatusBadRequest)
+	if strings.ContainsAny(password, "\n") {
+		http.Error(w, "password is not valid", http.StatusBadRequest)
 		return
 	}
 
-	if !users.UserIsValid(body.Username) {
-		http.Error(w, "Username not valid.", http.StatusBadRequest)
+	if !users.CredentialsAreValid(username, password) {
+		http.Error(w, "credentials are not valid", http.StatusBadRequest)
 		return
 	}
 
-	if !users.CredentialsAreValid(body.Username, body.Password) {
-		http.Error(w, "Credentials not valid.", http.StatusBadRequest)
-		return
-	}
-
-	login(w, body.Username)
+	login(w, username)
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -84,17 +64,28 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func Impersonate(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
+	username := r.FormValue("username")
 
 	if !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to impersonate.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to impersonate", http.StatusUnauthorized)
 		return
 	}
 
-	login(w, r.PathValue("username"))
+	if !users.UserIsValid(username) {
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	if requestor == username {
+		http.Error(w, "cannot impersonate yourself", http.StatusBadRequest)
+		return
+	}
+
+	login(w, username)
 }
 
 func login(w http.ResponseWriter, username string) {
-	filesystem.CreateTrashDirectory(username)
+	filesystem.CreateRequiredFiles(username)
 	cookie.RemoveUsername(w)
 	cookie.SetUsername(w, username)
 	w.WriteHeader(http.StatusOK)
@@ -102,15 +93,21 @@ func login(w http.ResponseWriter, username string) {
 
 func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
+	username := r.FormValue("username")
 
 	if !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to change admin status.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to change admin status", http.StatusUnauthorized)
 		return
 	}
 
-	err := users.ToggleAdmin(r.PathValue("username"))
+	if !users.UserIsValid(username) {
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	err := users.ToggleAdmin(username)
 	if err != nil {
-		http.Error(w, "Failed to change admin status.", http.StatusInternalServerError)
+		http.Error(w, "failed to change admin status", http.StatusInternalServerError)
 		return
 	}
 
@@ -136,30 +133,30 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
-		http.Error(w, "Path not found.", http.StatusBadRequest)
+		http.Error(w, "path not found", http.StatusBadRequest)
 		return
 	}
 
 	if !urlPathInfo.IsDir() {
-		http.Error(w, "Path is not a directory.", http.StatusBadRequest)
+		http.Error(w, "path is not a directory", http.StatusBadRequest)
 		return
 	}
 
 	uid, gid, err := users.GetUserIds(requestor)
 	if err != nil {
-		http.Error(w, "Failed to get user ids.", http.StatusInternalServerError)
+		http.Error(w, "failed to get user ids", http.StatusInternalServerError)
 		return
 	}
 
 	mediaType, contentParams, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || !strings.HasPrefix(mediaType, "multipart/") {
-		http.Error(w, "Failed to parse media type.", http.StatusInternalServerError)
+		http.Error(w, "failed to parse media type", http.StatusInternalServerError)
 		return
 	}
 
 	boundary, ok := contentParams["boundary"]
 	if !ok {
-		http.Error(w, "Failed to get file boundary.", http.StatusInternalServerError)
+		http.Error(w, "failed to get file boundary", http.StatusInternalServerError)
 		return
 	}
 
@@ -170,7 +167,7 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if err != nil {
-			http.Error(w, "Failed to get next file part.", http.StatusInternalServerError)
+			http.Error(w, "failed to get next file part", http.StatusInternalServerError)
 			return
 		}
 
@@ -223,12 +220,12 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
-		http.Error(w, "Path not found.", http.StatusBadRequest)
+		http.Error(w, "path not found", http.StatusBadRequest)
 		return
 	}
 
 	if urlPathInfo.IsDir() {
-		http.Error(w, "Path is a directory.", http.StatusBadRequest)
+		http.Error(w, "path is a directory", http.StatusBadRequest)
 		return
 	}
 
@@ -266,7 +263,7 @@ func SystemReboot(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
 
 	if !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to reboot.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to reboot", http.StatusUnauthorized)
 		return
 	}
 
@@ -283,7 +280,7 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
 
 	if !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to poweroff.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to poweroff", http.StatusUnauthorized)
 		return
 	}
 
@@ -298,19 +295,25 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	username := r.PathValue("username")
+	username := r.FormValue("username")
 
 	if !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to create users.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to create users", http.StatusUnauthorized)
 		return
 	}
 
 	if !users.UsernameIsValid(username) {
-		http.Error(w, "Username is not valid.", http.StatusBadRequest)
+		http.Error(w, "username is not valid", http.StatusBadRequest)
 		return
 	}
 
 	err := users.CreateUser(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = filesystem.CreateRequiredFiles(username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -321,10 +324,15 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	username := r.PathValue("username")
+	username := r.FormValue("username")
 
 	if requestor != username && !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to reset passwords for other users.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to reset passwords for other users", http.StatusUnauthorized)
+		return
+	}
+
+	if !users.UserIsValid(username) {
+		http.Error(w, "username is not valid", http.StatusBadRequest)
 		return
 	}
 
@@ -339,14 +347,20 @@ func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 
 func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	username := r.PathValue("username")
+	username := r.FormValue("username")
+	sshKey := r.FormValue("sshKey")
 
 	if requestor != username && !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to add SSH keys for other users.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to add SSH keys for other users", http.StatusUnauthorized)
 		return
 	}
 
-	err := filesystem.AddUserSshKey(username, r.FormValue("sshKey"))
+	if !users.UserIsValid(username) {
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.AddUserSshKey(username, sshKey)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -357,14 +371,20 @@ func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	username := r.PathValue("username")
+	username := r.FormValue("username")
+	index := r.FormValue("index")
 
 	if requestor != username && !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to delete SSH keys for other users.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to delete SSH keys for other users", http.StatusUnauthorized)
 		return
 	}
 
-	err := filesystem.DeleteUserSshKey(username, r.PathValue("index"))
+	if !users.UserIsValid(username) {
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.DeleteUserSshKey(username, index)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -375,10 +395,15 @@ func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	requestor := users.GetRequestor(r)
-	username := r.PathValue("username")
+	username := r.FormValue("username")
 
 	if requestor != username && !users.IsAdmin(requestor) {
-		http.Error(w, "Must be admin to delete other users.", http.StatusUnauthorized)
+		http.Error(w, "must be admin to delete other users", http.StatusUnauthorized)
+		return
+	}
+
+	if !users.UserIsValid(username) {
+		http.Error(w, "username is not valid", http.StatusBadRequest)
 		return
 	}
 

@@ -131,7 +131,7 @@
             if (confirmed) {
                 document.getElementById("create-user-dialog").close();
                 toggleLoading();
-                fetch(`/api/user/${username}/create`, { method: "POST" }).then((response) => {
+                fetch("/api/user", { method: "POST", body: formData }).then((response) => {
                     if (response.ok) {
                         location.href = `/user/${username}`;
                     } else {
@@ -147,7 +147,9 @@
         customConfirm(`Are you sure you want to change the admin status for '${username}'?`).then(confirmed => {
             if (confirmed) {
                 toggleLoading();
-                fetch(`/api/user/${username}/toggle-admin`, { method: "POST" }).then((response) => {
+                const formData = new FormData();
+                formData.append("username", username);
+                fetch("/api/user/toggle-admin", { method: "POST", body: formData }).then((response) => {
                     if (response.ok) {
                         location.reload(true);
                     } else {
@@ -165,7 +167,9 @@
         customConfirm(`Are you sure you want to impersonate user '${username}'?`).then(confirmed => {
             if (confirmed) {
                 toggleLoading();
-                fetch(`/api/user/${username}/impersonate`, { method: "POST" }).then((response) => {
+                const formData = new FormData();
+                formData.append("username", username);
+                fetch("/api/user/impersonate", { method: "POST", body: formData }).then((response) => {
                     if (response.ok) {
                         location.reload();
                     } else {

@@ -52,6 +52,13 @@
         </div>
     </div>
     <form id="add-ssh-key-form">
+        <input
+            type="text"
+            name="username"
+            value="{{.TargetUsername}}"
+            required="required"
+            hidden
+        />
         <label for="addSshKey">SSH Key:</label>
         <input
             type="text"
@@ -73,11 +80,12 @@
 <script>
     document.getElementById("add-ssh-key-form").addEventListener("submit", function (event) {
         event.preventDefault();
+        const formData = new FormData(this);
         customConfirm("Are you sure you want to add this SSH Key?").then(confirmed => {
             if (confirmed) {
                 document.getElementById("add-ssh-key-dialog").close();
                 toggleLoading();
-                fetch("/api/user/{{.TargetUsername}}/ssh-key", { method: "POST", body: new FormData(this) }).then((response) => {
+                fetch("/api/user/ssh-key", { method: "POST", body: formData }).then((response) => {
                     if (response.ok) {
                         location.reload();
                     } else {
@@ -93,7 +101,10 @@
         customConfirm("Are you sure you want to delete this SSH Key?").then(confirmed => {
             if (confirmed) {
                 toggleLoading();
-                fetch(`/api/user/{{.TargetUsername}}/ssh-key/${index}`, { method: "DELETE" }).then((response) => {
+                const formData = new FormData();
+                formData.append("username", "{{.TargetUsername}}");
+                formData.append("index", index);
+                fetch("/api/user/ssh-key", { method: "DELETE", body: formData }).then((response) => {
                     if (response.ok) {
                         location.reload();
                     } else {
@@ -109,7 +120,9 @@
         customConfirm(`Are you sure you want to reset this user's password?`).then(confirmed => {
             if (confirmed) {
                 toggleLoading();
-                fetch(`/api/user/{{.TargetUsername}}/password/reset`, { method: "POST" }).then((response) => {
+                const formData = new FormData();
+                formData.append("username", "{{.TargetUsername}}");
+                fetch("/api/user/password/reset", { method: "POST", body: formData }).then((response) => {
                     if (response.ok) {
                         //{{if eq .Username .TargetUsername}}
                         logout();
@@ -130,7 +143,9 @@
         customConfirm(`Are you sure you want to delete this user?`).then(confirmed => {
             if (confirmed) {
                 toggleLoading();
-                fetch(`/api/user/{{.TargetUsername}}`, { method: "DELETE" }).then((response) => {
+                const formData = new FormData();
+                formData.append("username", "{{.TargetUsername}}");
+                fetch("/api/user", { method: "DELETE", body: formData }).then((response) => {
                     if (response.ok) {
                         //{{if eq .Username .TargetUsername}}
                         logout();

@@ -32,20 +32,23 @@ func Run() {
 	// apis
 	http.HandleFunc("POST /api/login", api.Login)
 	http.HandleFunc("POST /api/logout", api.Logout)
+
 	http.Handle("POST /api/compress/", api.Middleware(http.HandlerFunc(api.CompressDirectory)))
 	http.Handle("POST /api/upload/", api.Middleware(http.HandlerFunc(api.UploadFiles)))
 	http.Handle("GET /api/download/", api.Middleware(http.HandlerFunc(api.DownloadFile)))
 	http.Handle("POST /api/trash/", api.Middleware(http.HandlerFunc(api.Trash)))
 	http.Handle("DELETE /api/trash", api.Middleware(http.HandlerFunc(api.EmptyTrash)))
+
 	http.Handle("POST /api/system/reboot", api.Middleware(http.HandlerFunc(api.SystemReboot)))
 	http.Handle("POST /api/system/poweroff", api.Middleware(http.HandlerFunc(api.SystemPoweroff)))
-	http.Handle("POST /api/user/{username}/create", api.Middleware(http.HandlerFunc(api.CreateUser)))
-	http.Handle("POST /api/user/{username}/toggle-admin", api.Middleware(http.HandlerFunc(api.ToggleAdmin)))
-	http.Handle("POST /api/user/{username}/impersonate", api.Middleware(http.HandlerFunc(api.Impersonate)))
-	http.Handle("POST /api/user/{username}/password/reset", api.Middleware(http.HandlerFunc(api.ResetUserPassword)))
-	http.Handle("POST /api/user/{username}/ssh-key", api.Middleware(http.HandlerFunc(api.AddUserSshKey)))
-	http.Handle("DELETE /api/user/{username}/ssh-key/{index}", api.Middleware(http.HandlerFunc(api.DeleteUserSshKey)))
-	http.Handle("DELETE /api/user/{username}", api.Middleware(http.HandlerFunc(api.DeleteUser)))
+
+	http.Handle("POST /api/user", api.Middleware(http.HandlerFunc(api.CreateUser)))
+	http.Handle("DELETE /api/user", api.Middleware(http.HandlerFunc(api.DeleteUser)))
+	http.Handle("POST /api/user/toggle-admin", api.Middleware(http.HandlerFunc(api.ToggleAdmin)))
+	http.Handle("POST /api/user/impersonate", api.Middleware(http.HandlerFunc(api.Impersonate)))
+	http.Handle("POST /api/user/password/reset", api.Middleware(http.HandlerFunc(api.ResetUserPassword)))
+	http.Handle("POST /api/user/ssh-key", api.Middleware(http.HandlerFunc(api.AddUserSshKey)))
+	http.Handle("DELETE /api/user/ssh-key", api.Middleware(http.HandlerFunc(api.DeleteUserSshKey)))
 
 	// pages
 	http.Handle("GET /{$}", pages.Middleware(http.HandlerFunc(pages.Home)))

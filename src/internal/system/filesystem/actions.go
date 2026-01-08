@@ -46,16 +46,27 @@ func CompressDirectory(username string, urlRelativePath string) error {
 	return nil
 }
 
-func CreateTrashDirectory(username string) error {
+func CreateRequiredFiles(username string) error {
 	uid, gid, err := users.GetUserIds(username)
 	if err != nil {
 		return errors.Join(errors.New("failed to get user ids"), err)
 	}
 
 	homePath := path.Join("/home", username)
+
 	err = CreateMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
 	if err != nil {
-		return errors.Join(errors.New("failed to create missing directories"), err)
+		return errors.Join(errors.New("failed to create trash directory"), err)
+	}
+
+	err = CreateMissingDirectories(homePath, ".ssh", uid, gid)
+	if err != nil {
+		return errors.Join(errors.New("failed to create ssh directory"), err)
+	}
+
+	err = createMissingFile(path.Join(homePath, ".ssh", "authorized_keys"), uid, gid)
+	if err != nil {
+		return errors.Join(errors.New("failed to create ssh keys file"), err)
 	}
 
 	return nil

@@ -82,7 +82,7 @@
 </div>
 {{end}}
 <script>
-    function emptyTrash(filePath) {
+    function emptyTrash() {
         customConfirm("Are you sure you want to empty the trash? This is permanent and cannot be undone.").then(confirmed => {
             if (confirmed) {
                 toggleLoading();

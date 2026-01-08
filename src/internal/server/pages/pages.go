@@ -226,6 +226,13 @@ func User(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err := filesystem.CreateRequiredFiles(targetUsername)
+	if err != nil {
+		slog.Error("failed to create required files", "request", r.URL.Path, "requestor", requestor, "error", err)
+		getProblemPage(w, r, "failed to create required files")
+		return
+	}
+
 	sshKeys, err := filesystem.GetUserSshKeys(targetUsername)
 	if err != nil {
 		slog.Error("failed to get ssh keys", "request", r.URL.Path, "requestor", requestor, "error", err)
