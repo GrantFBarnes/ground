@@ -1,14 +1,18 @@
 {{define "body"}}
 <h1>Manage User - {{.TargetUsername}}</h1>
-<button onclick="resetPassword()">
-    Reset Password
-</button>
-&nbsp;&nbsp;
-<button onclick="deleteUser()">
-    Delete User
-</button>
-<br />
-<br />
+
+<details>
+    <summary>Manage User</summary>
+    <div style="display: grid; grid-auto-flow: column">
+        <div style="text-align: center;">
+            <button onclick="resetPassword()">Reset Password</button>
+        </div>
+        <div style="text-align: center;">
+            <button onclick="deleteUser()">Delete User</button>
+        </div>
+    </div>
+</details>
+
 <h3>SSH Keys</h3>
 <button onclick="document.getElementById('add-ssh-key-dialog').showModal()">
     Add New SSH Key

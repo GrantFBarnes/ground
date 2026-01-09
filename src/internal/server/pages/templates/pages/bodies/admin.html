@@ -4,9 +4,9 @@
 <div>Home Disk Usage: {{.DiskUsage}}</div>
 <div>Uptime: {{.Uptime}}</div>
 <br />
+
 <details>
-    <summary>System Control</summary>
-    <br />
+    <summary>Power Control</summary>
     <div style="display: grid; grid-auto-flow: column">
         <div style="text-align: center;">
             <button onclick="systemCall('reboot')">Reboot</button>
@@ -16,7 +16,7 @@
         </div>
     </div>
 </details>
-<br />
+
 <h3>Users</h3>
 <button onclick="document.getElementById('create-user-dialog').showModal()">
     Create New User
