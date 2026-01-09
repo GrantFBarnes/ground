@@ -26,6 +26,12 @@ dialog::backdrop {
     opacity: 0.8;
 }
 
+details {
+    border: 2px solid;
+    padding: var(--padding-large);
+    border-radius: var(--padding-small);
+}
+
 .table-container {
     width: 100%;
     overflow-x: auto;
