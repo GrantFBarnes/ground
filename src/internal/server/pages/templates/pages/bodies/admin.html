@@ -7,14 +7,14 @@
 <details>
     <summary>System Control</summary>
     <br />
-    <button onclick="systemCall('reboot')">
-        Reboot
-    </button>
-    <br />
-    <br />
-    <button onclick="systemCall('poweroff')">
-        Poweroff
-    </button>
+    <div style="display: grid; grid-auto-flow: column">
+        <div style="text-align: center;">
+            <button onclick="systemCall('reboot')">Reboot</button>
+        </div>
+        <div style="text-align: center;">
+            <button onclick="systemCall('poweroff')">Poweroff</button>
+        </div>
+    </div>
 </details>
 <br />
 <h3>Users</h3>
