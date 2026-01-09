@@ -126,15 +126,15 @@ func getFileExtension(fileName string) (string, string) {
 	return coreFileName, fileExtension
 }
 
-func GetDirectoryEntries(urlRelativePath string, urlRootPath string, isTrash bool) ([]DirectoryEntryData, error) {
-	dirEntries, err := os.ReadDir(urlRootPath)
+func GetDirectoryEntries(relDirPath string, rootDirPath string, isTrash bool) ([]DirectoryEntryData, error) {
+	dirEntries, err := os.ReadDir(rootDirPath)
 	if err != nil {
 		return nil, errors.Join(errors.New("failed to read directory"), err)
 	}
 
 	var directoryEntries []DirectoryEntryData
 	for _, entry := range dirEntries {
-		directoryEntry, err := getDirectoryEntry(entry, urlRelativePath, urlRootPath, isTrash)
+		directoryEntry, err := getDirectoryEntry(entry, relDirPath, rootDirPath, isTrash)
 		if err != nil {
 			continue
 		}
@@ -144,7 +144,7 @@ func GetDirectoryEntries(urlRelativePath string, urlRootPath string, isTrash boo
 	return sortDirectoryEntries(directoryEntries), nil
 }
 
-func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath string, isTrash bool) (DirectoryEntryData, error) {
+func getDirectoryEntry(entry os.DirEntry, relDirPath string, rootDirPath string, isTrash bool) (DirectoryEntryData, error) {
 	entryInfo, err := entry.Info()
 	if err != nil {
 		return DirectoryEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
@@ -154,7 +154,7 @@ func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath st
 		IsDir:        entry.IsDir(),
 		isTrash:      isTrash,
 		Name:         entry.Name(),
-		Path:         path.Join(urlRelativePath, entry.Name()),
+		Path:         path.Join(relDirPath, entry.Name()),
 		size:         entryInfo.Size(),
 		LastModified: entryInfo.ModTime().Format("2006-01-02 03:04:05 PM"),
 	}
@@ -165,7 +165,7 @@ func getDirectoryEntry(entry os.DirEntry, urlRelativePath string, urlRootPath st
 	if directoryEntry.isTrash {
 		directoryEntry.Path = path.Join("/", TRASH_HOME_PATH, directoryEntry.Path)
 	} else {
-		symLinkPath, isSymLinkDir := directoryEntry.getSymLinkInfo(urlRootPath)
+		symLinkPath, isSymLinkDir := directoryEntry.getSymLinkInfo(rootDirPath)
 		directoryEntry.SymLinkPath = symLinkPath
 		if isSymLinkDir {
 			directoryEntry.IsDir = true
@@ -211,14 +211,14 @@ func (directoryEntry DirectoryEntryData) getHumanSize() string {
 	return fmt.Sprintf("%d B", directoryEntry.size)
 }
 
-func (directoryEntry DirectoryEntryData) getSymLinkInfo(urlRootPath string) (string, bool) {
-	linkPath, err := os.Readlink(path.Join(urlRootPath, directoryEntry.Name))
+func (directoryEntry DirectoryEntryData) getSymLinkInfo(rootPath string) (string, bool) {
+	linkPath, err := os.Readlink(path.Join(rootPath, directoryEntry.Name))
 	if err != nil {
 		return "", false
 	}
 
 	if !strings.HasPrefix(linkPath, "/") {
-		linkPath = path.Join(urlRootPath, linkPath)
+		linkPath = path.Join(rootPath, linkPath)
 	}
 
 	linkInfo, err := os.Stat(linkPath)
@@ -226,7 +226,7 @@ func (directoryEntry DirectoryEntryData) getSymLinkInfo(urlRootPath string) (str
 		return "", false
 	}
 
-	return strings.TrimPrefix(linkPath, urlRootPath), linkInfo.IsDir()
+	return strings.TrimPrefix(linkPath, rootPath), linkInfo.IsDir()
 }
 
 func sortDirectoryEntries(directoryEntries []DirectoryEntryData) []DirectoryEntryData {
@@ -249,7 +249,7 @@ func sortDirectoryEntries(directoryEntries []DirectoryEntryData) []DirectoryEntr
 	return directoryEntries
 }
 
-func GetFileBreadcrumbs(homeName string, urlPath string) []FilePathBreadcrumb {
+func GetFileBreadcrumbs(homeName string, relPath string) []FilePathBreadcrumb {
 	breadcrumbPath := "/"
 	FilePathBreadcrumbs := []FilePathBreadcrumb{
 		{
@@ -259,7 +259,7 @@ func GetFileBreadcrumbs(homeName string, urlPath string) []FilePathBreadcrumb {
 		},
 	}
 
-	for breadcrumbDir := range strings.SplitSeq(urlPath, string(filepath.Separator)) {
+	for breadcrumbDir := range strings.SplitSeq(relPath, string(filepath.Separator)) {
 		if breadcrumbDir == "" {
 			continue
 		}

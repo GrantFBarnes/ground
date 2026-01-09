@@ -14,18 +14,18 @@ import (
 	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
-func CompressDirectory(username string, urlRelativePath string) error {
-	urlRootPath := path.Join("/home", username, urlRelativePath)
-	urlPathInfo, err := os.Stat(urlRootPath)
+func CompressDirectory(username string, relDirPath string) error {
+	rootDirPath := path.Join("/home", username, relDirPath)
+	dirInfo, err := os.Stat(rootDirPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to get path stat"), err)
 	}
 
-	if !urlPathInfo.IsDir() {
+	if !dirInfo.IsDir() {
 		return errors.New("path is not a directory")
 	}
 
-	dirPath, dirName := path.Split(urlRootPath)
+	dirPath, dirName := path.Split(rootDirPath)
 	fileName, err := GetAvailableFileName(dirPath, dirName+".tar.gz")
 	if err != nil {
 		return errors.Join(errors.New("failed to find available file name"), err)
@@ -37,7 +37,7 @@ func CompressDirectory(username string, urlRelativePath string) error {
 		return errors.New("file already exists")
 	}
 
-	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+urlRootPath+"' .", username)
+	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+rootDirPath+"' .", username)
 	err = cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed to compress directory"), err)
@@ -72,9 +72,9 @@ func CreateRequiredFiles(username string) error {
 	return nil
 }
 
-func Trash(username string, urlRelativePath string) error {
-	urlRootPath := path.Join("/home", username, urlRelativePath)
-	_, err := os.Stat(urlRootPath)
+func Trash(username string, relDirPath string) error {
+	rootDirPath := path.Join("/home", username, relDirPath)
+	_, err := os.Stat(rootDirPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to get path stat"), err)
 	}
@@ -85,13 +85,13 @@ func Trash(username string, urlRelativePath string) error {
 	}
 
 	homePath := path.Join("/home", username)
-	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(urlRelativePath))
+	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(relDirPath))
 	err = CreateMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
 	if err != nil {
 		return errors.Join(errors.New("failed to create missing directories"), err)
 	}
 
-	cmd := exec.Command("mv", urlRootPath, path.Join(homePath, trashTimestampHomePath))
+	cmd := exec.Command("mv", rootDirPath, path.Join(homePath, trashTimestampHomePath))
 	err = cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed to move files"), err)
