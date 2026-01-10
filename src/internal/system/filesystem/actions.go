@@ -32,15 +32,52 @@ func CompressDirectory(username string, relDirPath string) error {
 	}
 	filePath := path.Join(dirPath, fileName)
 
-	_, err = os.Stat(filePath)
-	if err == nil {
-		return errors.New("file already exists")
-	}
-
 	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+rootDirPath+"' .", username)
 	err = cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed to compress directory"), err)
+	}
+
+	return nil
+}
+
+func ExtractFile(username string, relFilePath string) error {
+	rootFilePath := path.Join("/home", username, relFilePath)
+	fileInfo, err := os.Stat(rootFilePath)
+	if err != nil {
+		return errors.Join(errors.New("failed to get path stat"), err)
+	}
+
+	if fileInfo.IsDir() {
+		return errors.New("path is a directory")
+	}
+
+	fileDirPath, fileName := path.Split(rootFilePath)
+	fileNameNoExt, fileExt := getFileExtension(fileName)
+	if fileExt != ".tar.gz" {
+		return errors.New("file is not compressed")
+	}
+
+	uid, gid, err := users.GetUserIds(username)
+	if err != nil {
+		return errors.Join(errors.New("failed to get user ids"), err)
+	}
+
+	extractedDirName, err := GetAvailableFileName(fileDirPath, fileNameNoExt)
+	if err != nil {
+		return errors.Join(errors.New("failed to find available name"), err)
+	}
+	extractedDirPath := path.Join(fileDirPath, extractedDirName)
+
+	err = CreateMissingDirectories(fileDirPath, extractedDirName, uid, gid)
+	if err != nil {
+		return errors.Join(errors.New("failed to create extract directory"), err)
+	}
+
+	cmd := exec.Command("su", "-c", "tar -xzf '"+rootFilePath+"' --directory='"+extractedDirPath+"'", username)
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to extract file"), err)
 	}
 
 	return nil

@@ -42,6 +42,7 @@
                 <th style="text-align: right;">size</th>
                 <th style="text-align: right;">last modified</th>
                 <th></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -67,7 +68,16 @@
                         class="clickable"
                         onclick="compressDirectory('{{.Path}}')"
                     >&#128476;</span>
-                    {{else}}
+                    {{else if .IsCompressed}}
+                    <span
+                        title="Extract File"
+                        class="clickable"
+                        onclick="extractFile('{{.Path}}')"
+                    >&#128449;</span>
+                    {{end}}
+                </td>
+                <td class="single-icon-cell">
+                    {{if not .IsDir}}
                     <span
                         title="Download File"
                         class="clickable"
@@ -101,6 +111,18 @@
     function compressDirectory(filePath) {
         toggleLoading();
         fetch("/api/compress" + filePath, { method: "POST" }).then((response) => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                response.text().then((text) => notifyError(text));
+                toggleLoading();
+            }
+        });
+    }
+
+    function extractFile(filePath) {
+        toggleLoading();
+        fetch("/api/extract" + filePath, { method: "POST" }).then((response) => {
             if (response.ok) {
                 location.reload();
             } else {

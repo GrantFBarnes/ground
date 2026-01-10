@@ -28,6 +28,7 @@ func SetupFileCopyNameRegex() error {
 
 type DirectoryEntryData struct {
 	IsDir        bool
+	IsCompressed bool
 	isTrash      bool
 	Name         string
 	Path         string
@@ -152,6 +153,7 @@ func getDirectoryEntry(entry os.DirEntry, relDirPath string, rootDirPath string,
 
 	directoryEntry := DirectoryEntryData{
 		IsDir:        entry.IsDir(),
+		IsCompressed: strings.HasSuffix(entry.Name(), ".tar.gz"),
 		isTrash:      isTrash,
 		Name:         entry.Name(),
 		Path:         path.Join(relDirPath, entry.Name()),

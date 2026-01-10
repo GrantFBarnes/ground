@@ -138,6 +138,19 @@ func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func ExtractFile(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/extract")
+	err := filesystem.ExtractFile(requestor, urlRelativePath)
+	if err != nil {
+		slog.Error("failed to extract file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "failed to extract file", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
