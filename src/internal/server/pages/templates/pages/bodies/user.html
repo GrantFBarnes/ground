@@ -2,15 +2,62 @@
 <h1>Manage User - {{.TargetUsername}}</h1>
 
 <details>
-    <summary>Manage User</summary>
+    <summary>Change Password</summary>
+    <br />
     <div style="display: grid; grid-auto-flow: column">
-        <div style="text-align: center;">
+        <div>
+            <form id="change-password-form">
+                <input
+                    type="text"
+                    name="username"
+                    value="{{.TargetUsername}}"
+                    hidden
+                >
+                <label for="currentPassword">Current Password:</label>
+                <br />
+                <input
+                    type="password"
+                    id="currentPassword"
+                    name="currentPassword"
+                    required="required"
+                >
+                <br />
+                <label for="newPassword">New Password:</label>
+                <br />
+                <input
+                    type="password"
+                    id="newPassword"
+                    name="newPassword"
+                    required="required"
+                >
+                <br />
+                <label for="newPasswordConfirm">New Password Confirm:</label>
+                <br />
+                <input
+                    type="password"
+                    id="newPasswordConfirm"
+                    name="newPasswordConfirm"
+                    required="required"
+                >
+                <br />
+                <br />
+                <input
+                    type="submit"
+                    value="Change Password"
+                >
+            </form>
+        </div>
+        <div>
+            <p>Reset password to 'password'</p>
             <button onclick="resetPassword()">Reset Password</button>
         </div>
-        <div style="text-align: center;">
-            <button onclick="deleteUser()">Delete User</button>
-        </div>
     </div>
+</details>
+<br />
+<details>
+    <summary>Delete User</summary>
+    <br />
+    <button onclick="deleteUser()">Delete User</button>
 </details>
 
 <h3>SSH Keys</h3>
@@ -82,6 +129,25 @@
     </form>
 </dialog>
 <script>
+    document.getElementById("change-password-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        toggleLoading();
+        fetch("/api/user/password/change", { method: "POST", body: formData }).then((response) => {
+            if (response.ok) {
+                //{{if eq .Username .TargetUsername}}
+                logout();
+                //{{else}}
+                toggleLoading();
+                notifyInfo("Password changed successfully.");
+                //{{end}}
+            } else {
+                response.text().then((text) => notifyError(text));
+                toggleLoading();
+            }
+        });
+    });
+
     document.getElementById("add-ssh-key-form").addEventListener("submit", function (event) {
         event.preventDefault();
         const formData = new FormData(this);

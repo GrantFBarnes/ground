@@ -46,6 +46,7 @@ func Run() {
 	http.Handle("DELETE /api/user", api.Middleware(http.HandlerFunc(api.DeleteUser)))
 	http.Handle("POST /api/user/toggle-admin", api.Middleware(http.HandlerFunc(api.ToggleAdmin)))
 	http.Handle("POST /api/user/impersonate", api.Middleware(http.HandlerFunc(api.Impersonate)))
+	http.Handle("POST /api/user/password/change", api.Middleware(http.HandlerFunc(api.ChangeUserPassword)))
 	http.Handle("POST /api/user/password/reset", api.Middleware(http.HandlerFunc(api.ResetUserPassword)))
 	http.Handle("POST /api/user/ssh-key", api.Middleware(http.HandlerFunc(api.AddUserSshKey)))
 	http.Handle("DELETE /api/user/ssh-key", api.Middleware(http.HandlerFunc(api.DeleteUserSshKey)))

@@ -379,6 +379,59 @@ func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func ChangeUserPassword(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	username := r.FormValue("username")
+	currentPassword := r.FormValue("currentPassword")
+	newPassword := r.FormValue("newPassword")
+	newPasswordConfirm := r.FormValue("newPasswordConfirm")
+
+	if requestor != username && !users.IsAdmin(requestor) {
+		slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "must be admin to change passwords for other users", http.StatusUnauthorized)
+		return
+	}
+
+	if !users.UserIsValid(username) {
+		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	if newPassword == "" {
+		slog.Warn("password not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "password not provided", http.StatusBadRequest)
+		return
+	}
+
+	if strings.ContainsAny(newPassword, "\n") {
+		slog.Warn("password is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "password is not valid", http.StatusBadRequest)
+		return
+	}
+
+	if newPassword != newPasswordConfirm {
+		slog.Warn("password confirm does not match", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "password confirm does not match", http.StatusBadRequest)
+		return
+	}
+
+	if !users.CredentialsAreValid(username, currentPassword) {
+		slog.Warn("credentials are not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "credentials are not valid", http.StatusBadRequest)
+		return
+	}
+
+	err := users.SetUserPassword(username, newPassword)
+	if err != nil {
+		slog.Error("failed to change password", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
+		http.Error(w, "failed to change password", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func AddUserSshKey(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	username := r.FormValue("username")

@@ -22,7 +22,7 @@ func CreateUser(username string) error {
 		return errors.Join(errors.New("failed to create user"), err)
 	}
 
-	err = setUserPassword(username, "password")
+	err = SetUserPassword(username, "password")
 	if err != nil {
 		return errors.Join(errors.New("failed to set user password"), err)
 	}
@@ -42,7 +42,7 @@ func DeleteUser(username string) error {
 }
 
 func ResetUserPassword(username string) error {
-	err := setUserPassword(username, "password")
+	err := SetUserPassword(username, "password")
 	if err != nil {
 		return errors.Join(errors.New("failed to set user password"), err)
 	}
@@ -50,7 +50,7 @@ func ResetUserPassword(username string) error {
 	return nil
 }
 
-func setUserPassword(username string, password string) error {
+func SetUserPassword(username string, password string) error {
 	cmd := exec.Command("passwd", "--stdin", username)
 
 	stdin, err := cmd.StdinPipe()
