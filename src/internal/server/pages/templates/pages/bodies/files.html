@@ -134,7 +134,6 @@
     const hoverClassName = "highlighted-normal";
     const tableContainerElement = document.getElementById("directory-entries-table-container");
     let draggedRowName = null;
-    let isHoveringOverDirRow = false;
 
     function handleRowDragStart(event) {
         event.target.classList.add(draggedClassName);
@@ -148,25 +147,25 @@
 
     function handleDirRowDragOver(event) {
         event.preventDefault();
+        event.stopPropagation();
         tableContainerElement.classList.remove(hoverClassName);
         const row = event.target.closest("tr");
         if (row) row.classList.add(hoverClassName);
-        isHoveringOverDirRow = true;
     }
 
     function handleDirRowDragLeave(event) {
         event.preventDefault();
+        event.stopPropagation();
         const row = event.target.closest("tr");
         if (row) row.classList.remove(hoverClassName);
-        isHoveringOverDirRow = false;
     }
 
     function handleDirRowDrop(event) {
         event.preventDefault();
+        event.stopPropagation();
         const droppedRowElement = event.target.closest("tr");
         if (!droppedRowElement) return;
         droppedRowElement.classList.remove(hoverClassName);
-        isHoveringOverDirRow = false;
 
         const dirName = droppedRowElement.dataset.name;
         if (draggedRowName) {
@@ -183,21 +182,21 @@
 
     function handleTableContainerDragOver(event) {
         event.preventDefault();
-        if (!draggedRowName && !isHoveringOverDirRow) {
+        if (!draggedRowName) {
             tableContainerElement.classList.add(hoverClassName);
         }
     }
 
     function handleTableContainerDragLeave(event) {
         event.preventDefault();
-        if (!draggedRowName && !isHoveringOverDirRow) {
+        if (!draggedRowName) {
             tableContainerElement.classList.remove(hoverClassName);
         }
     }
 
     function handleTableContainerDrop(event) {
         event.preventDefault();
-        if (!draggedRowName && !isHoveringOverDirRow) {
+        if (!draggedRowName) {
             tableContainerElement.classList.remove(hoverClassName);
             if (event.dataTransfer.items) {
                 uploadItems("{{.Path}}", event.dataTransfer.items);
