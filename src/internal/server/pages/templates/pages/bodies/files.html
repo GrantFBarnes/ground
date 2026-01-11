@@ -162,7 +162,7 @@
         if (!droppedRowElement) return;
         droppedRowElement.classList.remove("highlighted-normal");
         if (draggedRowElement) {
-            console.log("move " + draggedRowElement.dataset.name + " to " + droppedRowElement.dataset.name);
+            moveFiles(draggedRowElement.dataset.name, droppedRowElement.dataset.name);
         } else if (event.dataTransfer.items) {
             uploadItems(event.dataTransfer.items, droppedRowElement.dataset.name);
         }
@@ -302,6 +302,25 @@
                     location.reload(true);
                 }
             });
+    }
+
+    function moveFiles(source, destination) {
+        customConfirm(`Are you sure you want to move '${source}' to '${destination}'?`).then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                const formData = new FormData();
+                formData.append("source", source);
+                formData.append("destination", destination);
+                fetch("/api/move{{.Path}}", { method: "POST", body: formData }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     }
 
     function compressDirectory(filePath) {

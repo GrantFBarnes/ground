@@ -213,6 +213,58 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func MoveFiles(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/move")
+	source := r.FormValue("source")
+	destination := r.FormValue("destination")
+
+	urlRootPath := path.Join("/home", requestor, urlRelativePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
+	if err != nil {
+		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "path not found", http.StatusBadRequest)
+		return
+	}
+
+	if !urlPathInfo.IsDir() {
+		slog.Warn("path is not a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path is not a directory", http.StatusBadRequest)
+		return
+	}
+
+	sourcePath := path.Join(urlRootPath, source)
+	_, err = os.Stat(sourcePath)
+	if err != nil {
+		slog.Warn("source path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "source", source, "error", err)
+		http.Error(w, "source path not found", http.StatusBadRequest)
+		return
+	}
+
+	destinationPath := path.Join(urlRootPath, destination)
+	destinationPathInfo, err := os.Stat(destinationPath)
+	if err != nil {
+		slog.Warn("destination path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "destination", destination, "error", err)
+		http.Error(w, "destination path not found", http.StatusBadRequest)
+		return
+	}
+
+	if !destinationPathInfo.IsDir() {
+		slog.Warn("destination path is not a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "destination", destination)
+		http.Error(w, "destination path is not a directory", http.StatusBadRequest)
+		return
+	}
+
+	err = filesystem.Move(sourcePath, destinationPath)
+	if err != nil {
+		slog.Error("failed to move files", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "source", source, "destination", destination, "error", err)
+		http.Error(w, "failed to move files", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func createFileFromPart(part *multipart.Part, urlRootPath string, uid int, gid int) error {
 	_, params, err := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
 	if err != nil {

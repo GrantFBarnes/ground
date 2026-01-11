@@ -109,6 +109,16 @@ func CreateRequiredFiles(username string) error {
 	return nil
 }
 
+func Move(sourcePath string, destinationPath string) error {
+	cmd := exec.Command("mv", sourcePath, destinationPath)
+	err := cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to move files"), err)
+	}
+
+	return nil
+}
+
 func Trash(username string, relDirPath string) error {
 	rootDirPath := path.Join("/home", username, relDirPath)
 	_, err := os.Stat(rootDirPath)
