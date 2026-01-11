@@ -45,6 +45,9 @@
     id="directory-entries-table-container"
     class="table-container"
     style="padding-bottom: 200px;"
+    ondragover="handleTableContainerDragOver(event)"
+    ondragleave="handleTableContainerDragLeave(event)"
+    ondrop="handleTableContainerDrop(event)"
 >
     <table>
         <thead>
@@ -72,10 +75,6 @@
                 ondragover="handleDirRowDragOver(event)"
                 ondragleave="handleDirRowDragLeave(event)"
                 ondrop="handleDirRowDrop(event)"
-                {{else}}
-                ondragover="handleFileRowDragOver(event)"
-                ondragleave="handleFileRowDragLeave(event)"
-                ondrop="handleFileRowDrop(event)"
                 {{end}}
             >
                 <td class="single-icon-cell">
@@ -133,6 +132,7 @@
 <script>
     const tableContainerElement = document.getElementById("directory-entries-table-container");
     let draggedRowElement = null;
+    let isHoveringOverDirRow = false;
 
     function handleRowDragStart(event) {
         draggedRowElement = event.target;
@@ -146,14 +146,17 @@
 
     function handleDirRowDragOver(event) {
         event.preventDefault();
+        tableContainerElement.classList.remove("highlighted-normal");
         const row = event.target.closest("tr");
         if (row) row.classList.add("highlighted-normal");
+        isHoveringOverDirRow = true;
     }
 
     function handleDirRowDragLeave(event) {
         event.preventDefault();
         const row = event.target.closest("tr");
         if (row) row.classList.remove("highlighted-normal");
+        isHoveringOverDirRow = false;
     }
 
     function handleDirRowDrop(event) {
@@ -170,23 +173,23 @@
         }
     }
 
-    function handleFileRowDragOver(event) {
+    function handleTableContainerDragOver(event) {
         event.preventDefault();
-        if (!draggedRowElement) {
+        if (!draggedRowElement && !isHoveringOverDirRow) {
             tableContainerElement.classList.add("highlighted-normal");
         }
     }
 
-    function handleFileRowDragLeave(event) {
+    function handleTableContainerDragLeave(event) {
         event.preventDefault();
-        if (!draggedRowElement) {
+        if (!draggedRowElement && !isHoveringOverDirRow) {
             tableContainerElement.classList.remove("highlighted-normal");
         }
     }
 
-    function handleFileRowDrop(event) {
+    function handleTableContainerDrop(event) {
         event.preventDefault();
-        if (!draggedRowElement) {
+        if (!draggedRowElement && !isHoveringOverDirRow) {
             tableContainerElement.classList.remove("highlighted-normal");
             if (event.dataTransfer.items) {
                 uploadItems(event.dataTransfer.items);
