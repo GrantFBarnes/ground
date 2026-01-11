@@ -12,7 +12,14 @@
         {{if not .IsHome}}
         <span>/</span>
         {{end}}
-        <span><a href="/files{{.Path}}">{{.Name}}</a></span>
+        <span
+            {{if ne .Path $.Path}}
+            data-path="{{.Path}}"
+            ondragover="handleBreadcrumbDragOver(event)"
+            ondragleave="handleBreadcrumbDragLeave(event)"
+            ondrop="handleBreadcrumbDrop(event)"
+            {{end}}
+        ><a href="/files{{.Path}}">{{.Name}}</a></span>
         {{end}}
     </div>
     <div style="text-align: right;">Disk Usage: {{.DiskUsage}}</div>
@@ -201,6 +208,34 @@
             if (event.dataTransfer.items) {
                 uploadItems("{{.Path}}", event.dataTransfer.items);
             }
+        }
+    }
+
+    function handleBreadcrumbDragOver(event) {
+        event.preventDefault();
+        const span = event.target.closest("span");
+        if (span) span.classList.add(hoverClassName);
+    }
+
+    function handleBreadcrumbDragLeave(event) {
+        event.preventDefault();
+        const span = event.target.closest("span");
+        if (span) span.classList.remove(hoverClassName);
+    }
+
+    function handleBreadcrumbDrop(event) {
+        event.preventDefault();
+        const droppedSpanElement = event.target.closest("span");
+        if (!droppedSpanElement) return;
+        droppedSpanElement.classList.remove(hoverClassName);
+
+        const relHomePath = droppedSpanElement.dataset.path;
+        if (draggedRowName) {
+            const source = pathJoin("{{.Path}}", draggedRowName);
+            const destination = pathJoin(relHomePath, draggedRowName);
+            moveFiles(source, destination);
+        } else if (event.dataTransfer.items) {
+            uploadItems(relHomePath, event.dataTransfer.items);
         }
     }
 
