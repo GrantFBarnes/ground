@@ -131,17 +131,17 @@
 {{end}}
 <script>
     const tableContainerElement = document.getElementById("directory-entries-table-container");
-    let draggedRowElement = null;
+    let draggedRowName = null;
     let isHoveringOverDirRow = false;
 
     function handleRowDragStart(event) {
-        draggedRowElement = event.target;
-        draggedRowElement.classList.add("highlighted-extra");
+        event.target.classList.add("highlighted-extra");
+        draggedRowName = event.target.dataset.name;
     }
 
     function handleRowDragEnd(event) {
-        draggedRowElement.classList.remove("highlighted-extra");
-        draggedRowElement = null;
+        event.target.classList.remove("highlighted-extra");
+        draggedRowName = null;
     }
 
     function handleDirRowDragOver(event) {
@@ -164,32 +164,35 @@
         const droppedRowElement = event.target.closest("tr");
         if (!droppedRowElement) return;
         droppedRowElement.classList.remove("highlighted-normal");
-        if (draggedRowElement) {
-            if (draggedRowElement.dataset.name != droppedRowElement.dataset.name) {
-                moveFiles(draggedRowElement.dataset.name, droppedRowElement.dataset.name);
+        isHoveringOverDirRow = false;
+
+        const dirName = droppedRowElement.dataset.name;
+        if (draggedRowName) {
+            if (draggedRowName != dirName) {
+                moveFiles(draggedRowName, dirName);
             }
         } else if (event.dataTransfer.items) {
-            uploadItems(event.dataTransfer.items, droppedRowElement.dataset.name);
+            uploadItems(event.dataTransfer.items, dirName);
         }
     }
 
     function handleTableContainerDragOver(event) {
         event.preventDefault();
-        if (!draggedRowElement && !isHoveringOverDirRow) {
+        if (!draggedRowName && !isHoveringOverDirRow) {
             tableContainerElement.classList.add("highlighted-normal");
         }
     }
 
     function handleTableContainerDragLeave(event) {
         event.preventDefault();
-        if (!draggedRowElement && !isHoveringOverDirRow) {
+        if (!draggedRowName && !isHoveringOverDirRow) {
             tableContainerElement.classList.remove("highlighted-normal");
         }
     }
 
     function handleTableContainerDrop(event) {
         event.preventDefault();
-        if (!draggedRowElement && !isHoveringOverDirRow) {
+        if (!draggedRowName && !isHoveringOverDirRow) {
             tableContainerElement.classList.remove("highlighted-normal");
             if (event.dataTransfer.items) {
                 uploadItems(event.dataTransfer.items);
