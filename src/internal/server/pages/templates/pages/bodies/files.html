@@ -130,32 +130,34 @@
 </div>
 {{end}}
 <script>
+    const draggedClassName = "highlighted-extra";
+    const hoverClassName = "highlighted-normal";
     const tableContainerElement = document.getElementById("directory-entries-table-container");
     let draggedRowName = null;
     let isHoveringOverDirRow = false;
 
     function handleRowDragStart(event) {
-        event.target.classList.add("highlighted-extra");
+        event.target.classList.add(draggedClassName);
         draggedRowName = event.target.dataset.name;
     }
 
     function handleRowDragEnd(event) {
-        event.target.classList.remove("highlighted-extra");
+        event.target.classList.remove(draggedClassName);
         draggedRowName = null;
     }
 
     function handleDirRowDragOver(event) {
         event.preventDefault();
-        tableContainerElement.classList.remove("highlighted-normal");
+        tableContainerElement.classList.remove(hoverClassName);
         const row = event.target.closest("tr");
-        if (row) row.classList.add("highlighted-normal");
+        if (row) row.classList.add(hoverClassName);
         isHoveringOverDirRow = true;
     }
 
     function handleDirRowDragLeave(event) {
         event.preventDefault();
         const row = event.target.closest("tr");
-        if (row) row.classList.remove("highlighted-normal");
+        if (row) row.classList.remove(hoverClassName);
         isHoveringOverDirRow = false;
     }
 
@@ -163,7 +165,7 @@
         event.preventDefault();
         const droppedRowElement = event.target.closest("tr");
         if (!droppedRowElement) return;
-        droppedRowElement.classList.remove("highlighted-normal");
+        droppedRowElement.classList.remove(hoverClassName);
         isHoveringOverDirRow = false;
 
         const dirName = droppedRowElement.dataset.name;
@@ -179,21 +181,21 @@
     function handleTableContainerDragOver(event) {
         event.preventDefault();
         if (!draggedRowName && !isHoveringOverDirRow) {
-            tableContainerElement.classList.add("highlighted-normal");
+            tableContainerElement.classList.add(hoverClassName);
         }
     }
 
     function handleTableContainerDragLeave(event) {
         event.preventDefault();
         if (!draggedRowName && !isHoveringOverDirRow) {
-            tableContainerElement.classList.remove("highlighted-normal");
+            tableContainerElement.classList.remove(hoverClassName);
         }
     }
 
     function handleTableContainerDrop(event) {
         event.preventDefault();
         if (!draggedRowName && !isHoveringOverDirRow) {
-            tableContainerElement.classList.remove("highlighted-normal");
+            tableContainerElement.classList.remove(hoverClassName);
             if (event.dataTransfer.items) {
                 uploadItems(event.dataTransfer.items);
             }
