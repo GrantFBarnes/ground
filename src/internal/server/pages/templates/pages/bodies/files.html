@@ -42,7 +42,7 @@
 {{$directoryEntryCount := len .DirectoryEntries}}
 {{if gt $directoryEntryCount 0}}
 <div
-    id="directory-entries-table"
+    id="directory-entries-table-container"
     class="table-container"
     style="padding-bottom: 200px;"
 >
@@ -66,16 +66,16 @@
                 ondblclick="window.location.href='{{.UrlPath}}'"
                 data-name="{{.Name}}"
                 draggable="true"
-                ondragstart="handleDragStart(event)"
-                ondragend="handleDragEnd(event)"
+                ondragstart="handleRowDragStart(event)"
+                ondragend="handleRowDragEnd(event)"
                 {{if .IsDir}}
-                ondragover="handleDragOverDir(event)"
-                ondragleave="handleDragLeaveDir(event)"
-                ondrop="handleDropDir(event)"
+                ondragover="handleDirRowDragOver(event)"
+                ondragleave="handleDirRowDragLeave(event)"
+                ondrop="handleDirRowDrop(event)"
                 {{else}}
-                ondragover="handleDragOverFile(event)"
-                ondragleave="handleDragLeaveFile(event)"
-                ondrop="handleDropFile(event)"
+                ondragover="handleFileRowDragOver(event)"
+                ondragleave="handleFileRowDragLeave(event)"
+                ondrop="handleFileRowDrop(event)"
                 {{end}}
             >
                 <td class="single-icon-cell">
@@ -131,61 +131,63 @@
 </div>
 {{end}}
 <script>
-    const tableElement = document.getElementById("directory-entries-table");
+    const tableContainerElement = document.getElementById("directory-entries-table-container");
     let draggedRowElement = null;
 
-    function handleDragStart(event) {
+    function handleRowDragStart(event) {
         draggedRowElement = event.target;
         draggedRowElement.classList.add("highlighted-extra");
     }
 
-    function handleDragEnd(event) {
+    function handleRowDragEnd(event) {
         draggedRowElement.classList.remove("highlighted-extra");
         draggedRowElement = null;
     }
 
-    function handleDragOverDir(event) {
+    function handleDirRowDragOver(event) {
         event.preventDefault();
         const row = event.target.closest("tr");
         if (row) row.classList.add("highlighted-normal");
     }
 
-    function handleDragLeaveDir(event) {
+    function handleDirRowDragLeave(event) {
         event.preventDefault();
         const row = event.target.closest("tr");
         if (row) row.classList.remove("highlighted-normal");
     }
 
-    function handleDropDir(event) {
+    function handleDirRowDrop(event) {
         event.preventDefault();
         const droppedRowElement = event.target.closest("tr");
         if (!droppedRowElement) return;
         droppedRowElement.classList.remove("highlighted-normal");
         if (draggedRowElement) {
-            moveFiles(draggedRowElement.dataset.name, droppedRowElement.dataset.name);
+            if (draggedRowElement.dataset.name != droppedRowElement.dataset.name) {
+                moveFiles(draggedRowElement.dataset.name, droppedRowElement.dataset.name);
+            }
         } else if (event.dataTransfer.items) {
             uploadItems(event.dataTransfer.items, droppedRowElement.dataset.name);
         }
     }
 
-    function handleDragOverFile(event) {
+    function handleFileRowDragOver(event) {
         event.preventDefault();
         if (!draggedRowElement) {
-            tableElement.classList.add("highlighted-normal");
+            tableContainerElement.classList.add("highlighted-normal");
         }
     }
 
-    function handleDragLeaveFile(event) {
+    function handleFileRowDragLeave(event) {
         event.preventDefault();
         if (!draggedRowElement) {
-            tableElement.classList.remove("highlighted-normal");
+            tableContainerElement.classList.remove("highlighted-normal");
         }
     }
 
-    function handleDropFile(event) {
+    function handleFileRowDrop(event) {
         event.preventDefault();
         if (!draggedRowElement) {
-            tableElement.classList.remove("highlighted-normal");
+            tableContainerElement.classList.remove("highlighted-normal");
             if (event.dataTransfer.items) {
                 uploadItems(event.dataTransfer.items);
             }

@@ -219,6 +219,12 @@ func MoveFiles(w http.ResponseWriter, r *http.Request) {
 	source := r.FormValue("source")
 	destination := r.FormValue("destination")
 
+	if source == destination {
+		slog.Warn("source and destination are the same", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "source and destination are the same", http.StatusBadRequest)
+		return
+	}
+
 	urlRootPath := path.Join("/home", requestor, urlRelativePath)
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
