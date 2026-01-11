@@ -171,10 +171,13 @@
         const dirName = droppedRowElement.dataset.name;
         if (draggedRowName) {
             if (draggedRowName != dirName) {
-                moveFiles(draggedRowName, dirName);
+                const source = pathJoin("{{.Path}}", draggedRowName);
+                const destination = pathJoin("{{.Path}}", dirName);
+                moveFiles(source, destination);
             }
         } else if (event.dataTransfer.items) {
-            uploadItems(event.dataTransfer.items, dirName);
+            const relHomePath = pathJoin("{{.Path}}", dirName);
+            uploadItems(relHomePath, event.dataTransfer.items);
         }
     }
 
@@ -197,27 +200,27 @@
         if (!draggedRowName && !isHoveringOverDirRow) {
             tableContainerElement.classList.remove(hoverClassName);
             if (event.dataTransfer.items) {
-                uploadItems(event.dataTransfer.items);
+                uploadItems("{{.Path}}", event.dataTransfer.items);
             }
         }
     }
 
-    function uploadItems(items, dirName = "") {
-        customConfirm(`Are you sure you want to upload this file/directory${dirName ? " to " + dirName : ""}?`).then(confirmed => {
+    function uploadItems(relHomePath, items) {
+        customConfirm(`Are you sure you want to upload this file/directory to ${relHomePath}?`).then(confirmed => {
             if (confirmed) {
-                uploadDroppedFiles(items, dirName);
+                uploadDroppedFiles(relHomePath, items);
             }
         });
     }
 
-    async function uploadDroppedFiles(items, dirName) {
+    async function uploadDroppedFiles(relHomePath, items) {
         let files = [];
         for (const item of items) {
             const entry = item.webkitGetAsEntry();
             if (!entry) continue;
             files = files.concat(await traverseFileTree(entry));
         }
-        upload(files, dirName);
+        upload(relHomePath, files);
     }
 
     function traverseFileTree(entry, path = "") {
@@ -267,21 +270,13 @@
             files.push(file);
         }
 
-        upload(files);
+        upload("{{.Path}}", files);
     });
 
-    function upload(files, dirName = "") {
+    function upload(relHomePath, files) {
         if (files.length === 0) {
             notifyError("No files available to upload.");
             return;
-        }
-
-        let apiUrl = "/api/upload{{.Path}}";
-        if (dirName) {
-            if (!apiUrl.endsWith("/")) {
-                apiUrl += "/";
-            }
-            apiUrl += dirName;
         }
 
         toggleLoading();
@@ -290,8 +285,9 @@
         let failedFiles = [];
         const uploadPromises = files.map(file => {
             const formData = new FormData();
+            formData.append("relHomePath", relHomePath);
             formData.append("file", file);
-            return fetch(apiUrl, { method: "POST", body: formData })
+            return fetch("/api/upload", { method: "POST", body: formData })
                 .then((response) => {
                     if (response.ok) {
                         uploadCount += 1;
@@ -319,9 +315,9 @@
             if (confirmed) {
                 toggleLoading();
                 const formData = new FormData();
-                formData.append("source", source);
-                formData.append("destination", destination);
-                fetch("/api/move{{.Path}}", { method: "POST", body: formData }).then((response) => {
+                formData.append("sourceRelHomePath", source);
+                formData.append("destinationRelHomePath", destination);
+                fetch("/api/move", { method: "POST", body: formData }).then((response) => {
                     if (response.ok) {
                         location.reload();
                     } else {
@@ -333,29 +329,6 @@
         });
     }
 
-    function compressDirectory(filePath) {
-        toggleLoading();
-        fetch("/api/compress" + filePath, { method: "POST" }).then((response) => {
-            if (response.ok) {
-                location.reload();
-            } else {
-                response.text().then((text) => notifyError(text));
-                toggleLoading();
-            }
-        });
-    }
-
-    function extractFile(filePath) {
-        toggleLoading();
-        fetch("/api/extract" + filePath, { method: "POST" }).then((response) => {
-            if (response.ok) {
-                location.reload();
-            } else {
-                response.text().then((text) => notifyError(text));
-                toggleLoading();
-            }
-        });
-    }
 
     function downloadFile(filePath) {
         const a = document.createElement("a");
@@ -365,20 +338,22 @@
         a.remove();
     }
 
-    function moveToTrash(filePath) {
+    function moveToTrash(relHomePath) {
         customConfirm("Are you sure you want to move this file/directory to the trash?").then(confirmed => {
             if (confirmed) {
-                toggleLoading();
-                fetch("/api/trash" + filePath, { method: "POST" }).then((response) => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        response.text().then((text) => notifyError(text));
-                        toggleLoading();
-                    }
-                });
+                callFileApi("trash", relHomePath);
             }
         });
+    }
+
+    function pathJoin(left, right) {
+        if (!left.endsWith("/")) {
+            left += "/";
+        }
+        if (right.startsWith("/")) {
+            right = right.slice(1);
+        }
+        return left + right;
     }
 </script>
 {{end}}

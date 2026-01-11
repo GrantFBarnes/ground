@@ -14,8 +14,8 @@ import (
 	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
-func CompressDirectory(username string, relDirPath string) error {
-	rootDirPath := path.Join("/home", username, relDirPath)
+func CompressDirectory(username string, relHomePath string) error {
+	rootDirPath := path.Join("/home", username, relHomePath)
 	dirInfo, err := os.Stat(rootDirPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to get path stat"), err)
@@ -41,8 +41,8 @@ func CompressDirectory(username string, relDirPath string) error {
 	return nil
 }
 
-func ExtractFile(username string, relFilePath string) error {
-	rootFilePath := path.Join("/home", username, relFilePath)
+func ExtractFile(username string, relHomePath string) error {
+	rootFilePath := path.Join("/home", username, relHomePath)
 	fileInfo, err := os.Stat(rootFilePath)
 	if err != nil {
 		return errors.Join(errors.New("failed to get path stat"), err)
@@ -119,8 +119,8 @@ func Move(sourcePath string, destinationPath string) error {
 	return nil
 }
 
-func Trash(username string, relDirPath string) error {
-	rootDirPath := path.Join("/home", username, relDirPath)
+func Trash(username string, relHomePath string) error {
+	rootDirPath := path.Join("/home", username, relHomePath)
 	_, err := os.Stat(rootDirPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to get path stat"), err)
@@ -132,7 +132,7 @@ func Trash(username string, relDirPath string) error {
 	}
 
 	homePath := path.Join("/home", username)
-	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(relDirPath))
+	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(relHomePath))
 	err = CreateMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
 	if err != nil {
 		return errors.Join(errors.New("failed to create missing directories"), err)

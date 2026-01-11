@@ -108,30 +108,6 @@
         });
     }
 
-    function compressDirectory(filePath) {
-        toggleLoading();
-        fetch("/api/compress" + filePath, { method: "POST" }).then((response) => {
-            if (response.ok) {
-                location.reload();
-            } else {
-                response.text().then((text) => notifyError(text));
-                toggleLoading();
-            }
-        });
-    }
-
-    function extractFile(filePath) {
-        toggleLoading();
-        fetch("/api/extract" + filePath, { method: "POST" }).then((response) => {
-            if (response.ok) {
-                location.reload();
-            } else {
-                response.text().then((text) => notifyError(text));
-                toggleLoading();
-            }
-        });
-    }
-
     function downloadFile(filePath) {
         const a = document.createElement("a");
         a.href = "/api/download" + filePath;

@@ -127,8 +127,14 @@ func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
 
 func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
-	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/compress")
-	err := filesystem.CompressDirectory(requestor, urlRelativePath)
+	relHomePath := r.FormValue("relHomePath")
+	if relHomePath == "" {
+		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.CompressDirectory(requestor, relHomePath)
 	if err != nil {
 		slog.Error("failed to compress directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		http.Error(w, "failed to compress directory", http.StatusInternalServerError)
@@ -140,8 +146,14 @@ func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 
 func ExtractFile(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
-	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/extract")
-	err := filesystem.ExtractFile(requestor, urlRelativePath)
+	relHomePath := r.FormValue("relHomePath")
+	if relHomePath == "" {
+		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.ExtractFile(requestor, relHomePath)
 	if err != nil {
 		slog.Error("failed to extract file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		http.Error(w, "failed to extract file", http.StatusInternalServerError)
@@ -153,17 +165,22 @@ func ExtractFile(w http.ResponseWriter, r *http.Request) {
 
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
-	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
+	relHomePath := r.FormValue("relHomePath")
+	if relHomePath == "" {
+		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
 
-	urlRootPath := path.Join("/home", requestor, urlRelativePath)
-	urlPathInfo, err := os.Stat(urlRootPath)
+	rootPath := path.Join("/home", requestor, relHomePath)
+	rootPathInfo, err := os.Stat(rootPath)
 	if err != nil {
 		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		http.Error(w, "path not found", http.StatusBadRequest)
 		return
 	}
 
-	if !urlPathInfo.IsDir() {
+	if !rootPathInfo.IsDir() {
 		slog.Warn("path is not a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
 		http.Error(w, "path is not a directory", http.StatusBadRequest)
 		return
@@ -202,7 +219,7 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = createFileFromPart(part, urlRootPath, uid, gid)
+		err = createFileFromPart(part, rootPath, uid, gid)
 		if err != nil {
 			slog.Error("failed to create file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 			http.Error(w, "failed to create file", http.StatusInternalServerError)
@@ -215,55 +232,54 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 
 func MoveFiles(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
-	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/move")
-	source := r.FormValue("source")
-	destination := r.FormValue("destination")
+	sourceRelHomePath := r.FormValue("sourceRelHomePath")
+	destinationRelHomePath := r.FormValue("destinationRelHomePath")
 
-	if source == destination {
+	if sourceRelHomePath == "" {
+		slog.Warn("source path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "source path not provided", http.StatusBadRequest)
+		return
+	}
+
+	if destinationRelHomePath == "" {
+		slog.Warn("destination path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "destination path not provided", http.StatusBadRequest)
+		return
+	}
+
+	if sourceRelHomePath == destinationRelHomePath {
 		slog.Warn("source and destination are the same", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
 		http.Error(w, "source and destination are the same", http.StatusBadRequest)
 		return
 	}
 
-	urlRootPath := path.Join("/home", requestor, urlRelativePath)
-	urlPathInfo, err := os.Stat(urlRootPath)
-	if err != nil {
-		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, "path not found", http.StatusBadRequest)
-		return
-	}
+	homePath := path.Join("/home", requestor)
 
-	if !urlPathInfo.IsDir() {
-		slog.Warn("path is not a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		http.Error(w, "path is not a directory", http.StatusBadRequest)
-		return
-	}
-
-	sourcePath := path.Join(urlRootPath, source)
-	_, err = os.Stat(sourcePath)
+	sourcePath := path.Join(homePath, sourceRelHomePath)
+	_, err := os.Stat(sourcePath)
 	if err != nil {
-		slog.Warn("source path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "source", source, "error", err)
+		slog.Warn("source path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "source", sourceRelHomePath, "error", err)
 		http.Error(w, "source path not found", http.StatusBadRequest)
 		return
 	}
 
-	destinationPath := path.Join(urlRootPath, destination)
+	destinationPath := path.Join(homePath, destinationRelHomePath)
 	destinationPathInfo, err := os.Stat(destinationPath)
 	if err != nil {
-		slog.Warn("destination path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "destination", destination, "error", err)
+		slog.Warn("destination path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "destination", destinationRelHomePath, "error", err)
 		http.Error(w, "destination path not found", http.StatusBadRequest)
 		return
 	}
 
 	if !destinationPathInfo.IsDir() {
-		slog.Warn("destination path is not a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "destination", destination)
+		slog.Warn("destination path is not a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "destination", destinationRelHomePath)
 		http.Error(w, "destination path is not a directory", http.StatusBadRequest)
 		return
 	}
 
 	err = filesystem.Move(sourcePath, destinationPath)
 	if err != nil {
-		slog.Error("failed to move files", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "source", source, "destination", destination, "error", err)
+		slog.Error("failed to move files", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "source", sourceRelHomePath, "destination", destinationRelHomePath, "error", err)
 		http.Error(w, "failed to move files", http.StatusInternalServerError)
 		return
 	}
@@ -330,8 +346,14 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 
 func Trash(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
-	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/trash")
-	err := filesystem.Trash(requestor, urlRelativePath)
+	relHomePath := r.FormValue("relHomePath")
+	if relHomePath == "" {
+		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.Trash(requestor, relHomePath)
 	if err != nil {
 		slog.Error("failed to trash", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		http.Error(w, "failed to trash", http.StatusInternalServerError)
