@@ -67,102 +67,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func Impersonate(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
-	username := r.FormValue("username")
-
-	if !users.IsAdmin(requestor) {
-		slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "must be admin to impersonate", http.StatusUnauthorized)
-		return
-	}
-
-	if !users.UserIsValid(username) {
-		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "username is not valid", http.StatusBadRequest)
-		return
-	}
-
-	if requestor == username {
-		slog.Warn("cannot impersonate yourself", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "cannot impersonate yourself", http.StatusBadRequest)
-		return
-	}
-
-	login(w, username)
-}
-
-func login(w http.ResponseWriter, username string) {
-	filesystem.CreateRequiredFiles(username)
-	cookie.RemoveUsername(w)
-	cookie.SetUsername(w, username)
-	w.WriteHeader(http.StatusOK)
-}
-
-func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
-	username := r.FormValue("username")
-
-	if !users.IsAdmin(requestor) {
-		slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "must be admin to change admin status", http.StatusUnauthorized)
-		return
-	}
-
-	if !users.UserIsValid(username) {
-		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "username is not valid", http.StatusBadRequest)
-		return
-	}
-
-	err := users.ToggleAdmin(username)
-	if err != nil {
-		slog.Error("failed to change admin status", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, "failed to change admin status", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func CompressDirectory(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
-	relHomePath := r.FormValue("relHomePath")
-	if relHomePath == "" {
-		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		http.Error(w, "path not provided", http.StatusBadRequest)
-		return
-	}
-
-	err := filesystem.CompressDirectory(requestor, relHomePath)
-	if err != nil {
-		slog.Error("failed to compress directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, "failed to compress directory", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func ExtractFile(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
-	relHomePath := r.FormValue("relHomePath")
-	if relHomePath == "" {
-		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		http.Error(w, "path not provided", http.StatusBadRequest)
-		return
-	}
-
-	err := filesystem.ExtractFile(requestor, relHomePath)
-	if err != nil {
-		slog.Error("failed to extract file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, "failed to extract file", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
@@ -224,6 +128,69 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func DownloadFile(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/download")
+
+	urlRootPath := path.Join("/home", requestor, urlRelativePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
+	if err != nil {
+		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "path not found", http.StatusBadRequest)
+		return
+	}
+
+	if urlPathInfo.IsDir() {
+		slog.Warn("path is a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path is a directory", http.StatusBadRequest)
+		return
+	}
+
+	_, fileName := path.Split(urlRootPath)
+	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	http.ServeFile(w, r, urlRootPath)
+}
+
+func CompressDirectory(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	relHomePath := r.FormValue("relHomePath")
+	if relHomePath == "" {
+		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.CompressDirectory(requestor, relHomePath)
+	if err != nil {
+		slog.Error("failed to compress directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "failed to compress directory", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func ExtractFile(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	relHomePath := r.FormValue("relHomePath")
+	if relHomePath == "" {
+		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.ExtractFile(requestor, relHomePath)
+	if err != nil {
+		slog.Error("failed to extract file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "failed to extract file", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func MoveFiles(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	sourceRelHomePath := r.FormValue("sourceRelHomePath")
@@ -279,63 +246,6 @@ func MoveFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func createFileFromPart(part *multipart.Part, urlRootPath string, uid int, gid int) error {
-	_, params, err := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
-	if err != nil {
-		return errors.Join(errors.New("failed to get content disposition"), err)
-	}
-
-	fileRelPath, ok := params["filename"]
-	if !ok {
-		return errors.New("filename not found in content disposition")
-	}
-	fileDirRelPath, fileName := path.Split(fileRelPath)
-
-	err = filesystem.CreateMissingDirectories(urlRootPath, fileDirRelPath, uid, gid)
-	if err != nil {
-		return errors.Join(errors.New("failed to create missing directories"), err)
-	}
-
-	fileDirPath := path.Join(urlRootPath, fileDirRelPath)
-	fileName, err = filesystem.GetAvailableFileName(fileDirPath, fileName)
-	if err != nil {
-		return errors.Join(errors.New("failed to find available file name"), err)
-	}
-	filePath := path.Join(fileDirPath, fileName)
-
-	err = filesystem.CreateMultipartFile(part, filePath, uid, gid)
-	if err != nil {
-		return errors.Join(errors.New("failed to create multipart file"), err)
-	}
-
-	return nil
-}
-
-func DownloadFile(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
-	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/download")
-
-	urlRootPath := path.Join("/home", requestor, urlRelativePath)
-	urlPathInfo, err := os.Stat(urlRootPath)
-	if err != nil {
-		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, "path not found", http.StatusBadRequest)
-		return
-	}
-
-	if urlPathInfo.IsDir() {
-		slog.Warn("path is a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		http.Error(w, "path is a directory", http.StatusBadRequest)
-		return
-	}
-
-	_, fileName := path.Split(urlRootPath)
-	w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-	w.Header().Set("Content-Type", "application/octet-stream")
-
-	http.ServeFile(w, r, urlRootPath)
 }
 
 func Trash(w http.ResponseWriter, r *http.Request) {
@@ -438,6 +348,83 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	username := r.FormValue("username")
+
+	if requestor != username && !users.IsAdmin(requestor) {
+		slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "must be admin to delete other users", http.StatusUnauthorized)
+		return
+	}
+
+	if !users.UserIsValid(username) {
+		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	err := users.DeleteUser(username)
+	if err != nil {
+		slog.Error("failed to delete user", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
+		http.Error(w, "failed to delete user", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func ToggleAdmin(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	username := r.FormValue("username")
+
+	if !users.IsAdmin(requestor) {
+		slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "must be admin to change admin status", http.StatusUnauthorized)
+		return
+	}
+
+	if !users.UserIsValid(username) {
+		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	err := users.ToggleAdmin(username)
+	if err != nil {
+		slog.Error("failed to change admin status", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
+		http.Error(w, "failed to change admin status", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func Impersonate(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	username := r.FormValue("username")
+
+	if !users.IsAdmin(requestor) {
+		slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "must be admin to impersonate", http.StatusUnauthorized)
+		return
+	}
+
+	if !users.UserIsValid(username) {
+		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "username is not valid", http.StatusBadRequest)
+		return
+	}
+
+	if requestor == username {
+		slog.Warn("cannot impersonate yourself", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
+		http.Error(w, "cannot impersonate yourself", http.StatusBadRequest)
+		return
+	}
+
+	login(w, username)
 }
 
 func ResetUserPassword(w http.ResponseWriter, r *http.Request) {
@@ -573,28 +560,41 @@ func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
-	username := r.FormValue("username")
-
-	if requestor != username && !users.IsAdmin(requestor) {
-		slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "must be admin to delete other users", http.StatusUnauthorized)
-		return
-	}
-
-	if !users.UserIsValid(username) {
-		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "username is not valid", http.StatusBadRequest)
-		return
-	}
-
-	err := users.DeleteUser(username)
-	if err != nil {
-		slog.Error("failed to delete user", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username, "error", err)
-		http.Error(w, "failed to delete user", http.StatusInternalServerError)
-		return
-	}
-
+func login(w http.ResponseWriter, username string) {
+	filesystem.CreateRequiredFiles(username)
+	cookie.RemoveUsername(w)
+	cookie.SetUsername(w, username)
 	w.WriteHeader(http.StatusOK)
+}
+
+func createFileFromPart(part *multipart.Part, urlRootPath string, uid int, gid int) error {
+	_, params, err := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
+	if err != nil {
+		return errors.Join(errors.New("failed to get content disposition"), err)
+	}
+
+	fileRelPath, ok := params["filename"]
+	if !ok {
+		return errors.New("filename not found in content disposition")
+	}
+	fileDirRelPath, fileName := path.Split(fileRelPath)
+
+	err = filesystem.CreateMissingDirectories(urlRootPath, fileDirRelPath, uid, gid)
+	if err != nil {
+		return errors.Join(errors.New("failed to create missing directories"), err)
+	}
+
+	fileDirPath := path.Join(urlRootPath, fileDirRelPath)
+	fileName, err = filesystem.GetAvailableFileName(fileDirPath, fileName)
+	if err != nil {
+		return errors.Join(errors.New("failed to find available file name"), err)
+	}
+	filePath := path.Join(fileDirPath, fileName)
+
+	err = filesystem.CreateMultipartFile(part, filePath, uid, gid)
+	if err != nil {
+		return errors.Join(errors.New("failed to create multipart file"), err)
+	}
+
+	return nil
 }

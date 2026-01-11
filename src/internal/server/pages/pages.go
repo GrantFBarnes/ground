@@ -42,6 +42,52 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
+func Home(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/home.html",
+	)
+	if err != nil {
+		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		getProblemPage(w, r, "failed to generate html for the requested page")
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle string
+		Username  string
+		IsAdmin   bool
+	}{
+		PageTitle: "Ground - Home",
+		Username:  requestor,
+		IsAdmin:   users.IsAdmin(requestor),
+	})
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.ParseFS(
+		templates,
+		"templates/pages/base.html",
+		"templates/pages/bodies/login.html",
+	)
+	if err != nil {
+		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "error", err)
+		getProblemPage(w, r, "failed to generate html for the requested page")
+		return
+	}
+
+	_ = tmpl.ExecuteTemplate(w, "base", struct {
+		PageTitle string
+		Username  string
+	}{
+		PageTitle: "Ground - Login",
+		Username:  "",
+	})
+}
+
 func Files(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/files")
@@ -162,54 +208,6 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func Admin(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
-
-	if !users.IsAdmin(requestor) {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-
-	uptime, err := monitor.GetUptime()
-	if err != nil {
-		slog.Error("failed to server uptime", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get server uptime")
-		return
-	}
-
-	userListItems, err := users.GetUserListItems()
-	if err != nil {
-		slog.Error("failed to users", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get users")
-		return
-	}
-
-	tmpl, err := template.ParseFS(
-		templates,
-		"templates/pages/base.html",
-		"templates/pages/bodies/admin.html",
-	)
-	if err != nil {
-		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
-		return
-	}
-
-	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle     string
-		Username      string
-		DiskUsage     string
-		Uptime        string
-		UserListItems []users.UserListItem
-	}{
-		PageTitle:     "Ground - Admin",
-		Username:      requestor,
-		DiskUsage:     monitor.GetDirectoryDiskUsage("/home"),
-		Uptime:        uptime,
-		UserListItems: userListItems,
-	})
-}
-
 func User(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 
@@ -264,34 +262,32 @@ func User(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFS(
-		templates,
-		"templates/pages/base.html",
-		"templates/pages/bodies/login.html",
-	)
-	if err != nil {
-		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
+func Admin(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+
+	if !users.IsAdmin(requestor) {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
-	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle string
-		Username  string
-	}{
-		PageTitle: "Ground - Login",
-		Username:  "",
-	})
-}
+	uptime, err := monitor.GetUptime()
+	if err != nil {
+		slog.Error("failed to server uptime", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		getProblemPage(w, r, "failed to get server uptime")
+		return
+	}
 
-func Home(w http.ResponseWriter, r *http.Request) {
-	requestor := common.GetRequestor(r)
+	userListItems, err := users.GetUserListItems()
+	if err != nil {
+		slog.Error("failed to users", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		getProblemPage(w, r, "failed to get users")
+		return
+	}
 
 	tmpl, err := template.ParseFS(
 		templates,
 		"templates/pages/base.html",
-		"templates/pages/bodies/home.html",
+		"templates/pages/bodies/admin.html",
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
@@ -300,13 +296,17 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
-		PageTitle string
-		Username  string
-		IsAdmin   bool
+		PageTitle     string
+		Username      string
+		DiskUsage     string
+		Uptime        string
+		UserListItems []users.UserListItem
 	}{
-		PageTitle: "Ground - Home",
-		Username:  requestor,
-		IsAdmin:   users.IsAdmin(requestor),
+		PageTitle:     "Ground - Admin",
+		Username:      requestor,
+		DiskUsage:     monitor.GetDirectoryDiskUsage("/home"),
+		Uptime:        uptime,
+		UserListItems: userListItems,
 	})
 }
 

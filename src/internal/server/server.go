@@ -33,11 +33,13 @@ func Run() {
 	http.HandleFunc("POST /api/login", api.Login)
 	http.HandleFunc("POST /api/logout", api.Logout)
 
-	http.Handle("GET /api/download/", api.Middleware(http.HandlerFunc(api.DownloadFile)))
 	http.Handle("POST /api/upload/", api.Middleware(http.HandlerFunc(api.UploadFiles)))
+	http.Handle("GET /api/download/", api.Middleware(http.HandlerFunc(api.DownloadFile)))
+
 	http.Handle("POST /api/compress", api.Middleware(http.HandlerFunc(api.CompressDirectory)))
 	http.Handle("POST /api/extract", api.Middleware(http.HandlerFunc(api.ExtractFile)))
 	http.Handle("POST /api/move", api.Middleware(http.HandlerFunc(api.MoveFiles)))
+
 	http.Handle("POST /api/trash", api.Middleware(http.HandlerFunc(api.Trash)))
 	http.Handle("DELETE /api/trash", api.Middleware(http.HandlerFunc(api.EmptyTrash)))
 
@@ -46,21 +48,24 @@ func Run() {
 
 	http.Handle("POST /api/user", api.Middleware(http.HandlerFunc(api.CreateUser)))
 	http.Handle("DELETE /api/user", api.Middleware(http.HandlerFunc(api.DeleteUser)))
+
 	http.Handle("POST /api/user/toggle-admin", api.Middleware(http.HandlerFunc(api.ToggleAdmin)))
 	http.Handle("POST /api/user/impersonate", api.Middleware(http.HandlerFunc(api.Impersonate)))
-	http.Handle("POST /api/user/password/change", api.Middleware(http.HandlerFunc(api.ChangeUserPassword)))
+
 	http.Handle("POST /api/user/password/reset", api.Middleware(http.HandlerFunc(api.ResetUserPassword)))
+	http.Handle("POST /api/user/password/change", api.Middleware(http.HandlerFunc(api.ChangeUserPassword)))
+
 	http.Handle("POST /api/user/ssh-key", api.Middleware(http.HandlerFunc(api.AddUserSshKey)))
 	http.Handle("DELETE /api/user/ssh-key", api.Middleware(http.HandlerFunc(api.DeleteUserSshKey)))
 
 	// pages
 	http.Handle("GET /{$}", pages.Middleware(http.HandlerFunc(pages.Home)))
 	http.Handle("GET /login", pages.Middleware(http.HandlerFunc(pages.Login)))
-	http.Handle("GET /admin", pages.Middleware(http.HandlerFunc(pages.Admin)))
-	http.Handle("GET /user/{username}", pages.Middleware(http.HandlerFunc(pages.User)))
 	http.Handle("GET /files/", pages.Middleware(http.HandlerFunc(pages.Files)))
 	http.Handle("GET /file/", pages.Middleware(http.HandlerFunc(pages.File)))
 	http.Handle("GET /trash/", pages.Middleware(http.HandlerFunc(pages.Trash)))
+	http.Handle("GET /user/{username}", pages.Middleware(http.HandlerFunc(pages.User)))
+	http.Handle("GET /admin", pages.Middleware(http.HandlerFunc(pages.Admin)))
 	http.Handle("GET /", pages.Middleware(http.HandlerFunc(pages.NotFound)))
 
 	ip, err := getLocalIPv4()
