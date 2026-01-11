@@ -42,6 +42,7 @@
 {{$directoryEntryCount := len .DirectoryEntries}}
 {{if gt $directoryEntryCount 0}}
 <div
+    id="directory-entries-table"
     class="table-container"
     style="padding-bottom: 200px;"
 >
@@ -63,6 +64,19 @@
             <tr
                 class="clickable"
                 ondblclick="window.location.href='{{.UrlPath}}'"
+                data-name="{{.Name}}"
+                draggable="true"
+                ondragstart="handleDragStart(event)"
+                ondragend="handleDragEnd(event)"
+                {{if .IsDir}}
+                ondragover="handleDragOverDir(event)"
+                ondragleave="handleDragLeaveDir(event)"
+                ondrop="handleDropDir(event)"
+                {{else}}
+                ondragover="handleDragOverFile(event)"
+                ondragleave="handleDragLeaveFile(event)"
+                ondrop="handleDropFile(event)"
+                {{end}}
             >
                 <td class="single-icon-cell">
                     {{if .IsDir}}
@@ -117,36 +131,83 @@
 </div>
 {{end}}
 <script>
-    const contentElement = document.getElementById("content");
+    const tableElement = document.getElementById("directory-entries-table");
+    let draggedRowElement = null;
 
-    contentElement.addEventListener("dragover", (event) => {
+    function handleDragStart(event) {
+        draggedRowElement = event.target;
+        draggedRowElement.classList.add("highlighted-extra");
+    }
+
+    function handleDragEnd(event) {
+        draggedRowElement.classList.remove("highlighted-extra");
+        draggedRowElement = null;
+    }
+
+    function handleDragOverDir(event) {
         event.preventDefault();
-        contentElement.className = "highlighted";
-    });
+        const row = event.target.closest("tr");
+        if (row) row.classList.add("highlighted-normal");
+    }
 
-    contentElement.addEventListener("dragleave", () => {
-        contentElement.className = "";
-    });
-
-    contentElement.addEventListener("drop", (event) => {
+    function handleDragLeaveDir(event) {
         event.preventDefault();
-        contentElement.className = "";
-        const items = event.dataTransfer.items;
-        customConfirm("Are you sure you want to upload this file/directory?").then(confirmed => {
+        const row = event.target.closest("tr");
+        if (row) row.classList.remove("highlighted-normal");
+    }
+
+    function handleDropDir(event) {
+        event.preventDefault();
+        const droppedRowElement = event.target.closest("tr");
+        if (!droppedRowElement) return;
+        droppedRowElement.classList.remove("highlighted-normal");
+        if (draggedRowElement) {
+            console.log("move " + draggedRowElement.dataset.name + " to " + droppedRowElement.dataset.name);
+        } else if (event.dataTransfer.items) {
+            uploadItems(event.dataTransfer.items, droppedRowElement.dataset.name);
+        }
+    }
+
+    function handleDragOverFile(event) {
+        event.preventDefault();
+        if (!draggedRowElement) {
+            tableElement.classList.add("highlighted-normal");
+        }
+    }
+
+    function handleDragLeaveFile(event) {
+        event.preventDefault();
+        if (!draggedRowElement) {
+            tableElement.classList.remove("highlighted-normal");
+        }
+    }
+
+    function handleDropFile(event) {
+        event.preventDefault();
+        if (!draggedRowElement) {
+            tableElement.classList.remove("highlighted-normal");
+            if (event.dataTransfer.items) {
+                uploadItems(event.dataTransfer.items);
+            }
+        }
+    }
+
+    function uploadItems(items, dirName = "") {
+        customConfirm(`Are you sure you want to upload this file/directory${dirName ? " to " + dirName : ""}?`).then(confirmed => {
             if (confirmed) {
-                uploadDroppedFiles(items);
+                uploadDroppedFiles(items, dirName);
             }
         });
-    });
+    }
 
-    async function uploadDroppedFiles(items) {
+    async function uploadDroppedFiles(items, dirName) {
         let files = [];
         for (const item of items) {
             const entry = item.webkitGetAsEntry();
             if (!entry) continue;
             files = files.concat(await traverseFileTree(entry));
         }
-        upload(files);
+        upload(files, dirName);
     }
 
     function traverseFileTree(entry, path = "") {
@@ -199,10 +260,18 @@
         upload(files);
     });
 
-    function upload(files) {
+    function upload(files, dirName = "") {
         if (files.length === 0) {
             notifyError("No files available to upload.");
             return;
+        }
+
+        let apiUrl = "/api/upload{{.Path}}";
+        if (dirName) {
+            if (!apiUrl.endsWith("/")) {
+                apiUrl += "/";
+            }
+            apiUrl += dirName;
         }
 
         toggleLoading();
@@ -212,7 +281,7 @@
         const uploadPromises = files.map(file => {
             const formData = new FormData();
             formData.append("file", file);
-            return fetch("/api/upload{{.Path}}", { method: "POST", body: formData })
+            return fetch(apiUrl, { method: "POST", body: formData })
                 .then((response) => {
                     if (response.ok) {
                         uploadCount += 1;
