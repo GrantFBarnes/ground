@@ -21,6 +21,10 @@ func CompressDirectory(username string, relHomePath string) error {
 		return errors.Join(errors.New("failed to get path stat"), err)
 	}
 
+	if strings.ContainsAny(rootDirPath, "'") {
+		return errors.New("path is not valid")
+	}
+
 	if !dirInfo.IsDir() {
 		return errors.New("path is not a directory")
 	}
@@ -46,6 +50,10 @@ func ExtractFile(username string, relHomePath string) error {
 	fileInfo, err := os.Stat(rootFilePath)
 	if err != nil {
 		return errors.Join(errors.New("failed to get path stat"), err)
+	}
+
+	if strings.ContainsAny(rootFilePath, "'") {
+		return errors.New("path is not valid")
 	}
 
 	if fileInfo.IsDir() {
