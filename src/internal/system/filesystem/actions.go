@@ -109,11 +109,33 @@ func CreateRequiredFiles(username string) error {
 	return nil
 }
 
-func Move(sourcePath string, destinationPath string) error {
-	cmd := exec.Command("mv", sourcePath, destinationPath)
-	err := cmd.Run()
+func Move(username string, sourceRelHomePath string, destinationRelHomePath string) error {
+	sourcePath := path.Join("/home", username, sourceRelHomePath)
+	_, err := os.Stat(sourcePath)
 	if err != nil {
-		return errors.Join(errors.New("failed to move files"), err)
+		return errors.Join(errors.New("failed to get source path stat"), err)
+	}
+
+	destinationPath := path.Join("/home", username, destinationRelHomePath)
+	_, err = os.Stat(destinationPath)
+	if err == nil {
+		return errors.New("destination already exists")
+	}
+
+	sourceParentPath, sourceName := path.Split(sourcePath)
+	destinationParentPath, destinationName := path.Split(destinationPath)
+
+	if sourceName != destinationName {
+		return errors.New("source and destination names do not match")
+	}
+
+	if sourceParentPath == destinationParentPath {
+		return errors.New("source and destination are the same")
+	}
+
+	err = os.Rename(sourcePath, destinationPath)
+	if err != nil {
+		return errors.Join(errors.New("failed rename files"), err)
 	}
 
 	return nil
