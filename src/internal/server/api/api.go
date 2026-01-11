@@ -165,22 +165,16 @@ func ExtractFile(w http.ResponseWriter, r *http.Request) {
 
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
-	relHomePath := r.FormValue("relHomePath")
-	if relHomePath == "" {
-		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		http.Error(w, "path not provided", http.StatusBadRequest)
-		return
-	}
-
-	rootPath := path.Join("/home", requestor, relHomePath)
-	rootPathInfo, err := os.Stat(rootPath)
+	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
+	urlRootPath := path.Join("/home", requestor, urlRelativePath)
+	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		http.Error(w, "path not found", http.StatusBadRequest)
 		return
 	}
 
-	if !rootPathInfo.IsDir() {
+	if !urlPathInfo.IsDir() {
 		slog.Warn("path is not a directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
 		http.Error(w, "path is not a directory", http.StatusBadRequest)
 		return
@@ -219,7 +213,7 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = createFileFromPart(part, rootPath, uid, gid)
+		err = createFileFromPart(part, urlRootPath, uid, gid)
 		if err != nil {
 			slog.Error("failed to create file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 			http.Error(w, "failed to create file", http.StatusInternalServerError)

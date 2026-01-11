@@ -284,9 +284,8 @@
         let failedFiles = [];
         const uploadPromises = files.map(file => {
             const formData = new FormData();
-            formData.append("relHomePath", relHomePath);
             formData.append("file", file);
-            return fetch("/api/upload", { method: "POST", body: formData })
+            return fetch(`/api/upload${relHomePath}`, { method: "POST", body: formData })
                 .then((response) => {
                     if (response.ok) {
                         uploadCount += 1;
