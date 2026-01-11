@@ -34,7 +34,7 @@
         toggleLoading();
         fetch("/api/login", { method: "POST", body: formData }).then((response) => {
             if (response.ok) {
-                location.href = "/";
+                location.reload();
             } else {
                 response.text().then((text) => notifyError(text));
                 toggleLoading();
