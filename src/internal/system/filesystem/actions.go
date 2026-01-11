@@ -135,7 +135,7 @@ func Move(username string, sourceRelHomePath string, destinationRelHomePath stri
 
 	err = os.Rename(sourcePath, destinationPath)
 	if err != nil {
-		return errors.Join(errors.New("failed rename files"), err)
+		return errors.Join(errors.New("failed to rename files"), err)
 	}
 
 	return nil
@@ -153,17 +153,17 @@ func Trash(username string, relHomePath string) error {
 		return errors.Join(errors.New("failed to get user ids"), err)
 	}
 
-	homePath := path.Join("/home", username)
-	trashTimestampHomePath := path.Join(TRASH_HOME_PATH, time.Now().Format("20060102150405.000"), path.Dir(relHomePath))
-	err = CreateMissingDirectories(homePath, trashTimestampHomePath, uid, gid)
+	trashRootPath := path.Join("/home", username, TRASH_HOME_PATH)
+	trashTimestamp := time.Now().Format("20060102150405.000")
+	err = CreateMissingDirectories(trashRootPath, trashTimestamp, uid, gid)
 	if err != nil {
 		return errors.Join(errors.New("failed to create missing directories"), err)
 	}
 
-	cmd := exec.Command("mv", rootDirPath, path.Join(homePath, trashTimestampHomePath))
-	err = cmd.Run()
+	_, fileName := path.Split(rootDirPath)
+	err = os.Rename(rootDirPath, path.Join(trashRootPath, trashTimestamp, fileName))
 	if err != nil {
-		return errors.Join(errors.New("failed to move files"), err)
+		return errors.Join(errors.New("failed to rename files"), err)
 	}
 
 	return nil

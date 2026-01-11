@@ -103,7 +103,6 @@ func healthCheck() (err error) {
 		"du",
 		"gpasswd",
 		"groups",
-		"mv",
 		"passwd",
 		"sed",
 		"su",
