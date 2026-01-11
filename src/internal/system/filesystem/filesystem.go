@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -161,7 +162,10 @@ func getDirectoryEntry(entry os.DirEntry, relDirPath string, rootDirPath string,
 		LastModified: entryInfo.ModTime().Format("2006-01-02 03:04:05 PM"),
 	}
 
-	directoryEntry.UrlPath = directoryEntry.getUrlPath()
+	directoryEntry.UrlPath, err = directoryEntry.getUrlPath()
+	if err != nil {
+		return DirectoryEntryData{}, errors.Join(errors.New("failed to get url path"), err)
+	}
 	directoryEntry.HumanSize = directoryEntry.getHumanSize()
 
 	if directoryEntry.isTrash {
@@ -177,18 +181,23 @@ func getDirectoryEntry(entry os.DirEntry, relDirPath string, rootDirPath string,
 	return directoryEntry, nil
 }
 
-func (directoryEntry DirectoryEntryData) getUrlPath() string {
+func (directoryEntry DirectoryEntryData) getUrlPath() (string, error) {
+	_, err := url.ParseRequestURI(directoryEntry.Path)
+	if err != nil {
+		return "", errors.Join(errors.New("failed to parse path to uri"), err)
+	}
+
 	if directoryEntry.isTrash {
 		if directoryEntry.IsDir {
-			return path.Join("/trash", directoryEntry.Path)
+			return url.JoinPath("/trash", directoryEntry.Path)
 		} else {
-			return path.Join("/file", TRASH_HOME_PATH, directoryEntry.Path)
+			return url.JoinPath("/file", TRASH_HOME_PATH, directoryEntry.Path)
 		}
 	} else {
 		if directoryEntry.IsDir {
-			return path.Join("/files", directoryEntry.Path)
+			return url.JoinPath("/files", directoryEntry.Path)
 		} else {
-			return path.Join("/file", directoryEntry.Path)
+			return url.JoinPath("/file", directoryEntry.Path)
 		}
 	}
 }
