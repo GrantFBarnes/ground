@@ -10,6 +10,8 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/grantfbarnes/ground/internal/server/common"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
@@ -17,6 +19,9 @@ import (
 	"github.com/grantfbarnes/ground/internal/system/power"
 	"github.com/grantfbarnes/ground/internal/system/users"
 )
+
+var loginAttemptMutex sync.Mutex
+var loginAttempts map[string][]time.Time = make(map[string][]time.Time)
 
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +39,12 @@ func Middleware(next http.Handler) http.Handler {
 func Login(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
+
+	if tooManyLoginAttempts(r) {
+		slog.Warn("too many login attempts", "ip", r.RemoteAddr, "request", r.URL.Path, "username", username)
+		http.Error(w, "too many login attempts", http.StatusTooManyRequests)
+		return
+	}
 
 	if !users.UserIsValid(username) {
 		slog.Warn("username is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "username", username)
@@ -528,6 +539,39 @@ func DeleteUserSshKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func tooManyLoginAttempts(r *http.Request) bool {
+	loginAttemptMutex.Lock()
+	defer loginAttemptMutex.Unlock()
+
+	cleanUpLoginAttempts()
+
+	if _, ok := loginAttempts[r.RemoteAddr]; !ok {
+		loginAttempts[r.RemoteAddr] = make([]time.Time, 0)
+	}
+	loginAttempts[r.RemoteAddr] = append(loginAttempts[r.RemoteAddr], time.Now())
+
+	return len(loginAttempts[r.RemoteAddr]) > 10
+}
+
+func cleanUpLoginAttempts() {
+	expiry := time.Now().Add(-time.Hour)
+
+	newLoginAttempts := make(map[string][]time.Time)
+	for ip, times := range loginAttempts {
+		newTimes := make([]time.Time, 0)
+		for _, t := range times {
+			if t.After(expiry) {
+				newTimes = append(newTimes, t)
+			}
+		}
+		if len(newTimes) > 0 {
+			newLoginAttempts[ip] = newTimes
+		}
+	}
+
+	loginAttempts = newLoginAttempts
 }
 
 func login(w http.ResponseWriter, username string) {
