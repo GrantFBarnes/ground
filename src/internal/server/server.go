@@ -36,6 +36,7 @@ func Run() {
 	http.Handle("POST /api/upload/", api.Middleware(http.HandlerFunc(api.UploadFiles)))
 	http.Handle("GET /api/download/", api.Middleware(http.HandlerFunc(api.DownloadFile)))
 
+	http.Handle("POST /api/directory", api.Middleware(http.HandlerFunc(api.CreateDirectory)))
 	http.Handle("POST /api/compress", api.Middleware(http.HandlerFunc(api.CompressDirectory)))
 	http.Handle("POST /api/extract", api.Middleware(http.HandlerFunc(api.ExtractFile)))
 	http.Handle("POST /api/move", api.Middleware(http.HandlerFunc(api.MoveFiles)))

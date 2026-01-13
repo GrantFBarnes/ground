@@ -14,6 +14,30 @@ import (
 	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
+func CreateDirectory(username string, relHomePath string, dirName string) error {
+	rootDirPath := path.Join("/home", username, relHomePath)
+	dirInfo, err := os.Stat(rootDirPath)
+	if err != nil {
+		return errors.Join(errors.New("failed to get path stat"), err)
+	}
+
+	if !dirInfo.IsDir() {
+		return errors.New("path is not a directory")
+	}
+
+	uid, gid, err := users.GetUserIds(username)
+	if err != nil {
+		return errors.Join(errors.New("failed to get user ids"), err)
+	}
+
+	err = CreateMissingDirectories(rootDirPath, dirName, uid, gid)
+	if err != nil {
+		return errors.Join(errors.New("failed to create directory"), err)
+	}
+
+	return nil
+}
+
 func CompressDirectory(username string, relHomePath string) error {
 	rootDirPath := path.Join("/home", username, relHomePath)
 	dirInfo, err := os.Stat(rootDirPath)

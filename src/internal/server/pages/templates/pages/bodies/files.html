@@ -6,6 +6,44 @@
     }
 </style>
 
+<dialog id="create-directory-dialog">
+    <div style="display: grid; grid-auto-flow: column">
+        <div>
+            <h3>Create Directory</h3>
+        </div>
+        <div>
+            <span
+                class="close-button"
+                onclick="document.getElementById('create-directory-dialog').close()"
+            >&#128938;</span>
+        </div>
+    </div>
+    <form id="create-directory-form">
+        <input
+            type="text"
+            name="relHomePath"
+            value="{{.Path}}"
+            hidden
+        >
+        <label for="createDirectory">Directory:</label>
+        <input
+            type="text"
+            id="createDirectory"
+            name="dirName"
+            maxlength="255"
+            placeholder="Enter Directory Name"
+            required="required"
+            autocomplete="off"
+        />
+        <br />
+        <br />
+        <input
+            type="submit"
+            value="Create Directory"
+        />
+    </form>
+</dialog>
+
 <div style="display: grid; grid-auto-flow: column">
     <div style="text-align: left;">
         {{range .FilePathBreadcrumbs}}
@@ -27,21 +65,28 @@
 
 <br />
 
-<div style="float: right;">
-    <form id="upload-form">
-        <input
-            id="file-upload"
-            type="file"
-            multiple
-        />
-        <input
-            id="directory-upload"
-            type="file"
-            multiple
-            webkitdirectory
-        />
-        <button type="submit">Upload</button>
-    </form>
+<div style="display: grid; grid-auto-flow: column">
+    <div style="text-align: left;">
+        <button onclick="document.getElementById('create-directory-dialog').showModal()">
+            Create Directory
+        </button>
+    </div>
+    <div style="text-align: right;">
+        <form id="upload-form">
+            <input
+                id="file-upload"
+                type="file"
+                multiple
+            />
+            <input
+                id="directory-upload"
+                type="file"
+                multiple
+                webkitdirectory
+            />
+            <button type="submit">Upload</button>
+        </form>
+    </div>
 </div>
 
 <br />
@@ -342,6 +387,26 @@
                 }
             });
     }
+
+    document.getElementById("create-directory-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const dirName = formData.get("dirName");
+        customConfirm(`Are you sure you want to create directory '${dirName}'?`).then(confirmed => {
+            if (confirmed) {
+                document.getElementById("create-directory-dialog").close();
+                toggleLoading();
+                fetch("/api/directory", { method: "POST", body: formData }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
+    });
 
     function moveFiles(source, destination) {
         customConfirm(`Are you sure you want to move '${source}' to '${destination}'?`).then(confirmed => {

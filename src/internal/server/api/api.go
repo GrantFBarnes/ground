@@ -164,6 +164,33 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, urlRootPath)
 }
 
+func CreateDirectory(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	relHomePath := r.FormValue("relHomePath")
+	dirName := r.FormValue("dirName")
+
+	if relHomePath == "" {
+		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	if dirName == "" {
+		slog.Warn("directory name not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "directory name not provided", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.CreateDirectory(requestor, relHomePath, dirName)
+	if err != nil {
+		slog.Error("failed to create directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "failed to create directory", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	relHomePath := r.FormValue("relHomePath")
