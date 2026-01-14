@@ -109,7 +109,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, false)
+	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath)
 	if err != nil {
 		slog.Error("failed to get directory entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		getProblemPage(w, r, "failed to get directory entries")
@@ -173,10 +173,10 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, true)
+	trashEntries, err := filesystem.GetTrashEntries(urlRelativePath, urlRootPath)
 	if err != nil {
-		slog.Error("failed to get directory entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get directory entries")
+		slog.Error("failed to get trash entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		getProblemPage(w, r, "failed to get trash entries")
 		return
 	}
 
@@ -197,14 +197,14 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		Path                string
 		FilePathBreadcrumbs []filesystem.FilePathBreadcrumb
 		DiskUsage           string
-		DirectoryEntries    []filesystem.DirectoryEntryData
+		TrashEntries        []filesystem.TrashEntryData
 	}{
 		PageTitle:           "Ground - Trash",
 		Username:            requestor,
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("trash", urlRelativePath),
 		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
-		DirectoryEntries:    directoryEntries,
+		TrashEntries:        trashEntries,
 	})
 }
 

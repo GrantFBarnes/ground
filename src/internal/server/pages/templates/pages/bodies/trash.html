@@ -28,8 +28,8 @@
 
 <br />
 
-{{$directoryEntryCount := len .DirectoryEntries}}
-{{if gt $directoryEntryCount 0}}
+{{$trashEntryCount := len .TrashEntries}}
+{{if gt $trashEntryCount 0}}
 <div
     class="table-container"
     style="padding-bottom: 200px;"
@@ -40,13 +40,12 @@
                 <th></th>
                 <th>name</th>
                 <th style="text-align: right;">size</th>
-                <th style="text-align: right;">last modified</th>
                 <th></th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
-            {{range .DirectoryEntries}}
+            {{range .TrashEntries}}
             <tr
                 class="clickable"
                 ondblclick="window.location.href='{{.UrlPath}}'"
@@ -60,7 +59,6 @@
                 </td>
                 <td>{{.Name}}</td>
                 <td style="text-align: right;">{{.HumanSize}}</td>
-                <td style="text-align: right;">{{.LastModified}}</td>
                 <td class="single-icon-cell">
                     {{if .IsDir}}
                     <span

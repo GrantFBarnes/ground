@@ -30,12 +30,21 @@ func SetupFileCopyNameRegex() error {
 type DirectoryEntryData struct {
 	IsDir        bool
 	IsCompressed bool
-	isTrash      bool
 	Name         string
 	Path         string
 	size         int64
 	LastModified string
 	SymLinkPath  string
+	UrlPath      string
+	HumanSize    string
+}
+
+type TrashEntryData struct {
+	IsDir        bool
+	IsCompressed bool
+	Name         string
+	Path         string
+	size         int64
 	UrlPath      string
 	HumanSize    string
 }
@@ -128,102 +137,69 @@ func getFileExtension(fileName string) (string, string) {
 	return coreFileName, fileExtension
 }
 
-func GetDirectoryEntries(relDirPath string, rootDirPath string, isTrash bool) ([]DirectoryEntryData, error) {
+func GetDirectoryEntries(relDirPath string, rootDirPath string) ([]DirectoryEntryData, error) {
 	dirEntries, err := os.ReadDir(rootDirPath)
 	if err != nil {
 		return nil, errors.Join(errors.New("failed to read directory"), err)
 	}
 
-	var directoryEntries []DirectoryEntryData
+	var entries []DirectoryEntryData
 	for _, entry := range dirEntries {
-		directoryEntry, err := getDirectoryEntry(entry, relDirPath, rootDirPath, isTrash)
+		entry, err := getDirectoryEntry(entry, relDirPath, rootDirPath)
 		if err != nil {
 			continue
 		}
-		directoryEntries = append(directoryEntries, directoryEntry)
+		entries = append(entries, entry)
 	}
 
-	return sortDirectoryEntries(directoryEntries), nil
+	return sortDirectoryEntries(entries), nil
 }
 
-func getDirectoryEntry(entry os.DirEntry, relDirPath string, rootDirPath string, isTrash bool) (DirectoryEntryData, error) {
-	entryInfo, err := entry.Info()
+func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath string) (DirectoryEntryData, error) {
+	entryInfo, err := dirEntry.Info()
 	if err != nil {
 		return DirectoryEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
 	}
 
-	directoryEntry := DirectoryEntryData{
-		IsDir:        entry.IsDir(),
-		IsCompressed: strings.HasSuffix(entry.Name(), ".tar.gz"),
-		isTrash:      isTrash,
-		Name:         entry.Name(),
-		Path:         path.Join(relDirPath, entry.Name()),
+	entry := DirectoryEntryData{
+		IsDir:        dirEntry.IsDir(),
+		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
+		Name:         dirEntry.Name(),
+		Path:         path.Join(relDirPath, dirEntry.Name()),
 		size:         entryInfo.Size(),
 		LastModified: entryInfo.ModTime().Format("2006-01-02 03:04:05 PM"),
 	}
 
-	directoryEntry.UrlPath, err = directoryEntry.getUrlPath()
+	entry.UrlPath, err = entry.getUrlPath()
 	if err != nil {
 		return DirectoryEntryData{}, errors.Join(errors.New("failed to get url path"), err)
 	}
-	directoryEntry.HumanSize = directoryEntry.getHumanSize()
+	entry.HumanSize = getHumanSize(entry.IsDir, entry.size)
 
-	if directoryEntry.isTrash {
-		directoryEntry.Path = path.Join("/", TRASH_HOME_PATH, directoryEntry.Path)
-	} else {
-		symLinkPath, isSymLinkDir := directoryEntry.getSymLinkInfo(rootDirPath)
-		directoryEntry.SymLinkPath = symLinkPath
-		if isSymLinkDir {
-			directoryEntry.IsDir = true
-		}
+	symLinkPath, isSymLinkDir := entry.getSymLinkInfo(rootDirPath)
+	entry.SymLinkPath = symLinkPath
+	if isSymLinkDir {
+		entry.IsDir = true
 	}
 
-	return directoryEntry, nil
+	return entry, nil
 }
 
-func (directoryEntry DirectoryEntryData) getUrlPath() (string, error) {
-	_, err := url.ParseRequestURI(directoryEntry.Path)
+func (entry DirectoryEntryData) getUrlPath() (string, error) {
+	_, err := url.ParseRequestURI(entry.Path)
 	if err != nil {
 		return "", errors.Join(errors.New("failed to parse path to uri"), err)
 	}
 
-	if directoryEntry.isTrash {
-		if directoryEntry.IsDir {
-			return url.JoinPath("/trash", directoryEntry.Path)
-		} else {
-			return url.JoinPath("/file", TRASH_HOME_PATH, directoryEntry.Path)
-		}
+	if entry.IsDir {
+		return url.JoinPath("/files", entry.Path)
 	} else {
-		if directoryEntry.IsDir {
-			return url.JoinPath("/files", directoryEntry.Path)
-		} else {
-			return url.JoinPath("/file", directoryEntry.Path)
-		}
+		return url.JoinPath("/file", entry.Path)
 	}
 }
 
-func (directoryEntry DirectoryEntryData) getHumanSize() string {
-	if directoryEntry.IsDir {
-		return "-"
-	}
-
-	if directoryEntry.size > 1000000000 {
-		return fmt.Sprintf("%.3f GB", float64(directoryEntry.size)/1000000000.0)
-	}
-
-	if directoryEntry.size > 1000000 {
-		return fmt.Sprintf("%.3f MB", float64(directoryEntry.size)/1000000.0)
-	}
-
-	if directoryEntry.size > 1000 {
-		return fmt.Sprintf("%.3f KB", float64(directoryEntry.size)/1000.0)
-	}
-
-	return fmt.Sprintf("%d B", directoryEntry.size)
-}
-
-func (directoryEntry DirectoryEntryData) getSymLinkInfo(rootPath string) (string, bool) {
-	linkPath, err := os.Readlink(path.Join(rootPath, directoryEntry.Name))
+func (entry DirectoryEntryData) getSymLinkInfo(rootPath string) (string, bool) {
+	linkPath, err := os.Readlink(path.Join(rootPath, entry.Name))
 	if err != nil {
 		return "", false
 	}
@@ -240,9 +216,9 @@ func (directoryEntry DirectoryEntryData) getSymLinkInfo(rootPath string) (string
 	return strings.TrimPrefix(linkPath, rootPath), linkInfo.IsDir()
 }
 
-func sortDirectoryEntries(directoryEntries []DirectoryEntryData) []DirectoryEntryData {
-	sort.Slice(directoryEntries, func(i, j int) bool {
-		a, b := directoryEntries[i], directoryEntries[j]
+func sortDirectoryEntries(entries []DirectoryEntryData) []DirectoryEntryData {
+	sort.Slice(entries, func(i, j int) bool {
+		a, b := entries[i], entries[j]
 
 		if a.IsDir != b.IsDir {
 			return a.IsDir
@@ -257,7 +233,103 @@ func sortDirectoryEntries(directoryEntries []DirectoryEntryData) []DirectoryEntr
 		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
 	})
 
-	return directoryEntries
+	return entries
+}
+
+func GetTrashEntries(relDirPath string, rootDirPath string) ([]TrashEntryData, error) {
+	dirEntries, err := os.ReadDir(rootDirPath)
+	if err != nil {
+		return nil, errors.Join(errors.New("failed to read directory"), err)
+	}
+
+	var entries []TrashEntryData
+	for _, entry := range dirEntries {
+		entry, err := getTrashEntry(entry, relDirPath)
+		if err != nil {
+			continue
+		}
+		entries = append(entries, entry)
+	}
+
+	return sortTrashEntries(entries), nil
+}
+
+func getTrashEntry(dirEntry os.DirEntry, relDirPath string) (TrashEntryData, error) {
+	entryInfo, err := dirEntry.Info()
+	if err != nil {
+		return TrashEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
+	}
+
+	entry := TrashEntryData{
+		IsDir:        dirEntry.IsDir(),
+		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
+		Name:         dirEntry.Name(),
+		Path:         path.Join(relDirPath, dirEntry.Name()),
+		size:         entryInfo.Size(),
+	}
+
+	entry.UrlPath, err = entry.getUrlPath()
+	if err != nil {
+		return TrashEntryData{}, errors.Join(errors.New("failed to get url path"), err)
+	}
+	entry.HumanSize = getHumanSize(entry.IsDir, entry.size)
+
+	entry.Path = path.Join("/", TRASH_HOME_PATH, entry.Path)
+
+	return entry, nil
+}
+
+func (entry TrashEntryData) getUrlPath() (string, error) {
+	_, err := url.ParseRequestURI(entry.Path)
+	if err != nil {
+		return "", errors.Join(errors.New("failed to parse path to uri"), err)
+	}
+
+	if entry.IsDir {
+		return url.JoinPath("/trash", entry.Path)
+	} else {
+		return url.JoinPath("/file", TRASH_HOME_PATH, entry.Path)
+	}
+}
+
+func sortTrashEntries(entries []TrashEntryData) []TrashEntryData {
+	sort.Slice(entries, func(i, j int) bool {
+		a, b := entries[i], entries[j]
+
+		if a.IsDir != b.IsDir {
+			return a.IsDir
+		}
+
+		aDot := strings.HasPrefix(a.Name, ".")
+		bDot := strings.HasPrefix(b.Name, ".")
+		if aDot != bDot {
+			return bDot
+		}
+
+		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+	})
+
+	return entries
+}
+
+func getHumanSize(isDir bool, size int64) string {
+	if isDir {
+		return "-"
+	}
+
+	if size > 1000000000 {
+		return fmt.Sprintf("%.3f GB", float64(size)/1000000000.0)
+	}
+
+	if size > 1000000 {
+		return fmt.Sprintf("%.3f MB", float64(size)/1000000.0)
+	}
+
+	if size > 1000 {
+		return fmt.Sprintf("%.3f KB", float64(size)/1000.0)
+	}
+
+	return fmt.Sprintf("%d B", size)
 }
 
 func GetFileBreadcrumbs(homeName string, relPath string) []FilePathBreadcrumb {
