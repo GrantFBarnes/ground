@@ -32,11 +32,10 @@ type DirectoryEntryData struct {
 	IsCompressed bool
 	Name         string
 	Path         string
-	size         int64
+	HumanSize    string
 	LastModified string
 	SymLinkPath  string
 	UrlPath      string
-	HumanSize    string
 }
 
 type TrashEntryData struct {
@@ -44,9 +43,8 @@ type TrashEntryData struct {
 	IsCompressed bool
 	Name         string
 	Path         string
-	size         int64
-	UrlPath      string
 	HumanSize    string
+	UrlPath      string
 }
 
 type FilePathBreadcrumb struct {
@@ -166,7 +164,7 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
 		Name:         dirEntry.Name(),
 		Path:         path.Join(relDirPath, dirEntry.Name()),
-		size:         entryInfo.Size(),
+		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
 		LastModified: entryInfo.ModTime().Format("2006-01-02 03:04:05 PM"),
 	}
 
@@ -174,7 +172,6 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 	if err != nil {
 		return DirectoryEntryData{}, errors.Join(errors.New("failed to get url path"), err)
 	}
-	entry.HumanSize = getHumanSize(entry.IsDir, entry.size)
 
 	symLinkPath, isSymLinkDir := entry.getSymLinkInfo(rootDirPath)
 	entry.SymLinkPath = symLinkPath
@@ -265,15 +262,13 @@ func getTrashEntry(dirEntry os.DirEntry, relDirPath string) (TrashEntryData, err
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
 		Name:         dirEntry.Name(),
 		Path:         path.Join(relDirPath, dirEntry.Name()),
-		size:         entryInfo.Size(),
+		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
 	}
 
 	entry.UrlPath, err = entry.getUrlPath()
 	if err != nil {
 		return TrashEntryData{}, errors.Join(errors.New("failed to get url path"), err)
 	}
-	entry.HumanSize = getHumanSize(entry.IsDir, entry.size)
-
 	entry.Path = path.Join("/", TRASH_HOME_PATH, entry.Path)
 
 	return entry, nil
