@@ -12,11 +12,15 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const TRASH_HOME_PATH string = ".local/share/ground/trash"
+const displayTimeLayout string = "2006-01-02 03:04:05 PM"
+const systemTimeLayout string = "20060102150405.000"
 
 var fileCopyNameRegex *regexp.Regexp
+var systemTimeLayoutRegex *regexp.Regexp
 
 func SetupFileCopyNameRegex() error {
 	re, err := regexp.Compile(`(.*)\(([0-9]+)\)$`)
@@ -25,6 +29,29 @@ func SetupFileCopyNameRegex() error {
 	}
 	fileCopyNameRegex = re
 	return nil
+}
+
+func SetupSystemTimeLayoutRegex() error {
+	re, err := regexp.Compile(`^[0-9]{14}\.[0-9]{3}$`)
+	if err != nil {
+		return errors.Join(errors.New("failed to compile regex"), err)
+	}
+	systemTimeLayoutRegex = re
+	return nil
+}
+
+func convertTimeLayout(stringTime string) (string, error) {
+	parsedTime, err := time.Parse(systemTimeLayout, stringTime)
+	if err == nil {
+		return parsedTime.Format(displayTimeLayout), nil
+	}
+
+	parsedTime, err = time.Parse(displayTimeLayout, stringTime)
+	if err == nil {
+		return parsedTime.Format(systemTimeLayout), nil
+	}
+
+	return "", errors.New("failed to convert time layout")
 }
 
 type DirectoryEntryData struct {
@@ -45,6 +72,7 @@ type TrashEntryData struct {
 	Path         string
 	HumanSize    string
 	UrlPath      string
+	TimeDeleted  string
 }
 
 type FilePathBreadcrumb struct {
@@ -165,7 +193,7 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 		Name:         dirEntry.Name(),
 		Path:         path.Join(relDirPath, dirEntry.Name()),
 		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
-		LastModified: entryInfo.ModTime().Format("2006-01-02 03:04:05 PM"),
+		LastModified: entryInfo.ModTime().Format(displayTimeLayout),
 	}
 
 	entry.UrlPath, err = entry.getUrlPath()
@@ -257,6 +285,21 @@ func getTrashEntry(dirEntry os.DirEntry, relDirPath string) (TrashEntryData, err
 		return TrashEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
 	}
 
+	var topLevelTrashDirName string
+	if relDirPath == "/" {
+		topLevelTrashDirName = entryInfo.Name()
+	} else {
+		relDirPathDirs := strings.Split(relDirPath, "/")
+		if len(relDirPathDirs) < 2 {
+			return TrashEntryData{}, errors.New("relative dir path is invalid")
+		}
+		topLevelTrashDirName = relDirPathDirs[1]
+	}
+
+	if !systemTimeLayoutRegex.MatchString(topLevelTrashDirName) {
+		return TrashEntryData{}, errors.New("top level trash dir name is invalid")
+	}
+
 	entry := TrashEntryData{
 		IsDir:        dirEntry.IsDir(),
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
@@ -270,6 +313,11 @@ func getTrashEntry(dirEntry os.DirEntry, relDirPath string) (TrashEntryData, err
 		return TrashEntryData{}, errors.Join(errors.New("failed to get url path"), err)
 	}
 	entry.Path = path.Join("/", TRASH_HOME_PATH, entry.Path)
+
+	entry.TimeDeleted, err = convertTimeLayout(topLevelTrashDirName)
+	if err != nil {
+		return TrashEntryData{}, errors.Join(errors.New("failed to get trash time deleted"), err)
+	}
 
 	return entry, nil
 }

@@ -40,6 +40,7 @@
                 <th></th>
                 <th>name</th>
                 <th style="text-align: right;">size</th>
+                <th style="text-align: right;">time deleted</th>
                 <th></th>
                 <th></th>
             </tr>
@@ -59,6 +60,7 @@
                 </td>
                 <td>{{.Name}}</td>
                 <td style="text-align: right;">{{.HumanSize}}</td>
+                <td style="text-align: right;">{{.TimeDeleted}}</td>
                 <td class="single-icon-cell">
                     {{if .IsDir}}
                     <span

@@ -186,7 +186,7 @@ func Trash(username string, relHomePath string) error {
 	}
 
 	trashRootPath := path.Join("/home", username, TRASH_HOME_PATH)
-	trashTimestamp := time.Now().Format("20060102150405.000")
+	trashTimestamp := time.Now().Format(systemTimeLayout)
 	err = CreateMissingDirectories(trashRootPath, trashTimestamp, uid, gid)
 	if err != nil {
 		return errors.Join(errors.New("failed to create missing directories"), err)

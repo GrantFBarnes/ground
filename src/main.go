@@ -128,6 +128,11 @@ func healthCheck() (err error) {
 		return errors.Join(errors.New("failed to setup file copy name regex"), err)
 	}
 
+	err = filesystem.SetupSystemTimeLayoutRegex()
+	if err != nil {
+		return errors.Join(errors.New("failed to setup system time layout regex"), err)
+	}
+
 	err = filesystem.SetupSshKeyRegex()
 	if err != nil {
 		return errors.Join(errors.New("failed to setup ssh key regex"), err)
