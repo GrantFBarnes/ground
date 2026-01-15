@@ -40,20 +40,6 @@ func SetupSystemTimeLayoutRegex() error {
 	return nil
 }
 
-func convertTimeLayout(stringTime string) (string, error) {
-	parsedTime, err := time.Parse(systemTimeLayout, stringTime)
-	if err == nil {
-		return parsedTime.Format(displayTimeLayout), nil
-	}
-
-	parsedTime, err = time.Parse(displayTimeLayout, stringTime)
-	if err == nil {
-		return parsedTime.Format(systemTimeLayout), nil
-	}
-
-	return "", errors.New("failed to convert time layout")
-}
-
 func getTopLevelDirName(fullPath string) string {
 	parts := strings.SplitSeq(fullPath, string(os.PathSeparator))
 	for p := range parts {
@@ -77,13 +63,14 @@ type DirectoryEntryData struct {
 }
 
 type TrashEntryData struct {
+	trashedTime  time.Time
+	TrashedOn    string
 	IsDir        bool
 	IsCompressed bool
 	Name         string
 	Path         string
 	HumanSize    string
 	UrlPath      string
-	TimeDeleted  string
 }
 
 type FilePathBreadcrumb struct {
@@ -307,10 +294,11 @@ func getTrashPathEntries(username string, relTrashPath string) ([]TrashEntryData
 		return entries, errors.New("top level trash dir name is invalid")
 	}
 
-	timeDeleted, err := convertTimeLayout(topLevelTrashDirName)
+	trashedTime, err := time.Parse(systemTimeLayout, topLevelTrashDirName)
 	if err != nil {
-		return entries, errors.Join(errors.New("failed to convert time layout"), err)
+		return entries, errors.Join(errors.New("failed to parse trash time"), err)
 	}
+	trashedOn := trashedTime.Format(displayTimeLayout)
 
 	dirEntries, err := os.ReadDir(path.Join("/home", username, TRASH_HOME_PATH, relTrashPath))
 	if err != nil {
@@ -318,7 +306,7 @@ func getTrashPathEntries(username string, relTrashPath string) ([]TrashEntryData
 	}
 
 	for _, entry := range dirEntries {
-		entry, err := getTrashEntry(entry, relTrashPath, timeDeleted)
+		entry, err := getTrashEntry(entry, relTrashPath, trashedTime, trashedOn)
 		if err != nil {
 			continue
 		}
@@ -328,19 +316,20 @@ func getTrashPathEntries(username string, relTrashPath string) ([]TrashEntryData
 	return entries, nil
 }
 
-func getTrashEntry(dirEntry os.DirEntry, relTrashPath string, timeDeleted string) (TrashEntryData, error) {
+func getTrashEntry(dirEntry os.DirEntry, relTrashPath string, trashedTime time.Time, trashedOn string) (TrashEntryData, error) {
 	entryInfo, err := dirEntry.Info()
 	if err != nil {
 		return TrashEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
 	}
 
 	entry := TrashEntryData{
+		trashedTime:  trashedTime,
+		TrashedOn:    trashedOn,
 		IsDir:        dirEntry.IsDir(),
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
 		Name:         dirEntry.Name(),
 		Path:         path.Join("/", relTrashPath, dirEntry.Name()),
 		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
-		TimeDeleted:  timeDeleted,
 	}
 
 	entry.UrlPath, err = entry.getUrlPath()
@@ -368,6 +357,10 @@ func (entry TrashEntryData) getUrlPath() (string, error) {
 func sortTrashEntries(entries []TrashEntryData) []TrashEntryData {
 	sort.Slice(entries, func(i, j int) bool {
 		a, b := entries[i], entries[j]
+
+		if a.TrashedOn != b.TrashedOn {
+			return a.trashedTime.After(b.trashedTime)
+		}
 
 		if a.IsDir != b.IsDir {
 			return a.IsDir
