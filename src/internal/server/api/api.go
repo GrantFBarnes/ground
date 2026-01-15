@@ -77,7 +77,17 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 func UploadFiles(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/upload")
-	urlRootPath := path.Join("/home", requestor, urlRelativePath)
+
+	homePath := path.Join("/home", requestor)
+	urlRootPath := path.Join(homePath, urlRelativePath)
+	urlRootPath = path.Clean(urlRootPath)
+
+	if !strings.HasPrefix(urlRootPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path outside of home", http.StatusBadRequest)
+		return
+	}
+
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
@@ -105,7 +115,16 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/api/download")
 
-	urlRootPath := path.Join("/home", requestor, urlRelativePath)
+	homePath := path.Join("/home", requestor)
+	urlRootPath := path.Join(homePath, urlRelativePath)
+	urlRootPath = path.Clean(urlRootPath)
+
+	if !strings.HasPrefix(urlRootPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path outside of home", http.StatusBadRequest)
+		return
+	}
+
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		slog.Warn("path not found", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)

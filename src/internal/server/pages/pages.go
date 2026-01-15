@@ -93,7 +93,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 func Files(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/files")
-	urlRootPath := path.Join("/home", requestor, urlRelativePath)
+
+	homePath := path.Join("/home", requestor)
+	urlRootPath := path.Join(homePath, urlRelativePath)
+	urlRootPath = path.Clean(urlRootPath)
+
+	if !strings.HasPrefix(urlRootPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		getProblemPage(w, r, "path outside of home")
+		return
+	}
+
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		slog.Warn("failed to find path", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
@@ -151,7 +161,17 @@ func Files(w http.ResponseWriter, r *http.Request) {
 func File(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/file")
-	urlRootPath := path.Join("/home", requestor, urlRelativePath)
+
+	homePath := path.Join("/home", requestor)
+	urlRootPath := path.Join(homePath, urlRelativePath)
+	urlRootPath = path.Clean(urlRootPath)
+
+	if !strings.HasPrefix(urlRootPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		getProblemPage(w, r, "path outside of home")
+		return
+	}
+
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		slog.Warn("failed to find path", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
@@ -170,7 +190,17 @@ func File(w http.ResponseWriter, r *http.Request) {
 func Trash(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/trash")
-	urlRootPath := path.Join("/home", requestor, filesystem.TRASH_HOME_PATH, urlRelativePath)
+
+	homePath := path.Join("/home", requestor, filesystem.TRASH_HOME_PATH)
+	urlRootPath := path.Join(homePath, urlRelativePath)
+	urlRootPath = path.Clean(urlRootPath)
+
+	if !strings.HasPrefix(urlRootPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		getProblemPage(w, r, "path outside of home")
+		return
+	}
+
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil || !urlPathInfo.IsDir() {
 		http.Redirect(w, r, path.Join("/trash", path.Dir(urlRelativePath)), http.StatusSeeOther)
