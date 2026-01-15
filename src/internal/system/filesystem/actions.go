@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -222,7 +221,7 @@ func EmptyTrash(username string) error {
 
 func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
 	relDirPathBuildUp := ""
-	for dirName := range strings.SplitSeq(relDirPath, string(filepath.Separator)) {
+	for dirName := range strings.SplitSeq(relDirPath, string(os.PathSeparator)) {
 		if dirName == "" {
 			continue
 		}

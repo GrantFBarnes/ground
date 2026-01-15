@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -408,7 +407,7 @@ func GetFileBreadcrumbs(homeName string, relPath string) []FilePathBreadcrumb {
 		},
 	}
 
-	for breadcrumbDir := range strings.SplitSeq(relPath, string(filepath.Separator)) {
+	for breadcrumbDir := range strings.SplitSeq(relPath, string(os.PathSeparator)) {
 		if breadcrumbDir == "" {
 			continue
 		}
