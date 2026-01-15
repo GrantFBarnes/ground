@@ -84,8 +84,6 @@
 
 <br />
 
-{{$directoryEntryCount := len .DirectoryEntries}}
-{{if gt $directoryEntryCount 0}}
 <div
     id="directory-entries-table-container"
     class="table-container"
@@ -94,6 +92,8 @@
     ondragleave="handleTableContainerDragLeave(event)"
     ondrop="handleTableContainerDrop(event)"
 >
+    {{$directoryEntryCount := len .DirectoryEntries}}
+    {{if gt $directoryEntryCount 0}}
     <table>
         <thead>
             <tr>
@@ -172,8 +172,8 @@
             {{end}}
         </tbody>
     </table>
+    {{end}}
 </div>
-{{end}}
 <script>
     const draggedClassName = "highlighted-extra";
     const hoverClassName = "highlighted-normal";
