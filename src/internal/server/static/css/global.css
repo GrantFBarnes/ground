@@ -137,6 +137,10 @@ button {
     grid-auto-flow: column
 }
 
+.column-container>div {
+    overflow-wrap: break-word;
+}
+
 .close-button {
     cursor: pointer;
     float: right;
