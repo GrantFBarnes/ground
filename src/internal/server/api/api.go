@@ -1,11 +1,7 @@
 package api
 
 import (
-	"errors"
-	"io"
 	"log/slog"
-	"mime"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"path"
@@ -95,45 +91,11 @@ func UploadFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid, gid, err := users.GetUserIds(requestor)
+	err = filesystem.UploadFile(r, urlRootPath, requestor)
 	if err != nil {
-		slog.Error("failed to get user ids", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, "failed to get user ids", http.StatusInternalServerError)
+		slog.Error("failed to upload file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "failed to upload file", http.StatusInternalServerError)
 		return
-	}
-
-	mediaType, contentParams, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-	if err != nil || !strings.HasPrefix(mediaType, "multipart/") {
-		slog.Error("failed to pares media type", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, "failed to parse media type", http.StatusInternalServerError)
-		return
-	}
-
-	boundary, ok := contentParams["boundary"]
-	if !ok {
-		slog.Warn("failed to get file boundary", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		http.Error(w, "failed to get file boundary", http.StatusInternalServerError)
-		return
-	}
-
-	multipartReader := multipart.NewReader(r.Body, boundary)
-	for {
-		part, err := multipartReader.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			slog.Error("failed to get next file part", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-			http.Error(w, "failed to get next file part", http.StatusInternalServerError)
-			return
-		}
-
-		err = createFileFromPart(part, urlRootPath, uid, gid)
-		if err != nil {
-			slog.Error("failed to create file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-			http.Error(w, "failed to create file", http.StatusInternalServerError)
-			return
-		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -606,36 +568,4 @@ func login(w http.ResponseWriter, username string) {
 	cookie.RemoveUsername(w)
 	cookie.SetUsername(w, username)
 	w.WriteHeader(http.StatusOK)
-}
-
-func createFileFromPart(part *multipart.Part, urlRootPath string, uid int, gid int) error {
-	_, params, err := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
-	if err != nil {
-		return errors.Join(errors.New("failed to get content disposition"), err)
-	}
-
-	fileRelPath, ok := params["filename"]
-	if !ok {
-		return errors.New("filename not found in content disposition")
-	}
-	fileDirRelPath, fileName := path.Split(fileRelPath)
-
-	err = filesystem.CreateMissingDirectories(urlRootPath, fileDirRelPath, uid, gid)
-	if err != nil {
-		return errors.Join(errors.New("failed to create missing directories"), err)
-	}
-
-	fileDirPath := path.Join(urlRootPath, fileDirRelPath)
-	fileName, err = filesystem.GetAvailableFileName(fileDirPath, fileName)
-	if err != nil {
-		return errors.Join(errors.New("failed to find available file name"), err)
-	}
-	filePath := path.Join(fileDirPath, fileName)
-
-	err = filesystem.CreateMultipartFile(part, filePath, uid, gid)
-	if err != nil {
-		return errors.Join(errors.New("failed to create multipart file"), err)
-	}
-
-	return nil
 }

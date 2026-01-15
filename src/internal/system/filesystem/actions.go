@@ -3,7 +3,9 @@ package filesystem
 import (
 	"errors"
 	"io"
+	"mime"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -12,6 +14,88 @@ import (
 
 	"github.com/grantfbarnes/ground/internal/system/users"
 )
+
+func UploadFile(r *http.Request, dirPath string, username string) error {
+	mediaType, contentParams, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+	if err != nil || !strings.HasPrefix(mediaType, "multipart/") {
+		return errors.Join(errors.New("failed to pares media type"), err)
+	}
+
+	boundary, ok := contentParams["boundary"]
+	if !ok {
+		return errors.New("failed to get file boundary")
+	}
+
+	multipartReader := multipart.NewReader(r.Body, boundary)
+	for {
+		part, err := multipartReader.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return errors.Join(errors.New("failed to get next file part"), err)
+		}
+
+		err = createFileFromPart(part, dirPath, username)
+		if err != nil {
+			return errors.Join(errors.New("failed to create file"), err)
+		}
+	}
+
+	return nil
+}
+
+func createFileFromPart(part *multipart.Part, dirPath string, username string) error {
+	_, params, err := mime.ParseMediaType(part.Header.Get("Content-Disposition"))
+	if err != nil {
+		return errors.Join(errors.New("failed to get content disposition"), err)
+	}
+
+	fileRelPath, ok := params["filename"]
+	if !ok {
+		return errors.New("filename not found in content disposition")
+	}
+	fileDirRelPath, fileName := path.Split(fileRelPath)
+	fileDirPath := path.Join(dirPath, fileDirRelPath)
+
+	err = mkdir(fileDirPath, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to create parent directory"), err)
+	}
+
+	fileName, err = getAvailableFileName(fileDirPath, fileName)
+	if err != nil {
+		return errors.Join(errors.New("failed to find available file name"), err)
+	}
+	filePath := path.Join(fileDirPath, fileName)
+
+	err = createMultipartFile(part, filePath, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to create multipart file"), err)
+	}
+
+	return nil
+}
+
+func createMultipartFile(part *multipart.Part, filePath string, username string) error {
+	err := touch(filePath, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to create file"), err)
+	}
+
+	osFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return errors.Join(errors.New("failed to open file"), err)
+	}
+	defer osFile.Close()
+
+	_, err = io.Copy(osFile, part)
+	if err != nil {
+		return errors.Join(errors.New("failed to copy file data"), err)
+	}
+
+	return nil
+}
 
 func CreateDirectory(username string, relHomePath string, dirName string) error {
 	rootDirPath := path.Join("/home", username, relHomePath)
@@ -24,12 +108,7 @@ func CreateDirectory(username string, relHomePath string, dirName string) error 
 		return errors.New("path is not a directory")
 	}
 
-	uid, gid, err := users.GetUserIds(username)
-	if err != nil {
-		return errors.Join(errors.New("failed to get user ids"), err)
-	}
-
-	err = CreateMissingDirectories(rootDirPath, dirName, uid, gid)
+	err = mkdir(path.Join(rootDirPath, dirName), username)
 	if err != nil {
 		return errors.Join(errors.New("failed to create directory"), err)
 	}
@@ -53,7 +132,7 @@ func CompressDirectory(username string, relHomePath string) error {
 	}
 
 	dirPath, dirName := path.Split(rootDirPath)
-	fileName, err := GetAvailableFileName(dirPath, dirName+".tar.gz")
+	fileName, err := getAvailableFileName(dirPath, dirName+".tar.gz")
 	if err != nil {
 		return errors.Join(errors.New("failed to find available file name"), err)
 	}
@@ -95,18 +174,13 @@ func ExtractFile(username string, relHomePath string) error {
 		return errors.New("file is not compressed")
 	}
 
-	uid, gid, err := users.GetUserIds(username)
-	if err != nil {
-		return errors.Join(errors.New("failed to get user ids"), err)
-	}
-
-	extractedDirName, err := GetAvailableFileName(fileDirPath, fileNameNoExt)
+	extractedDirName, err := getAvailableFileName(fileDirPath, fileNameNoExt)
 	if err != nil {
 		return errors.Join(errors.New("failed to find available name"), err)
 	}
 	extractedDirPath := path.Join(fileDirPath, extractedDirName)
 
-	err = CreateMissingDirectories(fileDirPath, extractedDirName, uid, gid)
+	err = mkdir(extractedDirPath, username)
 	if err != nil {
 		return errors.Join(errors.New("failed to create extract directory"), err)
 	}
@@ -127,24 +201,14 @@ func ExtractFile(username string, relHomePath string) error {
 }
 
 func CreateRequiredFiles(username string) error {
-	uid, gid, err := users.GetUserIds(username)
-	if err != nil {
-		return errors.Join(errors.New("failed to get user ids"), err)
-	}
-
 	homePath := path.Join("/home", username)
 
-	err = CreateMissingDirectories(homePath, TRASH_HOME_PATH, uid, gid)
+	err := mkdir(path.Join(homePath, TRASH_HOME_PATH), username)
 	if err != nil {
 		return errors.Join(errors.New("failed to create trash directory"), err)
 	}
 
-	err = CreateMissingDirectories(homePath, ".ssh", uid, gid)
-	if err != nil {
-		return errors.Join(errors.New("failed to create ssh directory"), err)
-	}
-
-	err = createMissingFile(path.Join(homePath, ".ssh", "authorized_keys"), uid, gid)
+	err = touch(path.Join(homePath, ".ssh", "authorized_keys"), username)
 	if err != nil {
 		return errors.Join(errors.New("failed to create ssh keys file"), err)
 	}
@@ -191,20 +255,16 @@ func Trash(username string, relHomePath string) error {
 		return errors.Join(errors.New("failed to get path stat"), err)
 	}
 
-	uid, gid, err := users.GetUserIds(username)
-	if err != nil {
-		return errors.Join(errors.New("failed to get user ids"), err)
-	}
-
 	trashRootPath := path.Join("/home", username, TRASH_HOME_PATH)
 	trashTimestamp := time.Now().Format(systemTimeLayout)
-	err = CreateMissingDirectories(trashRootPath, trashTimestamp, uid, gid)
+	trashTimestampPath := path.Join(trashRootPath, trashTimestamp)
+	err = mkdir(trashTimestampPath, username)
 	if err != nil {
-		return errors.Join(errors.New("failed to create missing directories"), err)
+		return errors.Join(errors.New("failed to create timestamp directory"), err)
 	}
 
 	_, fileName := path.Split(rootDirPath)
-	err = os.Rename(rootDirPath, path.Join(trashRootPath, trashTimestamp, fileName))
+	err = os.Rename(rootDirPath, path.Join(trashTimestampPath, fileName))
 	if err != nil {
 		return errors.Join(errors.New("failed to rename files"), err)
 	}
@@ -226,76 +286,6 @@ func EmptyTrash(username string) error {
 		if err != nil {
 			return errors.Join(errors.New("failed to remove all files"), err)
 		}
-	}
-
-	return nil
-}
-
-func CreateMissingDirectories(rootPath string, relDirPath string, uid int, gid int) error {
-	relDirPathBuildUp := ""
-	for dirName := range strings.SplitSeq(relDirPath, string(os.PathSeparator)) {
-		if dirName == "" {
-			continue
-		}
-
-		relDirPathBuildUp = path.Join(relDirPathBuildUp, dirName)
-		dirPath := path.Join(rootPath, relDirPathBuildUp)
-
-		_, err := os.Stat(dirPath)
-		if err == nil {
-			// directory already exists
-			continue
-		}
-
-		err = os.MkdirAll(dirPath, os.FileMode(0755))
-		if err != nil {
-			return errors.Join(errors.New("failed to make directories"), err)
-		}
-
-		err = os.Chown(dirPath, uid, gid)
-		if err != nil {
-			return errors.Join(errors.New("failed to change ownership"), err)
-		}
-	}
-	return nil
-}
-
-func createMissingFile(filePath string, uid int, gid int) error {
-	_, err := os.Stat(filePath)
-	if err == nil {
-		// file already exists
-		return nil
-	}
-
-	createdFile, err := os.Create(filePath)
-	if err != nil {
-		return errors.Join(errors.New("failed to create file"), err)
-	}
-	defer createdFile.Close()
-
-	err = os.Chown(filePath, uid, gid)
-	if err != nil {
-		return errors.Join(errors.New("failed to change ownership"), err)
-	}
-
-	return nil
-}
-
-func CreateMultipartFile(part *multipart.Part, filePath string, uid int, gid int) error {
-	osFile, err := os.Create(filePath)
-	if err != nil {
-		return errors.Join(errors.New("failed to create file"), err)
-	}
-	defer osFile.Close()
-
-	_, err = io.Copy(osFile, part)
-	if err != nil {
-		return errors.Join(errors.New("failed to copy file data"), err)
-	}
-
-	err = os.Chown(filePath, uid, gid)
-	if err != nil {
-		return errors.Join(errors.New("failed to change ownership"), err)
 	}
 
 	return nil

@@ -38,25 +38,6 @@ func GetUserListItems() ([]UserListItem, error) {
 	return listItems, nil
 }
 
-func GetUserIds(username string) (uid int, gid int, err error) {
-	user, err := user.Lookup(username)
-	if err != nil {
-		return 0, 0, errors.Join(errors.New("failed to lookup user"), err)
-	}
-
-	uid, err = strconv.Atoi(user.Uid)
-	if err != nil {
-		return 0, 0, errors.Join(errors.New("failed to convert uid"), err)
-	}
-
-	gid, err = strconv.Atoi(user.Gid)
-	if err != nil {
-		return 0, 0, errors.Join(errors.New("failed to convert gid"), err)
-	}
-
-	return uid, gid, nil
-}
-
 func ExecuteAs(cmd *exec.Cmd, username string) error {
 	user, err := user.Lookup(username)
 	if err != nil {
