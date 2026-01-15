@@ -132,6 +132,11 @@ button {
     opacity: 0.5;
 }
 
+.column-container {
+    display: grid;
+    grid-auto-flow: column
+}
+
 .close-button {
     cursor: pointer;
     float: right;

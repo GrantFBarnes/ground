@@ -1,6 +1,6 @@
 {{define "body"}}
 <dialog id="create-directory-dialog">
-    <div style="display: grid; grid-auto-flow: column">
+    <div class="column-container">
         <div>
             <h3>Create Directory</h3>
         </div>
@@ -37,7 +37,7 @@
     </form>
 </dialog>
 
-<div style="display: grid; grid-auto-flow: column">
+<div class="column-container">
     <div style="text-align: left;">
         {{range .FilePathBreadcrumbs}}
         {{if not .IsHome}}
@@ -58,7 +58,7 @@
 
 <br />
 
-<div style="display: grid; grid-auto-flow: column">
+<div class="column-container">
     <div style="text-align: left;">
         <button onclick="document.getElementById('create-directory-dialog').showModal()">
             Create Directory
