@@ -101,7 +101,8 @@ tbody>tr:hover {
     border-top-color: var(--color-blue0);
 }
 
-#top-bar {
+#top-bar,
+#nav-bar {
     background-color: var(--color-bg1);
 }
 

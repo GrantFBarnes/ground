@@ -82,9 +82,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle string
 		Username  string
+		IsAdmin   bool
 	}{
 		PageTitle: "Ground - Login",
 		Username:  "",
+		IsAdmin:   false,
 	})
 }
 
@@ -130,6 +132,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle           string
 		Username            string
+		IsAdmin             bool
 		Path                string
 		FilePathBreadcrumbs []filesystem.FilePathBreadcrumb
 		DiskUsage           string
@@ -137,6 +140,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle:           "Ground - Files",
 		Username:            requestor,
+		IsAdmin:             users.IsAdmin(requestor),
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("home", urlRelativePath),
 		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
@@ -194,6 +198,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle           string
 		Username            string
+		IsAdmin             bool
 		Path                string
 		FilePathBreadcrumbs []filesystem.FilePathBreadcrumb
 		DiskUsage           string
@@ -201,6 +206,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	}{
 		PageTitle:           "Ground - Trash",
 		Username:            requestor,
+		IsAdmin:             users.IsAdmin(requestor),
 		Path:                urlRelativePath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("trash", urlRelativePath),
 		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
@@ -252,11 +258,13 @@ func User(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle      string
 		Username       string
+		IsAdmin        bool
 		TargetUsername string
 		SshKeys        []string
 	}{
 		PageTitle:      "Ground - User Manage",
 		Username:       requestor,
+		IsAdmin:        users.IsAdmin(requestor),
 		TargetUsername: targetUsername,
 		SshKeys:        sshKeys,
 	})
@@ -298,12 +306,14 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle     string
 		Username      string
+		IsAdmin       bool
 		DiskUsage     string
 		Uptime        string
 		UserListItems []users.UserListItem
 	}{
 		PageTitle:     "Ground - Admin",
 		Username:      requestor,
+		IsAdmin:       users.IsAdmin(requestor),
 		DiskUsage:     monitor.GetDirectoryDiskUsage("/home"),
 		Uptime:        uptime,
 		UserListItems: userListItems,
@@ -331,10 +341,12 @@ func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage strin
 	_ = tmpl.ExecuteTemplate(w, "base", struct {
 		PageTitle      string
 		Username       string
+		IsAdmin        bool
 		ProblemMessage string
 	}{
 		PageTitle:      "Ground - Error",
 		Username:       requestor,
+		IsAdmin:        users.IsAdmin(requestor),
 		ProblemMessage: problemMessage,
 	})
 }

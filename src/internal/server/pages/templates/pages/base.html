@@ -26,28 +26,32 @@
 </head>
 
 <body>
-    <div id="top-bar">
-        <div style="text-align: left;">
-            {{if ne .Username ""}}
-            <span
-                class="clickable"
-                onclick="window.location.href='/'"
-            >{{.Username}}@ground</span>
-            {{else}}
-            <span>ground</span>
+    <div id="grid-container">
+        <div id="top-bar">
+            <div style="text-align: left;">
+                <span>{{if ne .Username ""}}{{.Username}}@{{end}}ground</span>
+            </div>
+            <div style="text-align: right;">
+                {{if ne .Username ""}}
+                <span
+                    class="clickable"
+                    onclick="confirmLogout()"
+                >logout</span>
+                {{end}}
+            </div>
+        </div>
+        <div id="nav-bar">
+            <div><a href="/">Home</a></div>
+            <div><a href="/files">Files</a></div>
+            <div><a href="/trash">Trash</a></div>
+            <div><a href="/user/{{.Username}}">Manage User</a></div>
+            {{if .IsAdmin}}
+            <div><a href="/admin">Admin</a></div>
             {{end}}
         </div>
-        <div style="text-align: right;">
-            {{if ne .Username ""}}
-            <span
-                class="clickable"
-                onclick="confirmLogout()"
-            >logout</span>
-            {{end}}
+        <div id="main-view">
+            <div id="content-view">{{template "body" .}}</div>
         </div>
-    </div>
-    <div id="bottom-view">
-        <div id="content">{{template "body" .}}</div>
     </div>
     <dialog id="confirm-dialog">
         <p id="confirm-message"></p>

@@ -1,8 +1,8 @@
 :root {
-    --top-bar-height: 20px;
+    --top-bar-height: 40px;
+    --nav-bar-width: 150px;
     --padding-large: 12px;
     --padding-small: 6px;
-    --bottom-view-margin: 20px;
     --loading-wheel-diameter: 100px;
     --loading-wheel-thickness: 15px;
 }
@@ -12,6 +12,55 @@ body {
     margin: 0;
     height: 100%;
     font-family: monospace;
+}
+
+#grid-container {
+    height: 100%;
+    width: 100%;
+    display: grid;
+    grid-template-columns: var(--nav-bar-width) auto;
+    grid-template-rows: var(--top-bar-height) auto;
+    grid-template-areas:
+        "top-bar top-bar"
+        "nav-bar main-view";
+}
+
+@media screen and (max-width: 1080px) {
+    #grid-container {
+        grid-template-columns: auto;
+        grid-template-rows: var(--top-bar-height) auto auto;
+        grid-template-areas:
+            "top-bar"
+            "nav-bar"
+            "main-view";
+    }
+}
+
+#top-bar {
+    grid-area: top-bar;
+    padding: var(--padding-large);
+    display: grid;
+    grid-auto-flow: column;
+    overflow: hidden;
+}
+
+#nav-bar {
+    grid-area: nav-bar;
+    padding: var(--padding-large);
+}
+
+#nav-bar>div {
+    padding: var(--padding-small)
+}
+
+#main-view {
+    grid-area: main-view;
+    margin: 20px;
+}
+
+#content-view {
+    max-width: 1920px;
+    margin: auto;
 }
 
 dialog {
@@ -58,25 +107,6 @@ button {
     cursor: pointer;
 }
 
-#top-bar {
-    height: var(--top-bar-height);
-    padding: var(--padding-large);
-    display: grid;
-    grid-auto-flow: column;
-    overflow: hidden;
-}
-
-#bottom-view {
-    margin: var(--bottom-view-margin);
-    height: calc(100% - (2 * var(--bottom-view-margin)) - (2 * var(--padding-large)) - var(--top-bar-height));
-}
-
-#content {
-    max-width: 1920px;
-    margin: auto;
-    height: 100%;
-}
-
 #overlay {
     position: fixed;
     z-index: 997;
@@ -102,7 +132,7 @@ button {
 }
 
 #notification-info {
-    top: calc(var(--top-bar-height) + (2 * var(--padding-large)) + 10px);
+    top: calc(var(--top-bar-height) + var(--padding-large));
 }
 
 #notification-error {
