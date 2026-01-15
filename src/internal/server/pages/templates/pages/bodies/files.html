@@ -1,11 +1,4 @@
 {{define "body"}}
-<style>
-    .single-icon-cell {
-        text-align: center;
-        width: 2em;
-    }
-</style>
-
 <dialog id="create-directory-dialog">
     <div style="display: grid; grid-auto-flow: column">
         <div>
@@ -107,8 +100,8 @@
                 <th></th>
                 <th>name</th>
                 <th></th>
-                <th style="text-align: right;">size</th>
-                <th style="text-align: right;">last modified</th>
+                <th class="right-align-cell">size</th>
+                <th class="right-align-cell">last modified</th>
                 <th></th>
                 <th></th>
                 <th></th>
@@ -142,8 +135,8 @@
                     <span title="{{.SymLinkPath}}">&#128279;</span>
                     {{end}}
                 </td>
-                <td style="text-align: right; white-space: nowrap;">{{.HumanSize}}</td>
-                <td style="text-align: right; white-space: nowrap;">{{.LastModified}}</td>
+                <td class="right-align-cell">{{.HumanSize}}</td>
+                <td class="right-align-cell">{{.LastModified}}</td>
                 <td class="single-icon-cell">
                     {{if .IsDir}}
                     <span

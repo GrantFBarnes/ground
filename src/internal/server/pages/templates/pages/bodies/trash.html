@@ -1,11 +1,4 @@
 {{define "body"}}
-<style>
-    .single-icon-cell {
-        text-align: center;
-        width: 2em;
-    }
-</style>
-
 <div style="display: grid; grid-auto-flow: column">
     <div style="text-align: left;">
         {{range .FilePathBreadcrumbs}}
@@ -39,8 +32,8 @@
             <tr>
                 <th></th>
                 <th>name</th>
-                <th style="text-align: right;">size</th>
-                <th style="text-align: right;">trashed on</th>
+                <th class="right-align-cell">size</th>
+                <th class="right-align-cell">trashed on</th>
                 <th></th>
                 <th></th>
             </tr>
@@ -59,8 +52,8 @@
                     {{end}}
                 </td>
                 <td>{{.Name}}</td>
-                <td style="text-align: right; white-space: nowrap;">{{.HumanSize}}</td>
-                <td style="text-align: right; white-space: nowrap;">{{.TrashedOn}}</td>
+                <td class="right-align-cell">{{.HumanSize}}</td>
+                <td class="right-align-cell">{{.TrashedOn}}</td>
                 <td class="single-icon-cell">
                     {{if .IsDir}}
                     <span

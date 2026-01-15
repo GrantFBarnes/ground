@@ -44,6 +44,8 @@ table {
 
 th,
 td {
+    max-width: 80vw;
+    overflow-wrap: break-word;
     text-align: left;
     padding: var(--padding-small)
 }
@@ -107,6 +109,10 @@ button {
     bottom: 30px;
 }
 
+#confirm-message {
+    overflow-wrap: break-word;
+}
+
 .notification {
     position: fixed;
     z-index: 999;
@@ -129,6 +135,16 @@ button {
 .close-button {
     cursor: pointer;
     float: right;
+}
+
+.single-icon-cell {
+    text-align: center;
+    width: 2em;
+}
+
+.right-align-cell {
+    text-align: right;
+    white-space: nowrap;
 }
 
 @-webkit-keyframes spin {
