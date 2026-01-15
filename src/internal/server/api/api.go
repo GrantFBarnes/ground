@@ -162,6 +162,15 @@ func CreateDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	homePath := path.Join("/home", requestor)
+	dirPath := path.Join(homePath, relHomePath, dirName)
+	dirPath = path.Clean(dirPath)
+	if !strings.HasPrefix(dirPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path outside of home", http.StatusBadRequest)
+		return
+	}
+
 	err := filesystem.CreateDirectory(requestor, relHomePath, dirName)
 	if err != nil {
 		slog.Error("failed to create directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
@@ -181,6 +190,15 @@ func CompressDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	homePath := path.Join("/home", requestor)
+	fullPath := path.Join(homePath, relHomePath)
+	fullPath = path.Clean(fullPath)
+	if !strings.HasPrefix(fullPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path outside of home", http.StatusBadRequest)
+		return
+	}
+
 	err := filesystem.CompressDirectory(requestor, relHomePath)
 	if err != nil {
 		slog.Error("failed to compress directory", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
@@ -197,6 +215,15 @@ func ExtractFile(w http.ResponseWriter, r *http.Request) {
 	if relHomePath == "" {
 		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
 		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	homePath := path.Join("/home", requestor)
+	fullPath := path.Join(homePath, relHomePath)
+	fullPath = path.Clean(fullPath)
+	if !strings.HasPrefix(fullPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path outside of home", http.StatusBadRequest)
 		return
 	}
 
@@ -227,6 +254,24 @@ func MoveFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	homePath := path.Join("/home", requestor)
+
+	fullSourcePath := path.Join(homePath, sourceRelHomePath)
+	fullSourcePath = path.Clean(fullSourcePath)
+	if !strings.HasPrefix(fullSourcePath, homePath) {
+		slog.Warn("source path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "source path outside of home", http.StatusBadRequest)
+		return
+	}
+
+	fullDestinationPath := path.Join(homePath, destinationRelHomePath)
+	fullDestinationPath = path.Clean(fullDestinationPath)
+	if !strings.HasPrefix(fullDestinationPath, homePath) {
+		slog.Warn("destination path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "destination path outside of home", http.StatusBadRequest)
+		return
+	}
+
 	err := filesystem.Move(requestor, sourceRelHomePath, destinationRelHomePath)
 	if err != nil {
 		slog.Error("failed to move files", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "source", sourceRelHomePath, "destination", destinationRelHomePath, "error", err)
@@ -243,6 +288,15 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	if relHomePath == "" {
 		slog.Warn("path not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
 		http.Error(w, "path not provided", http.StatusBadRequest)
+		return
+	}
+
+	homePath := path.Join("/home", requestor)
+	fullPath := path.Join(homePath, relHomePath)
+	fullPath = path.Clean(fullPath)
+	if !strings.HasPrefix(fullPath, homePath) {
+		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "path outside of home", http.StatusBadRequest)
 		return
 	}
 
