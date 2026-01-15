@@ -1,6 +1,6 @@
 :root {
     --top-bar-height: 40px;
-    --nav-bar-width: 150px;
+    --nav-bar-width: 124px;
     --padding-large: 12px;
     --padding-small: 6px;
     --loading-wheel-diameter: 100px;
@@ -28,7 +28,7 @@ body {
 @media screen and (max-width: 1080px) {
     #grid-container {
         grid-template-columns: auto;
-        grid-template-rows: var(--top-bar-height) auto auto;
+        grid-template-rows: var(--top-bar-height) var(--top-bar-height) auto;
         grid-template-areas:
             "top-bar"
             "nav-bar"
@@ -49,8 +49,18 @@ body {
     padding: var(--padding-large);
 }
 
-#nav-bar>div {
-    padding: var(--padding-small)
+#nav-bar>a {
+    display: block;
+    padding-bottom: var(--padding-large);
+    padding-right: 0px;
+}
+
+@media screen and (max-width: 1080px) {
+    #nav-bar>a {
+        display: inline-block;
+        padding-bottom: 0px;
+        padding-right: var(--padding-large);
+    }
 }
 
 #main-view {

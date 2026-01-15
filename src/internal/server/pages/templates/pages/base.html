@@ -41,12 +41,14 @@
             </div>
         </div>
         <div id="nav-bar">
-            <div><a href="/">Home</a></div>
-            <div><a href="/files">Files</a></div>
-            <div><a href="/trash">Trash</a></div>
-            <div><a href="/user/{{.Username}}">Manage User</a></div>
+            {{if ne .Username ""}}
+            <a href="/">home</a>
+            <a href="/files">files</a>
+            <a href="/trash">trash</a>
+            <a href="/user/{{.Username}}">manage user</a>
             {{if .IsAdmin}}
-            <div><a href="/admin">Admin</a></div>
+            <a href="/admin">admin</a>
+            {{end}}
             {{end}}
         </div>
         <div id="main-view">
