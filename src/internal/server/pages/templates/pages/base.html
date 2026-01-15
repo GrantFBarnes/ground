@@ -42,12 +42,27 @@
         </div>
         <div id="nav-bar">
             {{if ne .Username ""}}
-            <a href="/">home</a>
-            <a href="/files">files</a>
-            <a href="/trash">trash</a>
-            <a href="/user/{{.Username}}">manage user</a>
+            <span
+                class="clickable"
+                onclick="window.location.href='/'"
+            >home</span>
+            <span
+                class="clickable"
+                onclick="window.location.href='/files'"
+            >files</span>
+            <span
+                class="clickable"
+                onclick="window.location.href='/trash'"
+            >trash</span>
+            <span
+                class="clickable"
+                onclick="window.location.href='/user/{{.Username}}'"
+            >manage</span>
             {{if .IsAdmin}}
-            <a href="/admin">admin</a>
+            <span
+                class="clickable"
+                onclick="window.location.href='/admin'"
+            >admin</span>
             {{end}}
             {{end}}
         </div>

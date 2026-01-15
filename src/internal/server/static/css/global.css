@@ -1,6 +1,6 @@
 :root {
     --top-bar-height: 40px;
-    --nav-bar-width: 124px;
+    --nav-bar-width: 100px;
     --padding-large: 12px;
     --padding-small: 6px;
     --loading-wheel-diameter: 100px;
@@ -49,17 +49,14 @@ body {
     padding: var(--padding-large);
 }
 
-#nav-bar>a {
+#nav-bar>span {
     display: block;
-    padding-bottom: var(--padding-large);
-    padding-right: 0px;
+    padding: var(--padding-small);
 }
 
 @media screen and (max-width: 1080px) {
-    #nav-bar>a {
+    #nav-bar>span {
         display: inline-block;
-        padding-bottom: 0px;
-        padding-right: var(--padding-large);
     }
 }
 

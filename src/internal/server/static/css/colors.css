@@ -106,6 +106,10 @@ tbody>tr:hover {
     background-color: var(--color-bg1);
 }
 
+#nav-bar>span:hover {
+    background-color: var(--color-bg2);
+}
+
 #notification-info {
     background-color: var(--color-aqua0)
 }
