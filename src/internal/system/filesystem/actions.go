@@ -59,7 +59,13 @@ func CompressDirectory(username string, relHomePath string) error {
 	}
 	filePath := path.Join(dirPath, fileName)
 
-	cmd := exec.Command("su", "-c", "tar -zchf '"+filePath+"' --directory='"+rootDirPath+"' .", username)
+	cmd := exec.Command("tar", "-zchf", filePath, "--directory", rootDirPath, ".")
+
+	err = users.ExecuteAs(cmd, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to set command executor"), err)
+	}
+
 	err = cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed to compress directory"), err)
@@ -105,7 +111,13 @@ func ExtractFile(username string, relHomePath string) error {
 		return errors.Join(errors.New("failed to create extract directory"), err)
 	}
 
-	cmd := exec.Command("su", "-c", "tar -xzf '"+rootFilePath+"' --directory='"+extractedDirPath+"'", username)
+	cmd := exec.Command("tar", "-xzf", rootFilePath, "--directory", extractedDirPath)
+
+	err = users.ExecuteAs(cmd, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to set command executor"), err)
+	}
+
 	err = cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed to extract file"), err)

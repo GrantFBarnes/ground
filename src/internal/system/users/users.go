@@ -3,9 +3,11 @@ package users
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"os/user"
 	"path"
 	"strconv"
+	"syscall"
 
 	"github.com/grantfbarnes/ground/internal/system/monitor"
 )
@@ -53,4 +55,30 @@ func GetUserIds(username string) (uid int, gid int, err error) {
 	}
 
 	return uid, gid, nil
+}
+
+func ExecuteAs(cmd *exec.Cmd, username string) error {
+	user, err := user.Lookup(username)
+	if err != nil {
+		return errors.Join(errors.New("failed to lookup user"), err)
+	}
+
+	uid64, err := strconv.ParseUint(user.Uid, 10, 32)
+	if err != nil {
+		return errors.Join(errors.New("failed to parse uid"), err)
+	}
+
+	gid64, err := strconv.ParseUint(user.Gid, 10, 32)
+	if err != nil {
+		return errors.Join(errors.New("failed to parse gid"), err)
+	}
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Credential: &syscall.Credential{
+			Uid: uint32(uid64),
+			Gid: uint32(gid64),
+		},
+	}
+
+	return nil
 }
