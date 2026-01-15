@@ -173,7 +173,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trashEntries, err := filesystem.GetTrashEntries(urlRelativePath, urlRootPath)
+	trashEntries, err := filesystem.GetTrashEntries(requestor, urlRelativePath)
 	if err != nil {
 		slog.Error("failed to get trash entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		getProblemPage(w, r, "failed to get trash entries")
