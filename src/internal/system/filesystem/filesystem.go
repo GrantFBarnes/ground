@@ -198,7 +198,7 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 
 	entry.UrlPath, err = entry.getUrlPath()
 	if err != nil {
-		return DirectoryEntryData{}, errors.Join(errors.New("failed to get url path"), err)
+		return entry, errors.Join(errors.New("failed to get url path"), err)
 	}
 
 	symLinkPath, isSymLinkDir := entry.getSymLinkInfo(rootDirPath)
@@ -285,21 +285,6 @@ func getTrashEntry(dirEntry os.DirEntry, relDirPath string) (TrashEntryData, err
 		return TrashEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
 	}
 
-	var topLevelTrashDirName string
-	if relDirPath == "/" {
-		topLevelTrashDirName = entryInfo.Name()
-	} else {
-		relDirPathDirs := strings.Split(relDirPath, "/")
-		if len(relDirPathDirs) < 2 {
-			return TrashEntryData{}, errors.New("relative dir path is invalid")
-		}
-		topLevelTrashDirName = relDirPathDirs[1]
-	}
-
-	if !systemTimeLayoutRegex.MatchString(topLevelTrashDirName) {
-		return TrashEntryData{}, errors.New("top level trash dir name is invalid")
-	}
-
 	entry := TrashEntryData{
 		IsDir:        dirEntry.IsDir(),
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
@@ -310,16 +295,41 @@ func getTrashEntry(dirEntry os.DirEntry, relDirPath string) (TrashEntryData, err
 
 	entry.UrlPath, err = entry.getUrlPath()
 	if err != nil {
-		return TrashEntryData{}, errors.Join(errors.New("failed to get url path"), err)
+		return entry, errors.Join(errors.New("failed to get url path"), err)
 	}
 	entry.Path = path.Join("/", TRASH_HOME_PATH, entry.Path)
 
+	topLevelTrashDirName, err := getTopLevelTrashDirName(relDirPath, entryInfo.Name())
+	if err != nil {
+		return entry, errors.Join(errors.New("failed to get top level trash dir name"), err)
+	}
+
 	entry.TimeDeleted, err = convertTimeLayout(topLevelTrashDirName)
 	if err != nil {
-		return TrashEntryData{}, errors.Join(errors.New("failed to get trash time deleted"), err)
+		return entry, errors.Join(errors.New("failed to get trash time deleted"), err)
 	}
 
 	return entry, nil
+}
+
+func getTopLevelTrashDirName(relDirPath string, entryName string) (string, error) {
+	var topLevelTrashDirName string
+
+	if relDirPath == "/" {
+		topLevelTrashDirName = entryName
+	} else {
+		relDirPathDirs := strings.Split(relDirPath, "/")
+		if len(relDirPathDirs) < 2 {
+			return topLevelTrashDirName, errors.New("relative dir path is invalid")
+		}
+		topLevelTrashDirName = relDirPathDirs[1]
+	}
+
+	if !systemTimeLayoutRegex.MatchString(topLevelTrashDirName) {
+		return topLevelTrashDirName, errors.New("top level trash dir name is invalid")
+	}
+
+	return topLevelTrashDirName, nil
 }
 
 func (entry TrashEntryData) getUrlPath() (string, error) {
