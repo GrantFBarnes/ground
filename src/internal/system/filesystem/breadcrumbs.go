@@ -12,7 +12,15 @@ type FilePathBreadcrumb struct {
 	IsHome bool
 }
 
-func GetFileBreadcrumbs(homeName string, relPath string) []FilePathBreadcrumb {
+func GetFileBreadcrumbs(relPath string) []FilePathBreadcrumb {
+	return getBreadcrumbs("home", relPath)
+}
+
+func GetTrashBreadcrumbs(relPath string) []FilePathBreadcrumb {
+	return getBreadcrumbs("trash", relPath)
+}
+
+func getBreadcrumbs(homeName string, relPath string) []FilePathBreadcrumb {
 	breadcrumbPath := "/"
 	FilePathBreadcrumbs := []FilePathBreadcrumb{
 		{
@@ -27,12 +35,16 @@ func GetFileBreadcrumbs(homeName string, relPath string) []FilePathBreadcrumb {
 			continue
 		}
 
-		breadcrumbPath = path.Join(breadcrumbPath, breadcrumbDir)
-		FilePathBreadcrumbs = append(FilePathBreadcrumbs, FilePathBreadcrumb{
-			Name:   breadcrumbDir,
-			Path:   breadcrumbPath,
-			IsHome: false,
-		})
+		if homeName == "trash" && breadcrumbPath == "/" {
+			breadcrumbPath = path.Join(breadcrumbPath, breadcrumbDir)
+		} else {
+			breadcrumbPath = path.Join(breadcrumbPath, breadcrumbDir)
+			FilePathBreadcrumbs = append(FilePathBreadcrumbs, FilePathBreadcrumb{
+				Name:   breadcrumbDir,
+				Path:   breadcrumbPath,
+				IsHome: false,
+			})
+		}
 	}
 
 	return FilePathBreadcrumbs

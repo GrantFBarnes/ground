@@ -152,7 +152,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		Username:            requestor,
 		IsAdmin:             users.IsAdmin(requestor),
 		Path:                urlRelativePath,
-		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("home", urlRelativePath),
+		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs(urlRelativePath),
 		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
 		DirectoryEntries:    directoryEntries,
 	})
@@ -238,7 +238,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		Username:            requestor,
 		IsAdmin:             users.IsAdmin(requestor),
 		Path:                urlRelativePath,
-		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs("trash", urlRelativePath),
+		FilePathBreadcrumbs: filesystem.GetTrashBreadcrumbs(urlRelativePath),
 		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
 		TrashEntries:        trashEntries,
 	})
