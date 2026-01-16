@@ -15,6 +15,7 @@ import (
 )
 
 const TRASH_HOME_PATH string = ".local/share/ground/trash"
+const trashRestorePathFileName string = ".ground-trash-restore-path"
 const displayTimeLayout string = "2006-01-02 03:04:05 PM"
 const systemTimeLayout string = "20060102150405.000"
 

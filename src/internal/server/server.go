@@ -42,6 +42,7 @@ func Run() {
 	http.Handle("POST /api/move", api.Middleware(http.HandlerFunc(api.MoveFiles)))
 
 	http.Handle("POST /api/trash", api.Middleware(http.HandlerFunc(api.Trash)))
+	http.Handle("POST /api/restore", api.Middleware(http.HandlerFunc(api.Restore)))
 	http.Handle("DELETE /api/trash", api.Middleware(http.HandlerFunc(api.EmptyTrash)))
 
 	http.Handle("POST /api/system/reboot", api.Middleware(http.HandlerFunc(api.SystemReboot)))

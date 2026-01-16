@@ -35,7 +35,6 @@
                 <th class="right-align-cell">size</th>
                 <th class="right-align-cell">trashed on</th>
                 <th></th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -55,28 +54,11 @@
                 <td class="right-align-cell">{{.HumanSize}}</td>
                 <td class="right-align-cell">{{.TrashedOn}}</td>
                 <td class="single-icon-cell">
-                    {{if .IsDir}}
                     <span
-                        title="Compress Directory"
+                        title="Restore trash directory back to files"
                         class="clickable"
-                        onclick="compressDirectory('{{.Path}}')"
-                    >&#128476;</span>
-                    {{else if .IsCompressed}}
-                    <span
-                        title="Extract File"
-                        class="clickable"
-                        onclick="extractFile('{{.Path}}')"
-                    >&#128449;</span>
-                    {{end}}
-                </td>
-                <td class="single-icon-cell">
-                    {{if not .IsDir}}
-                    <span
-                        title="Download File"
-                        class="clickable"
-                        onclick="downloadFile('{{.Path}}')"
-                    >&#8681;</span>
-                    {{end}}
+                        onclick="restoreDir('{{.DirName}}', '{{.TrashedOn}}')"
+                    >&#9100;</span>
                 </td>
             </tr>
             {{end}}
@@ -101,12 +83,22 @@
         });
     }
 
-    function downloadFile(filePath) {
-        const a = document.createElement("a");
-        a.href = "/api/download" + filePath;
-        a.download = true;
-        a.click();
-        a.remove();
+    function restoreDir(trashDirName, trashedOn) {
+        customConfirm(`Are you sure you want to restore all files/directories trashed on ${trashedOn}?`).then(confirmed => {
+            if (confirmed) {
+                toggleLoading();
+                const formData = new FormData();
+                formData.append("trashDirName", trashDirName);
+                fetch("/api/restore", { method: "POST", body: formData }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.text().then((text) => notifyError(text));
+                        toggleLoading();
+                    }
+                });
+            }
+        });
     }
 </script>
 {{end}}

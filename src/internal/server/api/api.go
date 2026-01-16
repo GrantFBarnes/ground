@@ -310,6 +310,25 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func Restore(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	trashDirName := r.FormValue("trashDirName")
+	if trashDirName == "" {
+		slog.Warn("trash dir name not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "trash dir name not provided", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.Restore(requestor, trashDirName)
+	if err != nil {
+		slog.Error("failed restore trash dir", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "failed restore trash dir", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func EmptyTrash(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	err := filesystem.EmptyTrash(requestor)

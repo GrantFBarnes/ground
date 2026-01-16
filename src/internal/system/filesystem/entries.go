@@ -22,13 +22,14 @@ type DirectoryEntryData struct {
 }
 
 type TrashEntryData struct {
-	trashedTime  time.Time
-	TrashedOn    string
+	DirName      string
 	IsDir        bool
 	IsCompressed bool
 	Name         string
 	Path         string
 	HumanSize    string
+	trashedTime  time.Time
+	TrashedOn    string
 	UrlPath      string
 }
 
@@ -160,12 +161,12 @@ func GetTrashEntries(username string, relTrashPath string) ([]TrashEntryData, er
 func getTrashPathEntries(username string, relTrashPath string) ([]TrashEntryData, error) {
 	var entries []TrashEntryData
 
-	topLevelTrashDirName := getTopLevelDirName(relTrashPath)
-	if !systemTimeLayoutRegex.MatchString(topLevelTrashDirName) {
-		return entries, errors.New("top level trash dir name is invalid")
+	trashDirName := getTopLevelDirName(relTrashPath)
+	if !systemTimeLayoutRegex.MatchString(trashDirName) {
+		return entries, errors.New("trash dir name is invalid")
 	}
 
-	trashedTime, err := time.Parse(systemTimeLayout, topLevelTrashDirName)
+	trashedTime, err := time.Parse(systemTimeLayout, trashDirName)
 	if err != nil {
 		return entries, errors.Join(errors.New("failed to parse trash time"), err)
 	}
@@ -177,25 +178,32 @@ func getTrashPathEntries(username string, relTrashPath string) ([]TrashEntryData
 	}
 
 	for _, entry := range dirEntries {
-		entry, err := getTrashEntry(entry, relTrashPath, trashedTime, trashedOn)
+		if entry.Name() == trashRestorePathFileName {
+			continue
+		}
+
+		entry, err := getTrashEntry(entry, relTrashPath)
 		if err != nil {
 			continue
 		}
+
+		entry.DirName = trashDirName
+		entry.trashedTime = trashedTime
+		entry.TrashedOn = trashedOn
+
 		entries = append(entries, entry)
 	}
 
 	return entries, nil
 }
 
-func getTrashEntry(dirEntry os.DirEntry, relTrashPath string, trashedTime time.Time, trashedOn string) (TrashEntryData, error) {
+func getTrashEntry(dirEntry os.DirEntry, relTrashPath string) (TrashEntryData, error) {
 	entryInfo, err := dirEntry.Info()
 	if err != nil {
 		return TrashEntryData{}, errors.Join(errors.New("failed to get entry info"), err)
 	}
 
 	entry := TrashEntryData{
-		trashedTime:  trashedTime,
-		TrashedOn:    trashedOn,
 		IsDir:        dirEntry.IsDir(),
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
 		Name:         dirEntry.Name(),

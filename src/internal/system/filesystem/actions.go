@@ -263,10 +263,78 @@ func Trash(username string, relHomePath string) error {
 		return errors.Join(errors.New("failed to create timestamp directory"), err)
 	}
 
-	_, fileName := path.Split(rootDirPath)
+	restorePath, fileName := path.Split(rootDirPath)
+
+	if fileName == trashRestorePathFileName {
+		fileName, _ = strings.CutPrefix(fileName, ".")
+	}
+
 	err = os.Rename(rootDirPath, path.Join(trashTimestampPath, fileName))
 	if err != nil {
 		return errors.Join(errors.New("failed to rename files"), err)
+	}
+
+	trashRestorePathFilePath := path.Join(trashTimestampPath, trashRestorePathFileName)
+	err = touch(trashRestorePathFilePath, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to create restore path file"), err)
+	}
+
+	err = os.WriteFile(trashRestorePathFilePath, []byte(restorePath), 0644)
+	if err != nil {
+		return errors.Join(errors.New("failed to write to restore path file"), err)
+	}
+
+	return nil
+}
+
+func Restore(username string, trashDirName string) error {
+	if !systemTimeLayoutRegex.MatchString(trashDirName) {
+		return errors.New("trash dir name is invalid")
+	}
+
+	trashDirPath := path.Join("/home", username, TRASH_HOME_PATH, trashDirName)
+	_, err := os.Stat(trashDirPath)
+	if err != nil {
+		return errors.Join(errors.New("failed to find trash dir"), err)
+	}
+
+	restoreFilePath := path.Join(trashDirPath, trashRestorePathFileName)
+	restorePathBytes, err := os.ReadFile(restoreFilePath)
+	if err != nil {
+		return errors.Join(errors.New("failed to read restore path"), err)
+	}
+	restorePath := string(restorePathBytes)
+
+	err = mkdir(restorePath, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to create restore path"), err)
+	}
+
+	dirEntries, err := os.ReadDir(trashDirPath)
+	if err != nil {
+		return errors.Join(errors.New("failed to read directory"), err)
+	}
+
+	for _, entry := range dirEntries {
+		if entry.Name() == trashRestorePathFileName {
+			continue
+		}
+
+		restoreName, err := getAvailableFileName(restorePath, entry.Name())
+		if err != nil {
+			return errors.Join(errors.New("failed to find available restore name"), err)
+		}
+
+		err = os.Rename(path.Join(trashDirPath, entry.Name()), path.Join(restorePath, restoreName))
+		if err != nil {
+			return errors.Join(errors.New("failed to rename files"), err)
+		}
+	}
+
+	err = os.RemoveAll(trashDirPath)
+	if err != nil {
+		return errors.Join(errors.New("failed to remove dir path"), err)
 	}
 
 	return nil

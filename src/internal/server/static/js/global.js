@@ -90,22 +90,6 @@ function logout() {
     fetch("/api/logout", { method: "POST" }).then(() => location.reload());
 }
 
-function compressDirectory(relHomePath) {
-    customConfirm("Are you sure you want to compress this directory?").then(confirmed => {
-        if (confirmed) {
-            callFileApi("compress", relHomePath);
-        }
-    });
-}
-
-function extractFile(relHomePath) {
-    customConfirm("Are you sure you want to extract this file?").then(confirmed => {
-        if (confirmed) {
-            callFileApi("extract", relHomePath);
-        }
-    });
-}
-
 function callFileApi(api, relHomePath) {
     toggleLoading();
     const formData = new FormData();
