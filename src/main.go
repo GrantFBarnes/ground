@@ -131,9 +131,9 @@ func healthCheck() (err error) {
 		return errors.Join(errors.New("failed to setup file copy name regex"), err)
 	}
 
-	err = filesystem.SetupSystemTimeLayoutRegex()
+	err = filesystem.SetupTrashNameDirRegex()
 	if err != nil {
-		return errors.Join(errors.New("failed to setup system time layout regex"), err)
+		return errors.Join(errors.New("failed to setup trash dir name regex"), err)
 	}
 
 	err = filesystem.SetupSshKeyRegex()

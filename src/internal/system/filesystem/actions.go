@@ -289,7 +289,7 @@ func Trash(username string, relHomePath string) error {
 }
 
 func Restore(username string, trashDirName string) error {
-	if !systemTimeLayoutRegex.MatchString(trashDirName) {
+	if !trashDirNameRegex.MatchString(trashDirName) {
 		return errors.New("trash dir name is invalid")
 	}
 

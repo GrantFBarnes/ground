@@ -20,7 +20,7 @@ const displayTimeLayout string = "2006-01-02 03:04:05 PM"
 const systemTimeLayout string = "20060102150405.000"
 
 var fileCopyNameRegex *regexp.Regexp
-var systemTimeLayoutRegex *regexp.Regexp
+var trashDirNameRegex *regexp.Regexp
 
 func SetupFileCopyNameRegex() error {
 	re, err := regexp.Compile(`(.*)\(([0-9]+)\)$`)
@@ -31,12 +31,12 @@ func SetupFileCopyNameRegex() error {
 	return nil
 }
 
-func SetupSystemTimeLayoutRegex() error {
+func SetupTrashNameDirRegex() error {
 	re, err := regexp.Compile(`^[0-9]{14}\.[0-9]{3}$`)
 	if err != nil {
 		return errors.Join(errors.New("failed to compile regex"), err)
 	}
-	systemTimeLayoutRegex = re
+	trashDirNameRegex = re
 	return nil
 }
 
