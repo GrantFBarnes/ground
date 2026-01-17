@@ -8,6 +8,8 @@ import (
 	"path"
 	"regexp"
 	"strconv"
+
+	"github.com/grantfbarnes/ground/internal/system/execute"
 )
 
 var sshKeyRegex *regexp.Regexp
@@ -39,7 +41,7 @@ func AddUserSshKey(username string, sshKey string) error {
 	sshKeyPath := path.Join(homePath, ".ssh", "authorized_keys")
 	_, err := os.Stat(sshKeyPath)
 	if err != nil {
-		err = touch(sshKeyPath, username)
+		err = execute.Touch(username, sshKeyPath)
 		if err != nil {
 			return errors.Join(errors.New("failed to create missing file"), err)
 		}

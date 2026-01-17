@@ -5,13 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
 const TRASH_HOME_PATH string = ".local/share/ground/trash"
@@ -131,54 +128,6 @@ func getFileExtension(fileName string) (string, string) {
 	}
 
 	return coreFileName, fileExtension
-}
-
-func touch(filePath string, username string) error {
-	filePath = path.Clean(filePath)
-
-	_, err := os.Stat(filePath)
-	if err == nil {
-		// file already exists
-		return nil
-	}
-
-	dirPath, _ := path.Split(filePath)
-	err = mkdir(dirPath, username)
-	if err != nil {
-		return errors.Join(errors.New("failed to create parent directory"), err)
-	}
-
-	cmd := exec.Command("touch", filePath)
-
-	err = users.ExecuteAs(cmd, username)
-	if err != nil {
-		return errors.Join(errors.New("failed to set command executor"), err)
-	}
-
-	err = cmd.Run()
-	if err != nil {
-		return errors.Join(errors.New("failed to create file"), err)
-	}
-
-	return nil
-}
-
-func mkdir(dirPath string, username string) error {
-	dirPath = path.Clean(dirPath)
-
-	cmd := exec.Command("mkdir", "-p", dirPath)
-
-	err := users.ExecuteAs(cmd, username)
-	if err != nil {
-		return errors.Join(errors.New("failed to set command executor"), err)
-	}
-
-	err = cmd.Run()
-	if err != nil {
-		return errors.Join(errors.New("failed to create directory"), err)
-	}
-
-	return nil
 }
 
 func getHumanSize(isDir bool, size int64) string {

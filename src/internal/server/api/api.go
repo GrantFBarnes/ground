@@ -11,8 +11,8 @@ import (
 
 	"github.com/grantfbarnes/ground/internal/server/common"
 	"github.com/grantfbarnes/ground/internal/server/cookie"
+	"github.com/grantfbarnes/ground/internal/system/execute"
 	"github.com/grantfbarnes/ground/internal/system/filesystem"
-	"github.com/grantfbarnes/ground/internal/system/power"
 	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
@@ -350,7 +350,7 @@ func SystemReboot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := power.Reboot()
+	err := execute.Reboot()
 	if err != nil {
 		slog.Error("failed to reboot", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		http.Error(w, "Failed to reboot.", http.StatusInternalServerError)
@@ -369,7 +369,7 @@ func SystemPoweroff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := power.Poweroff()
+	err := execute.Poweroff()
 	if err != nil {
 		slog.Error("failed to poweroff", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		http.Error(w, "Failed to poweroff.", http.StatusInternalServerError)
