@@ -290,7 +290,7 @@ func Trash(username string, relHomePath string) error {
 
 func Restore(username string, trashDirName string) error {
 	if !trashDirNameRegex.MatchString(trashDirName) {
-		return errors.New("trash dir name is invalid")
+		return errors.New("trash dir name is not valid")
 	}
 
 	trashDirPath := path.Join("/home", username, TRASH_HOME_PATH, trashDirName)

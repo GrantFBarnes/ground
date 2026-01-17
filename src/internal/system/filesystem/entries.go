@@ -163,7 +163,7 @@ func getTrashPathEntries(username string, relTrashPath string) ([]TrashEntryData
 
 	trashDirName := getTopLevelDirName(relTrashPath)
 	if !trashDirNameRegex.MatchString(trashDirName) {
-		return entries, errors.New("trash dir name is invalid")
+		return entries, errors.New("trash dir name is not valid")
 	}
 
 	trashedTime, err := time.Parse(systemTimeLayout, trashDirName)

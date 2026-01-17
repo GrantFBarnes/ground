@@ -31,9 +31,9 @@
         <thead>
             <tr>
                 <th></th>
-                <th>name</th>
-                <th class="right-align-cell">size</th>
-                <th class="right-align-cell">trashed on</th>
+                <th>Name</th>
+                <th class="right-align-cell">Size</th>
+                <th class="right-align-cell">Trashed On</th>
                 <th></th>
             </tr>
         </thead>
@@ -68,7 +68,7 @@
 {{end}}
 <script>
     function emptyTrash() {
-        customConfirm("Are you sure you want to empty the trash? This is permanent and cannot be undone.").then(confirmed => {
+        customConfirm("Are you sure you want to empty the trash?\nThis is permanent and cannot be undone.").then(confirmed => {
             if (confirmed) {
                 toggleLoading();
                 fetch("/api/trash", { method: "DELETE" }).then((response) => {

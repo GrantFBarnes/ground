@@ -52,7 +52,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
@@ -75,7 +75,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
@@ -100,14 +100,14 @@ func Files(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(urlRootPath, homePath) {
 		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		getProblemPage(w, r, "path outside of home")
+		getProblemPage(w, r, "The requested file path is not in your home directory.")
 		return
 	}
 
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		slog.Warn("failed to find path", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "the requested file path could not be found in your home directory")
+		getProblemPage(w, r, "The requested file path could not be found in your home directory.")
 		return
 	}
 
@@ -124,7 +124,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath)
 	if err != nil {
 		slog.Error("failed to get directory entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get directory entries")
+		getProblemPage(w, r, "There was a problem getting the directory entries for this requested file path.")
 		return
 	}
 
@@ -135,7 +135,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
@@ -168,14 +168,14 @@ func File(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(urlRootPath, homePath) {
 		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		getProblemPage(w, r, "path outside of home")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
 	urlPathInfo, err := os.Stat(urlRootPath)
 	if err != nil {
 		slog.Warn("failed to find path", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "the requested file path could not be found in your home directory")
+		getProblemPage(w, r, "The requested file path could not be found in your home directory.")
 		return
 	}
 
@@ -197,7 +197,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(urlRootPath, homePath) {
 		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		getProblemPage(w, r, "path outside of home")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
@@ -210,7 +210,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	trashEntries, err := filesystem.GetTrashEntries(requestor, urlRelativePath)
 	if err != nil {
 		slog.Error("failed to get trash entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get trash entries")
+		getProblemPage(w, r, "There was a problem getting the trash entries for this requested file path.")
 		return
 	}
 
@@ -221,7 +221,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
@@ -251,7 +251,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 
 	if !users.UserIsValid(targetUsername) {
 		slog.Warn("user is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		getProblemPage(w, r, "requested user is not valid")
+		getProblemPage(w, r, "The requested user is not valid.")
 		return
 	}
 
@@ -263,14 +263,14 @@ func User(w http.ResponseWriter, r *http.Request) {
 	err := filesystem.CreateRequiredFiles(targetUsername)
 	if err != nil {
 		slog.Error("failed to create required files", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to create required files")
+		getProblemPage(w, r, "There was a problem creating the required files for this user.")
 		return
 	}
 
 	sshKeys, err := filesystem.GetUserSshKeys(targetUsername)
 	if err != nil {
 		slog.Error("failed to get ssh keys", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get ssh keys")
+		getProblemPage(w, r, "There was a problem getting the SSH Keys for this user.")
 		return
 	}
 
@@ -281,7 +281,7 @@ func User(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
@@ -311,14 +311,14 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	uptime, err := monitor.GetUptime()
 	if err != nil {
 		slog.Error("failed to server uptime", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get server uptime")
+		getProblemPage(w, r, "There was a problem getting the server uptime.")
 		return
 	}
 
 	userListItems, err := users.GetUserListItems()
 	if err != nil {
 		slog.Error("failed to users", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to get users")
+		getProblemPage(w, r, "There was a problem getting the list of system users.")
 		return
 	}
 
@@ -329,7 +329,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "failed to generate html for the requested page")
+		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
 		return
 	}
 
@@ -351,7 +351,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 }
 
 func NotFound(w http.ResponseWriter, r *http.Request) {
-	getProblemPage(w, r, "the requested url path is not valid")
+	getProblemPage(w, r, "The requested url path is not valid.")
 }
 
 func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage string) {
@@ -364,7 +364,7 @@ func getProblemPage(w http.ResponseWriter, r *http.Request, problemMessage strin
 	)
 	if err != nil {
 		slog.Error("failed to generate html", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		http.Error(w, "failed to generate html", http.StatusInternalServerError)
+		http.Error(w, "Failed to generate HTML.", http.StatusInternalServerError)
 		return
 	}
 

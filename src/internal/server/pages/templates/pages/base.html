@@ -36,7 +36,7 @@
                 <span
                     class="clickable"
                     onclick="confirmLogout()"
-                >logout</span>
+                >Logout</span>
                 {{end}}
             </div>
         </div>
@@ -45,24 +45,24 @@
             <span
                 class="clickable"
                 onclick="window.location.href='/'"
-            >home</span>
+            >Home</span>
             <span
                 class="clickable"
                 onclick="window.location.href='/files'"
-            >files</span>
+            >Files</span>
             <span
                 class="clickable"
                 onclick="window.location.href='/trash'"
-            >trash</span>
+            >Trash</span>
             <span
                 class="clickable"
                 onclick="window.location.href='/user/{{.Username}}'"
-            >manage</span>
+            >Manage</span>
             {{if .IsAdmin}}
             <span
                 class="clickable"
                 onclick="window.location.href='/admin'"
-            >admin</span>
+            >Admin</span>
             {{end}}
             {{end}}
         </div>
