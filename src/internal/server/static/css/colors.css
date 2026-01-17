@@ -101,9 +101,14 @@ tbody>tr:hover {
     border-top-color: var(--color-blue0);
 }
 
+#grid-container,
 #top-bar,
 #nav-bar {
     background-color: var(--color-bg1);
+}
+
+#main-view {
+    background: var(--color-bg0);
 }
 
 #nav-bar>span:hover {
