@@ -2,12 +2,12 @@ package users
 
 import (
 	"errors"
-	"io"
 	"os"
-	"os/exec"
 	"os/user"
 	"path"
 	"regexp"
+
+	"github.com/grantfbarnes/ground/internal/system/execute"
 )
 
 var usernameRegex *regexp.Regexp
@@ -50,19 +50,5 @@ func UserIsValid(username string) bool {
 }
 
 func CredentialsAreValid(username string, password string) bool {
-	// since program is run as root, standard su doesn't require password
-	// use su to run su as that user checking for password
-	cmd := exec.Command("su", "-c", "su -c exit "+username, username)
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return false
-	}
-
-	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, password+"\n")
-	}()
-
-	return cmd.Run() == nil
+	return execute.TestRunAs(username, password) == nil
 }

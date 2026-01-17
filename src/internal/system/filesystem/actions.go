@@ -57,7 +57,7 @@ func createFileFromPart(part *multipart.Part, dirPath string, username string) e
 	fileDirRelPath, fileName := path.Split(fileRelPath)
 	fileDirPath := path.Join(dirPath, fileDirRelPath)
 
-	err = execute.Mkdir(username, fileDirPath)
+	err = execute.MakeDirectory(username, fileDirPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to create parent directory"), err)
 	}
@@ -77,7 +77,7 @@ func createFileFromPart(part *multipart.Part, dirPath string, username string) e
 }
 
 func createMultipartFile(part *multipart.Part, filePath string, username string) error {
-	err := execute.Touch(username, filePath)
+	err := execute.TouchFile(username, filePath)
 	if err != nil {
 		return errors.Join(errors.New("failed to create file"), err)
 	}
@@ -107,7 +107,7 @@ func CreateDirectory(username string, relHomePath string, dirName string) error 
 		return errors.New("path is not a directory")
 	}
 
-	err = execute.Mkdir(username, path.Join(rootDirPath, dirName))
+	err = execute.MakeDirectory(username, path.Join(rootDirPath, dirName))
 	if err != nil {
 		return errors.Join(errors.New("failed to create directory"), err)
 	}
@@ -153,12 +153,12 @@ func ExtractFile(username string, relHomePath string) error {
 func CreateRequiredFiles(username string) error {
 	homePath := path.Join("/home", username)
 
-	err := execute.Mkdir(username, path.Join(homePath, TRASH_HOME_PATH))
+	err := execute.MakeDirectory(username, path.Join(homePath, TRASH_HOME_PATH))
 	if err != nil {
 		return errors.Join(errors.New("failed to create trash directory"), err)
 	}
 
-	err = execute.Touch(username, path.Join(homePath, ".ssh", "authorized_keys"))
+	err = execute.TouchFile(username, path.Join(homePath, ".ssh", "authorized_keys"))
 	if err != nil {
 		return errors.Join(errors.New("failed to create ssh keys file"), err)
 	}
@@ -208,7 +208,7 @@ func Trash(username string, relHomePath string) error {
 	trashRootPath := path.Join("/home", username, TRASH_HOME_PATH)
 	trashTimestamp := time.Now().Format(systemTimeLayout)
 	trashTimestampPath := path.Join(trashRootPath, trashTimestamp)
-	err = execute.Mkdir(username, trashTimestampPath)
+	err = execute.MakeDirectory(username, trashTimestampPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to create timestamp directory"), err)
 	}
@@ -225,7 +225,7 @@ func Trash(username string, relHomePath string) error {
 	}
 
 	trashRestorePathFilePath := path.Join(trashTimestampPath, trashRestorePathFileName)
-	err = execute.Touch(username, trashRestorePathFilePath)
+	err = execute.TouchFile(username, trashRestorePathFilePath)
 	if err != nil {
 		return errors.Join(errors.New("failed to create restore path file"), err)
 	}
@@ -256,7 +256,7 @@ func Restore(username string, trashDirName string) error {
 	}
 	restorePath := string(restorePathBytes)
 
-	err = execute.Mkdir(username, restorePath)
+	err = execute.MakeDirectory(username, restorePath)
 	if err != nil {
 		return errors.Join(errors.New("failed to create restore path"), err)
 	}

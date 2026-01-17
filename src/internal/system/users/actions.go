@@ -7,7 +7,7 @@ import (
 )
 
 func CreateUser(username string) error {
-	err := execute.Useradd(username)
+	err := execute.UserAdd(username)
 	if err != nil {
 		return errors.Join(errors.New("failed to add user"), err)
 	}
@@ -16,7 +16,7 @@ func CreateUser(username string) error {
 }
 
 func DeleteUser(username string) error {
-	err := execute.Userdel(username)
+	err := execute.UserDel(username)
 	if err != nil {
 		return errors.Join(errors.New("failed to delete user"), err)
 	}
@@ -34,7 +34,7 @@ func ResetUserPassword(username string) error {
 }
 
 func SetUserPassword(username string, password string) error {
-	err := execute.Passwd(username, password)
+	err := execute.PasswordSet(username, password)
 	if err != nil {
 		return errors.Join(errors.New("failed to change password"), err)
 	}

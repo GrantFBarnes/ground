@@ -33,7 +33,69 @@ func Poweroff() error {
 	return nil
 }
 
-func SedDeleteLine(filePath string, indexString string) error {
+func GetUptime() (string, error) {
+	cmd := exec.Command("uptime", "--pretty")
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return "", errors.Join(errors.New("failed to run uptime"), err)
+	}
+
+	return string(outputBytes), nil
+}
+
+func GetDiskSize() (string, error) {
+	cmd := exec.Command("df", "--human-readable", "--portability", "/home")
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return "", errors.Join(errors.New("failed to run df"), err)
+	}
+
+	lines := strings.Split(string(outputBytes), "\n")
+	if len(lines) < 2 {
+		return "", errors.New("df output less than two lines")
+	}
+
+	fields := strings.Fields(lines[1])
+	if len(fields) < 6 {
+		return "", errors.New("df output less than six fields")
+	}
+
+	return fields[1], nil
+}
+
+func GetDirectorySize(dirPath string) (string, error) {
+	dirPath = path.Clean(dirPath)
+
+	_, err := os.Stat(dirPath)
+	if err != nil {
+		return "", errors.Join(errors.New("dir path not found"), err)
+	}
+
+	cmd := exec.Command("du", "--summarize", "--human-readable", dirPath)
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return "", errors.Join(errors.New("failed to run du"), err)
+	}
+
+	fields := strings.Fields(string(outputBytes))
+	if len(fields) < 2 {
+		return "", errors.New("du output less than two fields")
+	}
+
+	return fields[0], nil
+}
+
+func FileSearch(filePath string, searchRegex string) error {
+	cmd := exec.Command("grep", "-E", searchRegex, filePath)
+	err := cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to grep file"), err)
+	}
+
+	return nil
+}
+
+func FileLineDelete(filePath string, indexString string) error {
 	filePath = path.Clean(filePath)
 	_, err := os.Stat(filePath)
 	if err != nil {
@@ -59,7 +121,37 @@ func SedDeleteLine(filePath string, indexString string) error {
 	return nil
 }
 
-func Useradd(username string) error {
+func GetGroups(username string) ([]string, error) {
+	cmd := exec.Command("groups", username)
+	outputBytes, err := cmd.Output()
+	if err != nil {
+		return nil, errors.Join(errors.New("failed get groups output"), err)
+	}
+
+	return strings.Fields(string(outputBytes)), nil
+}
+
+func GroupAdd(username string, groupname string) error {
+	cmd := exec.Command("gpasswd", "-a", username, groupname)
+	err := cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to add to group"), err)
+	}
+
+	return nil
+}
+
+func GroupDelete(username string, groupname string) error {
+	cmd := exec.Command("gpasswd", "-d", username, groupname)
+	err := cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to delete from group"), err)
+	}
+
+	return nil
+}
+
+func UserAdd(username string) error {
 	homePath := path.Join("/home", username)
 	_, err := os.Stat(homePath)
 	if err == nil {
@@ -73,7 +165,7 @@ func Useradd(username string) error {
 		return errors.Join(errors.New("failed to create user"), err)
 	}
 
-	err = Passwd(username, "password")
+	err = PasswordSet(username, "password")
 	if err != nil {
 		return errors.Join(errors.New("failed to set user password"), err)
 	}
@@ -81,7 +173,7 @@ func Useradd(username string) error {
 	return nil
 }
 
-func Userdel(username string) error {
+func UserDel(username string) error {
 	cmd := exec.Command("userdel", "--remove", username)
 
 	err := cmd.Run()
@@ -92,7 +184,7 @@ func Userdel(username string) error {
 	return nil
 }
 
-func Passwd(username string, password string) error {
+func PasswordSet(username string, password string) error {
 	if strings.ContainsAny(password, "\n") {
 		return errors.New("password is not valid")
 	}
@@ -117,7 +209,32 @@ func Passwd(username string, password string) error {
 	return nil
 }
 
-func Touch(username string, filePath string) error {
+func TestRunAs(username string, password string) error {
+	if strings.ContainsAny(password, "\n") {
+		return errors.New("password is not valid")
+	}
+
+	cmd := exec.Command("su", "-c", "su -c exit "+username, username)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return errors.Join(errors.New("failed to read stdin"), err)
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, password+"\n")
+	}()
+
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to run su"), err)
+	}
+
+	return nil
+}
+
+func TouchFile(username string, filePath string) error {
 	filePath = path.Clean(filePath)
 
 	if !strings.HasPrefix(filePath, path.Join("/home", username)) {
@@ -131,7 +248,7 @@ func Touch(username string, filePath string) error {
 	}
 
 	dirPath, _ := path.Split(filePath)
-	err = Mkdir(username, dirPath)
+	err = MakeDirectory(username, dirPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to create parent directory"), err)
 	}
@@ -151,7 +268,7 @@ func Touch(username string, filePath string) error {
 	return nil
 }
 
-func Mkdir(username string, dirPath string) error {
+func MakeDirectory(username string, dirPath string) error {
 	dirPath = path.Clean(dirPath)
 
 	if !strings.HasPrefix(dirPath, path.Join("/home", username)) {
@@ -239,7 +356,7 @@ func TarExtractFile(username string, filePath string, dirPath string) error {
 		return errors.New("file path is a directory")
 	}
 
-	err = Mkdir(username, dirPath)
+	err = MakeDirectory(username, dirPath)
 	if err != nil {
 		return errors.Join(errors.New("failed to create extract directory"), err)
 	}

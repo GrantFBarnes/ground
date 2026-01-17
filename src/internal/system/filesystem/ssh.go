@@ -38,7 +38,7 @@ func AddUserSshKey(username string, sshKey string) error {
 	sshKeyPath := path.Join(homePath, ".ssh", "authorized_keys")
 	_, err := os.Stat(sshKeyPath)
 	if err != nil {
-		err = execute.Touch(username, sshKeyPath)
+		err = execute.TouchFile(username, sshKeyPath)
 		if err != nil {
 			return errors.Join(errors.New("failed to create missing file"), err)
 		}
@@ -59,7 +59,7 @@ func AddUserSshKey(username string, sshKey string) error {
 }
 
 func DeleteUserSshKey(username string, indexString string) error {
-	err := execute.SedDeleteLine(path.Join("/home", username, ".ssh", "authorized_keys"), indexString)
+	err := execute.FileLineDelete(path.Join("/home", username, ".ssh", "authorized_keys"), indexString)
 	if err != nil {
 		return errors.Join(errors.New("failed to remove line from file"), err)
 	}

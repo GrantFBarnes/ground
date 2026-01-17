@@ -308,13 +308,6 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uptime, err := monitor.GetUptime()
-	if err != nil {
-		slog.Error("failed to server uptime", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
-		getProblemPage(w, r, "There was a problem getting the server uptime.")
-		return
-	}
-
 	userListItems, err := users.GetUserListItems()
 	if err != nil {
 		slog.Error("failed to users", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
@@ -345,7 +338,7 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 		Username:      requestor,
 		IsAdmin:       users.IsAdmin(requestor),
 		DiskUsage:     monitor.GetDirectoryDiskUsage("/home"),
-		Uptime:        uptime,
+		Uptime:        monitor.GetUptime(),
 		UserListItems: userListItems,
 	})
 }

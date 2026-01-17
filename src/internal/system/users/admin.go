@@ -2,9 +2,9 @@ package users
 
 import (
 	"errors"
-	"os/exec"
 	"slices"
-	"strings"
+
+	"github.com/grantfbarnes/ground/internal/system/execute"
 )
 
 var adminGroup string
@@ -12,8 +12,7 @@ var adminGroup string
 func SetupAdminGroup() error {
 	groups := []string{"sudo", "wheel"}
 	for _, group := range groups {
-		cmd := exec.Command("grep", "-E", "^%"+group+".*ALL", "/etc/sudoers")
-		if cmd.Run() == nil {
+		if execute.FileSearch("/etc/sudoers", "^%"+group+".*ALL") == nil {
 			adminGroup = group
 			return nil
 		}
@@ -22,27 +21,22 @@ func SetupAdminGroup() error {
 }
 
 func IsAdmin(username string) bool {
-	cmd := exec.Command("groups", username)
-	outputBytes, err := cmd.Output()
+	userGroups, err := execute.GetGroups(username)
 	if err != nil {
 		return false
 	}
-
-	userGroups := strings.Fields(string(outputBytes))
 	return slices.Contains(userGroups, adminGroup)
 }
 
 func ToggleAdmin(username string) (err error) {
 	if IsAdmin(username) {
-		cmd := exec.Command("gpasswd", "-d", username, adminGroup)
-		err = cmd.Run()
+		err = execute.GroupDelete(username, adminGroup)
 	} else {
-		cmd := exec.Command("gpasswd", "-a", username, adminGroup)
-		err = cmd.Run()
+		err = execute.GroupAdd(username, adminGroup)
 	}
 
 	if err != nil {
-		return errors.Join(errors.New("failed to run gpasswd"), err)
+		return errors.Join(errors.New("failed to modify group"), err)
 	}
 
 	return nil
