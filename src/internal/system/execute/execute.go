@@ -4,10 +4,11 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
+	"strconv"
 	"strings"
-
-	"github.com/grantfbarnes/ground/internal/system/users"
+	"syscall"
 )
 
 func Reboot() error {
@@ -51,7 +52,7 @@ func Touch(username string, filePath string) error {
 
 	cmd := exec.Command("touch", filePath)
 
-	err = users.ExecuteAs(cmd, username)
+	err = executeAs(cmd, username)
 	if err != nil {
 		return errors.Join(errors.New("failed to set command executor"), err)
 	}
@@ -73,7 +74,7 @@ func Mkdir(username string, dirPath string) error {
 
 	cmd := exec.Command("mkdir", "-p", dirPath)
 
-	err := users.ExecuteAs(cmd, username)
+	err := executeAs(cmd, username)
 	if err != nil {
 		return errors.Join(errors.New("failed to set command executor"), err)
 	}
@@ -81,6 +82,118 @@ func Mkdir(username string, dirPath string) error {
 	err = cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed to create directory"), err)
+	}
+
+	return nil
+}
+
+func TarCompressDirectory(username string, dirPath string, filePath string) error {
+	dirPath = path.Clean(dirPath)
+
+	if !strings.HasPrefix(dirPath, path.Join("/home", username)) {
+		return errors.New("dir path is not in home directory")
+	}
+
+	dirInfo, err := os.Stat(dirPath)
+	if err != nil {
+		return errors.Join(errors.New("dir path not found"), err)
+	}
+
+	if !dirInfo.IsDir() {
+		return errors.New("dir path is not a directory")
+	}
+
+	filePath = path.Clean(filePath)
+
+	if !strings.HasPrefix(filePath, path.Join("/home", username)) {
+		return errors.New("file path is not in home directory")
+	}
+
+	if !strings.HasSuffix(filePath, ".tar.gz") {
+		return errors.New("file path is not a compressed file")
+	}
+
+	_, err = os.Stat(filePath)
+	if err == nil {
+		return errors.Join(errors.New("file path already exists"), err)
+	}
+
+	cmd := exec.Command("tar", "-zchf", filePath, "--directory", dirPath, ".")
+
+	err = executeAs(cmd, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to set command executor"), err)
+	}
+
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to compress directory"), err)
+	}
+
+	return nil
+}
+
+func TarExtractFile(username string, filePath string, dirPath string) error {
+	filePath = path.Clean(filePath)
+
+	if !strings.HasPrefix(filePath, path.Join("/home", username)) {
+		return errors.New("file path is not in home directory")
+	}
+
+	if !strings.HasSuffix(filePath, ".tar.gz") {
+		return errors.New("file path is not a compressed file")
+	}
+
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return errors.Join(errors.New("file path not found"), err)
+	}
+
+	if fileInfo.IsDir() {
+		return errors.New("file path is a directory")
+	}
+
+	err = Mkdir(username, dirPath)
+	if err != nil {
+		return errors.Join(errors.New("failed to create extract directory"), err)
+	}
+
+	cmd := exec.Command("tar", "-xzf", filePath, "--directory", dirPath)
+
+	err = executeAs(cmd, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to set command executor"), err)
+	}
+
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to extract file"), err)
+	}
+
+	return nil
+}
+
+func executeAs(cmd *exec.Cmd, username string) error {
+	user, err := user.Lookup(username)
+	if err != nil {
+		return errors.Join(errors.New("failed to lookup user"), err)
+	}
+
+	uid64, err := strconv.ParseUint(user.Uid, 10, 32)
+	if err != nil {
+		return errors.Join(errors.New("failed to parse uid"), err)
+	}
+
+	gid64, err := strconv.ParseUint(user.Gid, 10, 32)
+	if err != nil {
+		return errors.Join(errors.New("failed to parse gid"), err)
+	}
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Credential: &syscall.Credential{
+			Uid: uint32(uid64),
+			Gid: uint32(gid64),
+		},
 	}
 
 	return nil

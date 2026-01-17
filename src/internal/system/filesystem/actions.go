@@ -7,13 +7,11 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/grantfbarnes/ground/internal/system/execute"
-	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
 func UploadFile(r *http.Request, dirPath string, username string) error {
@@ -118,84 +116,35 @@ func CreateDirectory(username string, relHomePath string, dirName string) error 
 }
 
 func CompressDirectory(username string, relHomePath string) error {
-	rootDirPath := path.Join("/home", username, relHomePath)
-	dirInfo, err := os.Stat(rootDirPath)
-	if err != nil {
-		return errors.Join(errors.New("failed to get path stat"), err)
-	}
-
-	if strings.ContainsAny(rootDirPath, "'") {
-		return errors.New("path is not valid")
-	}
-
-	if !dirInfo.IsDir() {
-		return errors.New("path is not a directory")
-	}
-
-	dirPath, dirName := path.Split(rootDirPath)
-	fileName, err := getAvailableFileName(dirPath, dirName+".tar.gz")
+	dirPath := path.Join("/home", username, relHomePath)
+	dirParentPath, dirName := path.Split(dirPath)
+	fileName, err := getAvailableFileName(dirParentPath, dirName+".tar.gz")
 	if err != nil {
 		return errors.Join(errors.New("failed to find available file name"), err)
 	}
-	filePath := path.Join(dirPath, fileName)
+	filePath := path.Join(dirParentPath, fileName)
 
-	cmd := exec.Command("tar", "-zchf", filePath, "--directory", rootDirPath, ".")
-
-	err = users.ExecuteAs(cmd, username)
+	err = execute.TarCompressDirectory(username, dirPath, filePath)
 	if err != nil {
-		return errors.Join(errors.New("failed to set command executor"), err)
-	}
-
-	err = cmd.Run()
-	if err != nil {
-		return errors.Join(errors.New("failed to compress directory"), err)
+		return errors.Join(errors.New("failed to execute tar compress"), err)
 	}
 
 	return nil
 }
 
 func ExtractFile(username string, relHomePath string) error {
-	rootFilePath := path.Join("/home", username, relHomePath)
-	fileInfo, err := os.Stat(rootFilePath)
+	filePath := path.Join("/home", username, relHomePath)
+	fileParentPath, fileName := path.Split(filePath)
+	fileNameNoExt, _ := getFileExtension(fileName)
+	dirName, err := getAvailableFileName(fileParentPath, fileNameNoExt)
 	if err != nil {
-		return errors.Join(errors.New("failed to get path stat"), err)
+		return errors.Join(errors.New("failed to find available dir name"), err)
 	}
+	dirPath := path.Join(fileParentPath, dirName)
 
-	if strings.ContainsAny(rootFilePath, "'") {
-		return errors.New("path is not valid")
-	}
-
-	if fileInfo.IsDir() {
-		return errors.New("path is a directory")
-	}
-
-	fileDirPath, fileName := path.Split(rootFilePath)
-	fileNameNoExt, fileExt := getFileExtension(fileName)
-	if fileExt != ".tar.gz" {
-		return errors.New("file is not compressed")
-	}
-
-	extractedDirName, err := getAvailableFileName(fileDirPath, fileNameNoExt)
+	err = execute.TarExtractFile(username, filePath, dirPath)
 	if err != nil {
-		return errors.Join(errors.New("failed to find available name"), err)
-	}
-	extractedDirPath := path.Join(fileDirPath, extractedDirName)
-
-	err = execute.Mkdir(username, extractedDirPath)
-	if err != nil {
-		return errors.Join(errors.New("failed to create extract directory"), err)
-	}
-
-	cmd := exec.Command("tar", "-xzf", rootFilePath, "--directory", extractedDirPath)
-
-	err = users.ExecuteAs(cmd, username)
-	if err != nil {
-		return errors.Join(errors.New("failed to set command executor"), err)
-	}
-
-	err = cmd.Run()
-	if err != nil {
-		return errors.Join(errors.New("failed to extract file"), err)
+		return errors.Join(errors.New("failed to execute tar extract"), err)
 	}
 
 	return nil
