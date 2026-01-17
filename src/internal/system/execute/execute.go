@@ -234,6 +234,50 @@ func TestRunAs(username string, password string) error {
 	return nil
 }
 
+func Move(username string, sourcePath string, destinationPath string) error {
+	sourcePath = path.Clean(sourcePath)
+
+	if !strings.HasPrefix(sourcePath, path.Join("/home", username)) {
+		return errors.New("source path is not in home directory")
+	}
+
+	_, err := os.Stat(sourcePath)
+	if err != nil {
+		return errors.Join(errors.New("source path not found"), err)
+	}
+
+	destinationPath = path.Clean(destinationPath)
+
+	if !strings.HasPrefix(destinationPath, path.Join("/home", username)) {
+		return errors.New("destination path is not in home directory")
+	}
+
+	_, err = os.Stat(destinationPath)
+	if err == nil {
+		return errors.New("destination path already exists")
+	}
+
+	destinationParentPath, _ := path.Split(destinationPath)
+	err = MakeDirectory(username, destinationParentPath)
+	if err != nil {
+		return errors.Join(errors.New("failed to create parent directory"), err)
+	}
+
+	cmd := exec.Command("mv", sourcePath, destinationPath)
+
+	err = executeAs(cmd, username)
+	if err != nil {
+		return errors.Join(errors.New("failed to set command executor"), err)
+	}
+
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to run mv"), err)
+	}
+
+	return nil
+}
+
 func TouchFile(username string, filePath string) error {
 	filePath = path.Clean(filePath)
 

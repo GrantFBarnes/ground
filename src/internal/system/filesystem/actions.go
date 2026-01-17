@@ -190,9 +190,9 @@ func Move(username string, sourceRelHomePath string, destinationRelHomePath stri
 		return errors.New("source and destination are the same")
 	}
 
-	err = os.Rename(sourcePath, destinationPath)
+	err = execute.Move(username, sourcePath, destinationPath)
 	if err != nil {
-		return errors.Join(errors.New("failed to rename files"), err)
+		return errors.Join(errors.New("failed to move files"), err)
 	}
 
 	return nil
@@ -219,9 +219,9 @@ func Trash(username string, relHomePath string) error {
 		fileName, _ = strings.CutPrefix(fileName, ".")
 	}
 
-	err = os.Rename(rootDirPath, path.Join(trashTimestampPath, fileName))
+	err = execute.Move(username, rootDirPath, path.Join(trashTimestampPath, fileName))
 	if err != nil {
-		return errors.Join(errors.New("failed to rename files"), err)
+		return errors.Join(errors.New("failed to move files"), err)
 	}
 
 	trashRestorePathFilePath := path.Join(trashTimestampPath, trashRestorePathFileName)
@@ -276,9 +276,9 @@ func Restore(username string, trashDirName string) error {
 			return errors.Join(errors.New("failed to find available restore name"), err)
 		}
 
-		err = os.Rename(path.Join(trashDirPath, entry.Name()), path.Join(restorePath, restoreName))
+		err = execute.Move(username, path.Join(trashDirPath, entry.Name()), path.Join(restorePath, restoreName))
 		if err != nil {
-			return errors.Join(errors.New("failed to rename files"), err)
+			return errors.Join(errors.New("failed to move files"), err)
 		}
 	}
 

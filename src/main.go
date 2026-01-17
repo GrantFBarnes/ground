@@ -105,6 +105,7 @@ func healthCheck() (err error) {
 		"grep",
 		"groups",
 		"mkdir",
+		"mv",
 		"passwd",
 		"sed",
 		"su",
