@@ -2,12 +2,9 @@ package filesystem
 
 import (
 	"errors"
-	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"regexp"
-	"strconv"
 
 	"github.com/grantfbarnes/ground/internal/system/execute"
 )
@@ -62,25 +59,7 @@ func AddUserSshKey(username string, sshKey string) error {
 }
 
 func DeleteUserSshKey(username string, indexString string) error {
-	index, err := strconv.Atoi(indexString)
-	if err != nil {
-		return errors.Join(errors.New("index is not a number"), err)
-	}
-
-	if index < 0 {
-		return errors.New("index is less than zero")
-	}
-
-	homePath := path.Join("/home", username)
-	sshKeyPath := path.Join(homePath, ".ssh", "authorized_keys")
-	_, err = os.Stat(sshKeyPath)
-	if err != nil {
-		return errors.Join(errors.New("ssh file does not exist"), err)
-	}
-
-	cmd := exec.Command("sed", "-i", fmt.Sprintf("%dd", index+1), sshKeyPath)
-
-	err = cmd.Run()
+	err := execute.SedDeleteLine(path.Join("/home", username, ".ssh", "authorized_keys"), indexString)
 	if err != nil {
 		return errors.Join(errors.New("failed to remove line from file"), err)
 	}

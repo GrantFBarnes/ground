@@ -2,6 +2,7 @@ package execute
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
@@ -26,6 +27,32 @@ func Poweroff() error {
 	err := cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed to call poweroff"), err)
+	}
+
+	return nil
+}
+
+func SedDeleteLine(filePath string, indexString string) error {
+	filePath = path.Clean(filePath)
+	_, err := os.Stat(filePath)
+	if err != nil {
+		return errors.Join(errors.New("file path not found"), err)
+	}
+
+	index, err := strconv.Atoi(indexString)
+	if err != nil {
+		return errors.Join(errors.New("index is not a number"), err)
+	}
+
+	if index < 0 {
+		return errors.New("index is less than zero")
+	}
+
+	cmd := exec.Command("sed", "--in-place", fmt.Sprintf("%dd", index+1), filePath)
+
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed run sed"), err)
 	}
 
 	return nil
