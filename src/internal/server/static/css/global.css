@@ -193,6 +193,7 @@ button {
 .close-button {
     cursor: pointer;
     float: right;
+    font-size: xx-large;
 }
 
 .single-icon-cell {
