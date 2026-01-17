@@ -2,38 +2,21 @@ package users
 
 import (
 	"errors"
-	"io"
-	"os"
-	"os/exec"
-	"path"
+
+	"github.com/grantfbarnes/ground/internal/system/execute"
 )
 
 func CreateUser(username string) error {
-	homePath := path.Join("/home", username)
-	_, err := os.Stat(homePath)
-	if err == nil {
-		return errors.New("user already exists")
-	}
-
-	cmd := exec.Command("useradd", "--create-home", username)
-
-	err = cmd.Run()
+	err := execute.Useradd(username)
 	if err != nil {
-		return errors.Join(errors.New("failed to create user"), err)
-	}
-
-	err = SetUserPassword(username, "password")
-	if err != nil {
-		return errors.Join(errors.New("failed to set user password"), err)
+		return errors.Join(errors.New("failed to add user"), err)
 	}
 
 	return nil
 }
 
 func DeleteUser(username string) error {
-	cmd := exec.Command("userdel", "--remove", username)
-
-	err := cmd.Run()
+	err := execute.Userdel(username)
 	if err != nil {
 		return errors.Join(errors.New("failed to delete user"), err)
 	}
@@ -51,21 +34,9 @@ func ResetUserPassword(username string) error {
 }
 
 func SetUserPassword(username string, password string) error {
-	cmd := exec.Command("passwd", "--stdin", username)
-
-	stdin, err := cmd.StdinPipe()
+	err := execute.Passwd(username, password)
 	if err != nil {
-		return errors.Join(errors.New("failed to read stdin"), err)
-	}
-
-	go func() {
-		defer stdin.Close()
-		io.WriteString(stdin, password+"\n")
-	}()
-
-	err = cmd.Run()
-	if err != nil {
-		return errors.Join(errors.New("failed to run passwd"), err)
+		return errors.Join(errors.New("failed to change password"), err)
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package execute
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/user"
@@ -53,6 +54,64 @@ func SedDeleteLine(filePath string, indexString string) error {
 	err = cmd.Run()
 	if err != nil {
 		return errors.Join(errors.New("failed run sed"), err)
+	}
+
+	return nil
+}
+
+func Useradd(username string) error {
+	homePath := path.Join("/home", username)
+	_, err := os.Stat(homePath)
+	if err == nil {
+		return errors.New("user already exists")
+	}
+
+	cmd := exec.Command("useradd", "--create-home", username)
+
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to create user"), err)
+	}
+
+	err = Passwd(username, "password")
+	if err != nil {
+		return errors.Join(errors.New("failed to set user password"), err)
+	}
+
+	return nil
+}
+
+func Userdel(username string) error {
+	cmd := exec.Command("userdel", "--remove", username)
+
+	err := cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to delete user"), err)
+	}
+
+	return nil
+}
+
+func Passwd(username string, password string) error {
+	if strings.ContainsAny(password, "\n") {
+		return errors.New("password is not valid")
+	}
+
+	cmd := exec.Command("passwd", "--stdin", username)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return errors.Join(errors.New("failed to read stdin"), err)
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, password+"\n")
+	}()
+
+	err = cmd.Run()
+	if err != nil {
+		return errors.Join(errors.New("failed to run passwd"), err)
 	}
 
 	return nil
