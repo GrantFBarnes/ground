@@ -1,3 +1,20 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const diskUsageElement = document.getElementById("disk-usage");
+    if (!diskUsageElement) return;
+
+    getDirectoryDiskUsage("/home").then((diskUsage) => {
+        diskUsageElement.innerText = `Disk Usage: ${diskUsage}`;
+    });
+
+    for (const userDiskUsageElement of document.getElementsByClassName("user-disk-usage")) {
+        const username = userDiskUsageElement.dataset.username;
+        if (!username) continue;
+        getDirectoryDiskUsage(`/home/${username}`).then((diskUsage) => {
+            userDiskUsageElement.innerText = diskUsage;
+        });
+    }
+});
+
 function systemCall(callMethod) {
     customConfirm(`Are you sure you want to ${callMethod} the system?`).then(confirmed => {
         if (confirmed) {

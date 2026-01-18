@@ -47,7 +47,10 @@
         ><a href="/files{{.Path}}">{{.Name}}</a></span>
         {{end}}
     </div>
-    <div style="text-align: right;">Disk Usage: {{.DiskUsage}}</div>
+    <div
+        id="disk-usage"
+        style="text-align: right;"
+    ></div>
 </div>
 
 <br />
@@ -170,6 +173,7 @@
 </div>
 <script>
     const pagePath = "{{.Path}}";
+    const pageRootPath = "{{.RootPath}}";
 </script>
 <script src="/static/js/files.js"></script>
 {{end}}

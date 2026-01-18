@@ -3,15 +3,11 @@ package users
 import (
 	"errors"
 	"os"
-	"path"
-
-	"github.com/grantfbarnes/ground/internal/system/monitor"
 )
 
 type UserListItem struct {
-	Username  string
-	DiskUsage string
-	IsAdmin   bool
+	Username string
+	IsAdmin  bool
 }
 
 func GetUserListItems() ([]UserListItem, error) {
@@ -24,9 +20,8 @@ func GetUserListItems() ([]UserListItem, error) {
 	for _, e := range homeEntries {
 		if e.IsDir() {
 			listItems = append(listItems, UserListItem{
-				Username:  e.Name(),
-				DiskUsage: monitor.GetDirectoryDiskUsage(path.Join("/home", e.Name())),
-				IsAdmin:   IsAdmin(e.Name()),
+				Username: e.Name(),
+				IsAdmin:  IsAdmin(e.Name()),
 			})
 		}
 	}

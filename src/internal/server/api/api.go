@@ -13,6 +13,7 @@ import (
 	"github.com/grantfbarnes/ground/internal/server/cookie"
 	"github.com/grantfbarnes/ground/internal/system/execute"
 	"github.com/grantfbarnes/ground/internal/system/filesystem"
+	"github.com/grantfbarnes/ground/internal/system/monitor"
 	"github.com/grantfbarnes/ground/internal/system/users"
 )
 
@@ -137,6 +138,31 @@ func DownloadFile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 
 	http.ServeFile(w, r, urlRootPath)
+}
+
+func DiskUsage(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	dirPath := strings.TrimPrefix(r.URL.Path, "/api/disk-usage")
+	dirPath = path.Clean(dirPath)
+
+	homePath := path.Join("/home", requestor)
+	if !strings.HasPrefix(dirPath, homePath) {
+		if !users.IsAdmin(requestor) {
+			slog.Warn("non-admin request", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+			http.Error(w, "Must be admin to get disk usage outside your home directory.", http.StatusUnauthorized)
+			return
+		}
+	}
+
+	dirDiskUsage, err := monitor.GetDirectoryDiskUsage(dirPath)
+	if err != nil {
+		slog.Error("failed to get disk usage", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
+		http.Error(w, "Failed to get disk usage.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(dirDiskUsage))
 }
 
 func CreateDirectory(w http.ResponseWriter, r *http.Request) {

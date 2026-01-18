@@ -1,3 +1,12 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const diskUsageElement = document.getElementById("disk-usage");
+    if (!diskUsageElement) return;
+
+    getDirectoryDiskUsage(pageRootPath).then((diskUsage) => {
+        diskUsageElement.innerText = `Disk Usage: ${diskUsage}`;
+    });
+});
+
 const draggedClassName = "highlighted-extra";
 const hoverClassName = "highlighted-normal";
 const tableContainerElement = document.getElementById("directory-entries-table-container");

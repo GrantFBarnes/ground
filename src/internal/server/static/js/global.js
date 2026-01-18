@@ -103,3 +103,17 @@ function callFileApi(api, relHomePath) {
         }
     });
 }
+
+function getDirectoryDiskUsage(dirPath) {
+    return new Promise((resolve, reject) => {
+        fetch(`/api/disk-usage${dirPath}`, { method: "GET" })
+            .then((response) => {
+                if (response.ok) {
+                    resolve(response.text());
+                } else {
+                    reject();
+                }
+            })
+            .catch(() => reject());
+    });
+}

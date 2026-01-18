@@ -1,3 +1,12 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const diskUsageElement = document.getElementById("disk-usage");
+    if (!diskUsageElement) return;
+
+    getDirectoryDiskUsage(pageRootPath).then((diskUsage) => {
+        diskUsageElement.innerText = `Disk Usage: ${diskUsage}`;
+    });
+});
+
 function emptyTrash() {
     customConfirm("Are you sure you want to empty the trash?\nThis is permanent and cannot be undone.").then(confirmed => {
         if (confirmed) {

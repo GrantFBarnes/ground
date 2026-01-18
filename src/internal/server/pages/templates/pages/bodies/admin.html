@@ -1,7 +1,7 @@
 {{define "body"}}
 <h1>Admin</h1>
 <h3>System</h3>
-<div>Home Disk Usage: {{.DiskUsage}}</div>
+<div id="disk-usage"></div>
 <div>Uptime: {{.Uptime}}</div>
 <br />
 
@@ -36,7 +36,10 @@
         {{range .UserListItems}}
         <tr>
             <td>{{.Username}}</td>
-            <td>{{.DiskUsage}}</td>
+            <td
+                class="user-disk-usage"
+                data-username="{{.Username}}"
+            ></td>
             <td>
                 <select onchange="toggleAdmin(this, '{{.Username}}')">
                     {{if .IsAdmin}}

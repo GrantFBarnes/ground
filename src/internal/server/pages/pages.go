@@ -144,16 +144,16 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		Username            string
 		IsAdmin             bool
 		Path                string
+		RootPath            string
 		FilePathBreadcrumbs []filesystem.FilePathBreadcrumb
-		DiskUsage           string
 		DirectoryEntries    []filesystem.DirectoryEntryData
 	}{
 		PageTitle:           "Ground - Files",
 		Username:            requestor,
 		IsAdmin:             users.IsAdmin(requestor),
 		Path:                urlRelativePath,
+		RootPath:            urlRootPath,
 		FilePathBreadcrumbs: filesystem.GetFileBreadcrumbs(urlRelativePath),
-		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
 		DirectoryEntries:    directoryEntries,
 	})
 }
@@ -230,16 +230,16 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		Username            string
 		IsAdmin             bool
 		Path                string
+		RootPath            string
 		FilePathBreadcrumbs []filesystem.FilePathBreadcrumb
-		DiskUsage           string
 		TrashEntries        []filesystem.TrashEntryData
 	}{
 		PageTitle:           "Ground - Trash",
 		Username:            requestor,
 		IsAdmin:             users.IsAdmin(requestor),
 		Path:                urlRelativePath,
+		RootPath:            urlRootPath,
 		FilePathBreadcrumbs: filesystem.GetTrashBreadcrumbs(urlRelativePath),
-		DiskUsage:           monitor.GetDirectoryDiskUsage(urlRootPath),
 		TrashEntries:        trashEntries,
 	})
 }
@@ -330,14 +330,12 @@ func Admin(w http.ResponseWriter, r *http.Request) {
 		PageTitle     string
 		Username      string
 		IsAdmin       bool
-		DiskUsage     string
 		Uptime        string
 		UserListItems []users.UserListItem
 	}{
 		PageTitle:     "Ground - Admin",
 		Username:      requestor,
 		IsAdmin:       users.IsAdmin(requestor),
-		DiskUsage:     monitor.GetDirectoryDiskUsage("/home"),
 		Uptime:        monitor.GetUptime(),
 		UserListItems: userListItems,
 	})

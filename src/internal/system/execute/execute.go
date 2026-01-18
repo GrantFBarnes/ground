@@ -66,9 +66,13 @@ func GetDiskSize() (string, error) {
 func GetDirectorySize(dirPath string) (string, error) {
 	dirPath = path.Clean(dirPath)
 
-	_, err := os.Stat(dirPath)
+	dirInfo, err := os.Stat(dirPath)
 	if err != nil {
 		return "", errors.Join(errors.New("dir path not found"), err)
+	}
+
+	if !dirInfo.IsDir() {
+		return "", errors.New("path is not a directory")
 	}
 
 	cmd := exec.Command("du", "--summarize", "--human-readable", dirPath)

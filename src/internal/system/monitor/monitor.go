@@ -28,16 +28,11 @@ func GetUptime() string {
 	return uptime
 }
 
-func GetDirectoryDiskUsage(dirPath string) string {
-	directorySize := getDirectorySize(dirPath)
-	return fmt.Sprintf("%s/%s", directorySize, diskSize)
-}
-
-func getDirectorySize(dirPath string) string {
-	ds, err := execute.GetDirectorySize(dirPath)
+func GetDirectoryDiskUsage(dirPath string) (string, error) {
+	directorySize, err := execute.GetDirectorySize(dirPath)
 	if err != nil {
-		return "?"
+		return "", errors.Join(errors.New("failed to get directory size"), err)
 	}
 
-	return ds
+	return fmt.Sprintf("%s/%s", directorySize, diskSize), nil
 }
