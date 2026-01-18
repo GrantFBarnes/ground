@@ -17,7 +17,7 @@ import (
 //go:embed static
 var static embed.FS
 
-func Run(port uint) {
+func Run(port uint, certFile string, keyFile string) {
 	defer func() {
 		if err := recover(); err != nil {
 			slog.Error("panic occured", "error", err)
@@ -77,8 +77,15 @@ func Run(port uint) {
 		slog.Error("failed to get local ip", "error", err)
 		os.Exit(1)
 	}
-	slog.Info("server is running", "url", fmt.Sprintf("http://%s:%d", ip, port))
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+
+	addr := fmt.Sprintf(":%d", port)
+	if certFile != "" && keyFile != "" {
+		slog.Info("starting server", "url", fmt.Sprintf("https://%s%s", ip, addr))
+		err = http.ListenAndServeTLS(addr, certFile, keyFile, nil)
+	} else {
+		slog.Info("starting server", "url", fmt.Sprintf("http://%s%s", ip, addr))
+		err = http.ListenAndServe(addr, nil)
+	}
 	if err != nil {
 		slog.Error("failed to run server", "error", err)
 		os.Exit(1)

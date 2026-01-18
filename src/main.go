@@ -51,14 +51,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	server.Run(settings.port)
+	server.Run(settings.port, settings.certFile, settings.keyFile)
 }
 
 type settings struct {
-	version bool
-	service bool
-	run     bool
-	port    uint
+	version  bool
+	service  bool
+	run      bool
+	port     uint
+	certFile string
+	keyFile  string
 }
 
 func getSettingsFromArguments() settings {
@@ -69,6 +71,8 @@ func getSettingsFromArguments() settings {
 	flag.BoolVar(&args.service, "service", false, "Print systemd service intructions")
 	flag.BoolVar(&args.run, "run", false, "Run web server")
 	flag.UintVar(&args.port, "port", 3478, "Define port web server is run on")
+	flag.StringVar(&args.certFile, "cert-file", "", "Define https certificate file path")
+	flag.StringVar(&args.keyFile, "key-file", "", "Define https key file path")
 
 	flag.Parse()
 
