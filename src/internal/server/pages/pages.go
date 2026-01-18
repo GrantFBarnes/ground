@@ -168,7 +168,7 @@ func File(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(urlRootPath, homePath) {
 		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
+		getProblemPage(w, r, "The requested file path is not in your home directory.")
 		return
 	}
 
@@ -197,7 +197,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 
 	if !strings.HasPrefix(urlRootPath, homePath) {
 		slog.Warn("path outside of home", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
-		getProblemPage(w, r, "There was a problem generating the HTML for the requested page.")
+		getProblemPage(w, r, "The requested file path is not in your home directory.")
 		return
 	}
 
