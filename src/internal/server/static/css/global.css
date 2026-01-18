@@ -4,6 +4,7 @@
     --padding-large: 18px;
     --padding-medium: 12px;
     --padding-small: 6px;
+    --notification-gap: 30px;
     --loading-wheel-diameter: 100px;
     --loading-wheel-thickness: 15px;
 }
@@ -150,11 +151,11 @@ button {
 }
 
 #notification-info {
-    top: calc(var(--top-bar-height) + var(--padding-medium));
+    top: var(--notification-gap);
 }
 
 #notification-error {
-    bottom: 30px;
+    bottom: var(--notification-gap);
 }
 
 #confirm-message {
@@ -165,9 +166,9 @@ button {
 .notification {
     position: fixed;
     z-index: 999;
-    left: 30px;
+    left: var(--notification-gap);
     padding: var(--padding-medium);
-    width: calc(100vw - 90px);
+    width: calc(100vw - (var(--padding-medium)*2) - (var(--notification-gap)*2));
     max-height: 60px;
     overflow-y: scroll;
     text-align: center;
@@ -192,8 +193,10 @@ button {
 
 .close-button {
     cursor: pointer;
-    float: right;
-    font-size: xx-large;
+    position: absolute;
+    font-size: x-large;
+    top: var(--padding-small);
+    right: var(--padding-medium);
 }
 
 .single-icon-cell {

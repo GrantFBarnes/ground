@@ -74,17 +74,11 @@
 </table>
 <br />
 <dialog id="create-user-dialog">
-    <div class="column-container">
-        <div>
-            <h3>Create New User</h3>
-        </div>
-        <div>
-            <span
-                class="close-button"
-                onclick="document.getElementById('create-user-dialog').close()"
-            >&#128938;</span>
-        </div>
-    </div>
+    <span
+        class="close-button"
+        onclick="document.getElementById('create-user-dialog').close()"
+    >&times;</span>
+    <h3>Create New User</h3>
     <form id="create-user-form">
         <label for="createUsername">Username:</label>
         <input

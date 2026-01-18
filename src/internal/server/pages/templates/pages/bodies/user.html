@@ -91,17 +91,11 @@
 {{end}}
 <br />
 <dialog id="add-ssh-key-dialog">
-    <div class="column-container">
-        <div>
-            <h3>Add New SSH Key</h3>
-        </div>
-        <div>
-            <span
-                class="close-button"
-                onclick="document.getElementById('add-ssh-key-dialog').close()"
-            >&#128938;</span>
-        </div>
-    </div>
+    <span
+        class="close-button"
+        onclick="document.getElementById('add-ssh-key-dialog').close()"
+    >&times;</span>
+    <h3>Add New SSH Key</h3>
     <form id="add-ssh-key-form">
         <input
             type="text"

@@ -37,7 +37,7 @@ function displayNotification(id, message, keepOpen) {
     const notificationCloseElement = document.createElement("span");
     notificationCloseElement.className = "close-button";
     notificationCloseElement.onclick = () => { notificationBoxElement.remove() };
-    notificationCloseElement.innerHTML = "&#128938;";
+    notificationCloseElement.innerHTML = "&times;";
 
     const notificationMessageElement = document.createElement("span");
     notificationMessageElement.innerText = message;
