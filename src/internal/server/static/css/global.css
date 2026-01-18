@@ -1,7 +1,7 @@
 :root {
     --top-bar-height: 40px;
     --nav-bar-width: 100px;
-    --padding-large: 18px;
+    --padding-large: 24px;
     --padding-medium: 12px;
     --padding-small: 6px;
     --notification-gap: 30px;
@@ -69,11 +69,13 @@ body {
     grid-area: main-view;
     padding: var(--padding-large);
     border-top-left-radius: var(--padding-large);
+    box-shadow: inset var(--padding-small) var(--padding-small) var(--padding-small) 0 rgba(0, 0, 0, 0.2);
 }
 
 @media screen and (max-width: 1080px) {
     #main-view {
         border-top-left-radius: 0;
+        box-shadow: inset 0 var(--padding-small) var(--padding-small) calc(var(--padding-small)/-2) rgba(0, 0, 0, 0.2);
     }
 }
 
