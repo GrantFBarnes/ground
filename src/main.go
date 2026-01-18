@@ -51,13 +51,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	server.Run()
+	server.Run(settings.port)
 }
 
 type settings struct {
 	version bool
 	service bool
 	run     bool
+	port    uint
 }
 
 func getSettingsFromArguments() settings {
@@ -67,6 +68,7 @@ func getSettingsFromArguments() settings {
 	flag.BoolVar(&args.version, "version", false, "Print version")
 	flag.BoolVar(&args.service, "service", false, "Print systemd service intructions")
 	flag.BoolVar(&args.run, "run", false, "Run web server")
+	flag.UintVar(&args.port, "port", 3478, "Define port web server is run on")
 
 	flag.Parse()
 
