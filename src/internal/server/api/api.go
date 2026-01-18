@@ -54,12 +54,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.ContainsAny(password, "\n") {
-		slog.Warn("password is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "username", username)
-		http.Error(w, "Password is not valid.", http.StatusBadRequest)
-		return
-	}
-
 	if !users.CredentialsAreValid(username, password) {
 		slog.Warn("credentials are not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "username", username)
 		http.Error(w, "Credentials are not valid.", http.StatusBadRequest)
@@ -537,12 +531,6 @@ func ChangeUserPassword(w http.ResponseWriter, r *http.Request) {
 	if newPassword == "" {
 		slog.Warn("password not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
 		http.Error(w, "Password not provided.", http.StatusBadRequest)
-		return
-	}
-
-	if strings.ContainsAny(newPassword, "\n") {
-		slog.Warn("password is not valid", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "username", username)
-		http.Error(w, "Password is not valid.", http.StatusBadRequest)
 		return
 	}
 
