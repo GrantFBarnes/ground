@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -24,11 +25,6 @@ const COLOR_RESET string = "\x1b[0m"
 func main() {
 	var err error
 	settings := getSettingsFromArguments()
-
-	if settings.help {
-		printHelp()
-		os.Exit(0)
-	}
 
 	if settings.version {
 		fmt.Println(VERSION)
@@ -59,7 +55,6 @@ func main() {
 }
 
 type settings struct {
-	help    bool
 	version bool
 	service bool
 	run     bool
@@ -67,29 +62,14 @@ type settings struct {
 
 func getSettingsFromArguments() settings {
 	args := settings{}
-	for i := 1; i < len(os.Args); i++ {
-		switch os.Args[i] {
-		case "help":
-			fallthrough
-		case "--help":
-			fallthrough
-		case "-h":
-			args.help = true
 
-		case "version":
-			fallthrough
-		case "--version":
-			fallthrough
-		case "-v":
-			args.version = true
+	flag.BoolVar(&args.version, "v", false, "Print version")
+	flag.BoolVar(&args.version, "version", false, "Print version")
+	flag.BoolVar(&args.service, "service", false, "Print systemd service intructions")
+	flag.BoolVar(&args.run, "run", false, "Run web server")
 
-		case "service":
-			args.service = true
+	flag.Parse()
 
-		case "run":
-			args.run = true
-		}
-	}
 	return args
 }
 
@@ -171,21 +151,6 @@ func printErrorMessage(msg string) {
 	fmt.Println("Run with -h/--help to print help.")
 }
 
-func printHelp() {
-	fmt.Print(`ground
-
-Methods:
-  help:    Print this message
-  version: Print version
-  service: Print systemd service intructions
-  run:     Run web server
-
-Arguments:
-  -h, --help:    Print this message
-  -v, --version: Print version
-`)
-}
-
 func printService() error {
 	execPath, err := os.Executable()
 	if err != nil {
@@ -211,7 +176,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=%s run
+ExecStart=%s -run
 Restart=always
 
 [Install]
