@@ -268,7 +268,7 @@ func getEntryIconName(isDir bool, name string) string {
 	}
 
 	_, fileExt := getFileExtension(name)
-	switch fileExt {
+	switch strings.ToLower(fileExt) {
 	case ".apng":
 		fallthrough
 	case ".avif":
@@ -286,11 +286,24 @@ func getEntryIconName(isDir bool, name string) string {
 	case ".webp":
 		return "file-image"
 
+	case ".avi":
+		fallthrough
+	case ".mkv":
+		fallthrough
+	case ".mov":
+		fallthrough
+	case ".mp4":
+		fallthrough
+	case ".mpeg":
+		fallthrough
+	case ".webm":
+		fallthrough
+	case ".wmv":
+		return "file-video"
+
 	case ".mp3":
 		fallthrough
 	case ".ogg":
-		fallthrough
-	case ".webm":
 		return "file-audio"
 
 	case ".txt":
