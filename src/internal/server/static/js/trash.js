@@ -7,6 +7,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+const selectedClassName = "highlighted-extra";
+let selectedRow = null;
+
+function selectRow(element) {
+    if (selectedRow) {
+        selectedRow.classList.remove(selectedClassName);
+    }
+    selectedRow = element;
+    selectedRow.classList.add(selectedClassName);
+}
+
 function emptyTrash() {
     customConfirm("Are you sure you want to empty the trash?\nThis is permanent and cannot be undone.").then(confirmed => {
         if (confirmed) {

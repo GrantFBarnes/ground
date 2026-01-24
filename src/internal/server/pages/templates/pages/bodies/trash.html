@@ -50,6 +50,7 @@
             {{range .TrashEntries}}
             <tr
                 class="clickable"
+                onclick="selectRow(this)"
                 ondblclick="window.location.href='{{.UrlPath}}'"
             >
                 <td class="single-icon-cell">
