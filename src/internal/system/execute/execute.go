@@ -193,7 +193,7 @@ func PasswordSet(username string, password string) error {
 		return errors.New("password is not valid")
 	}
 
-	cmd := exec.Command("passwd", "--stdin", username)
+	cmd := exec.Command("chpasswd")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -202,7 +202,7 @@ func PasswordSet(username string, password string) error {
 
 	go func() {
 		defer stdin.Close()
-		io.WriteString(stdin, password+"\n")
+		io.WriteString(stdin, fmt.Sprintf("%s:%s", username, password))
 	}()
 
 	err = cmd.Run()

@@ -85,6 +85,7 @@ func healthCheck() (err error) {
 	}
 
 	dependencies := []string{
+		"chpasswd",
 		"df",
 		"du",
 		"gpasswd",
@@ -92,7 +93,6 @@ func healthCheck() (err error) {
 		"groups",
 		"mkdir",
 		"mv",
-		"passwd",
 		"sed",
 		"su",
 		"systemctl",
