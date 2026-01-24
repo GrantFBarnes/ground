@@ -9,16 +9,38 @@
     <summary>Power Control</summary>
     <div class="column-container">
         <div style="text-align: center;">
-            <button onclick="systemCall('reboot')">Reboot</button>
+            <button onclick="systemCall('reboot')">
+                <img
+                    src="/static/symbols/reboot.svg"
+                    alt="Reboot Icon"
+                    width="16"
+                    height="16"
+                >
+                Reboot
+            </button>
         </div>
         <div style="text-align: center;">
-            <button onclick="systemCall('poweroff')">Poweroff</button>
+            <button onclick="systemCall('poweroff')">
+                <img
+                    src="/static/symbols/poweroff.svg"
+                    alt="Poweroff Icon"
+                    width="16"
+                    height="16"
+                >
+                Poweroff
+            </button>
         </div>
     </div>
 </details>
 
 <h3>Users</h3>
 <button onclick="document.getElementById('create-user-dialog').showModal()">
+    <img
+        src="/static/symbols/user-new.svg"
+        alt="User New Icon"
+        width="16"
+        height="16"
+    >
     Create New User
 </button>
 <br />
@@ -59,12 +81,24 @@
             </td>
             <td>
                 <button onclick="window.location.href='/user/{{.Username}}'">
+                    <img
+                        src="/static/symbols/user-info.svg"
+                        alt="User Info Icon"
+                        width="16"
+                        height="16"
+                    >
                     Manage User
                 </button>
             </td>
             <td>
                 {{if ne $.Username .Username}}
                 <button onclick="impersonateUser('{{.Username}}')">
+                    <img
+                        src="/static/symbols/impersonate.svg"
+                        alt="Impersonate Icon"
+                        width="16"
+                        height="16"
+                    >
                     Impersonate User
                 </button>
                 {{else}}

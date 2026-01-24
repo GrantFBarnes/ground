@@ -49,7 +49,15 @@
         </div>
         <div>
             <p>Reset password to 'password'</p>
-            <button onclick="resetPassword()">Reset Password</button>
+            <button onclick="resetPassword()">
+                <img
+                    src="/static/symbols/reset.svg"
+                    alt="Reset Icon"
+                    width="16"
+                    height="16"
+                >
+                Reset Password
+            </button>
         </div>
     </div>
 </details>
@@ -57,11 +65,25 @@
 <details>
     <summary>Delete User</summary>
     <br />
-    <button onclick="deleteUser()">Delete User</button>
+    <button onclick="deleteUser()">
+        <img
+            src="/static/symbols/trash.svg"
+            alt="Trash Icon"
+            width="16"
+            height="16"
+        >
+        Delete User
+    </button>
 </details>
 
 <h3>SSH Keys</h3>
 <button onclick="document.getElementById('add-ssh-key-dialog').showModal()">
+    <img
+        src="/static/symbols/file-new.svg"
+        alt="File New Icon"
+        width="16"
+        height="16"
+    >
     Add New SSH Key
 </button>
 <br />
@@ -81,6 +103,12 @@
             <td>{{$sshKey}}</td>
             <td>
                 <button onclick="deleteSshKeyLine('{{$index}}')">
+                    <img
+                        src="/static/symbols/trash.svg"
+                        alt="Trash Icon"
+                        width="16"
+                        height="16"
+                    >
                     Delete SSH Key
                 </button>
             </td>

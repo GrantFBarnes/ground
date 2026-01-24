@@ -18,6 +18,12 @@
 
 <div style="float: right;">
     <button onclick="emptyTrash()">
+        <img
+            src="/static/symbols/trash.svg"
+            alt="Trash Icon"
+            width="16"
+            height="16"
+        >
         Empty Trash
     </button>
 </div>
@@ -71,7 +77,14 @@
                         title="Restore trash directory back to files"
                         class="clickable"
                         onclick="restoreDir('{{.DirName}}', '{{.TrashedOn}}')"
-                    >&#9100;</span>
+                    >
+                        <img
+                            src="/static/symbols/restore.svg"
+                            alt="Restore Icon"
+                            width="16"
+                            height="16"
+                        >
+                    </span>
                 </td>
             </tr>
             {{end}}

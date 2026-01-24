@@ -65,6 +65,12 @@
 <div class="column-container">
     <div style="text-align: left;">
         <button onclick="document.getElementById('create-directory-dialog').showModal()">
+            <img
+                src="/static/symbols/folder-new.svg"
+                alt="Folder New Icon"
+                width="16"
+                height="16"
+            >
             Create Directory
         </button>
     </div>
@@ -81,7 +87,15 @@
                 multiple
                 webkitdirectory
             />
-            <button type="submit">Upload</button>
+            <button type="submit">
+                <img
+                    src="/static/symbols/upload.svg"
+                    alt="Upload Icon"
+                    width="16"
+                    height="16"
+                >
+                Upload
+            </button>
         </form>
     </div>
 </div>
@@ -110,25 +124,57 @@
                             id="selected-action-compress"
                             hidden
                         >
-                            <button>Compress Directory</button>
+                            <button>
+                                <img
+                                    src="/static/symbols/compress.svg"
+                                    alt="Compress Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                                Compress Directory
+                            </button>
                         </div>
                         <div
                             id="selected-action-extract"
                             hidden
                         >
-                            <button>Extract File</button>
+                            <button>
+                                <img
+                                    src="/static/symbols/extract.svg"
+                                    alt="Extract Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                                Extract File
+                            </button>
                         </div>
                         <div
                             id="selected-action-download"
                             hidden
                         >
-                            <button>Download File</button>
+                            <button>
+                                <img
+                                    src="/static/symbols/download.svg"
+                                    alt="Download Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                                Download File
+                            </button>
                         </div>
                         <div
                             id="selected-action-trash"
                             hidden
                         >
-                            <button>Move to Trash</button>
+                            <button>
+                                <img
+                                    src="/static/symbols/trash.svg"
+                                    alt="Trash Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                                Move to Trash
+                            </button>
                         </div>
                     </div>
                 </th>
