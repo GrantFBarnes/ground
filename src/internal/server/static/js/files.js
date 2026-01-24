@@ -7,19 +7,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-const draggedClassName = "highlighted-extra";
+const selectedClassName = "highlighted-extra";
 const hoverClassName = "highlighted-normal";
 const tableContainerElement = document.getElementById("directory-entries-table-container");
-let draggedRowName = null;
+let selectedRow = null;
 
 function handleRowDragStart(event) {
-    event.target.classList.add(draggedClassName);
-    draggedRowName = event.target.dataset.name;
+    event.target.classList.add(selectedClassName);
+    selectedRow = event.target;
 }
 
 function handleRowDragEnd(event) {
-    event.target.classList.remove(draggedClassName);
-    draggedRowName = null;
+    event.target.classList.remove(selectedClassName);
+    selectedRow = null;
 }
 
 function handleDirRowDragOver(event) {
@@ -45,10 +45,11 @@ function handleDirRowDrop(event) {
     droppedRowElement.classList.remove(hoverClassName);
 
     const dirName = droppedRowElement.dataset.name;
-    if (draggedRowName) {
-        if (draggedRowName != dirName) {
-            const source = pathJoin(pagePath, draggedRowName);
-            const destination = pathJoin(pathJoin(pagePath, dirName), draggedRowName);
+    if (selectedRow) {
+        const selectedRowName = selectedRow.dataset.name;
+        if (selectedRowName != dirName) {
+            const source = pathJoin(pagePath, selectedRowName);
+            const destination = pathJoin(pathJoin(pagePath, dirName), selectedRowName);
             moveFiles(source, destination);
         }
     } else if (event.dataTransfer.items) {
@@ -59,21 +60,21 @@ function handleDirRowDrop(event) {
 
 function handleTableContainerDragOver(event) {
     event.preventDefault();
-    if (!draggedRowName) {
+    if (!selectedRow) {
         tableContainerElement.classList.add(hoverClassName);
     }
 }
 
 function handleTableContainerDragLeave(event) {
     event.preventDefault();
-    if (!draggedRowName) {
+    if (!selectedRow) {
         tableContainerElement.classList.remove(hoverClassName);
     }
 }
 
 function handleTableContainerDrop(event) {
     event.preventDefault();
-    if (!draggedRowName) {
+    if (!selectedRow) {
         tableContainerElement.classList.remove(hoverClassName);
         if (event.dataTransfer.items) {
             uploadItems(pagePath, event.dataTransfer.items);
@@ -100,9 +101,10 @@ function handleBreadcrumbDrop(event) {
     droppedSpanElement.classList.remove(hoverClassName);
 
     const relHomePath = droppedSpanElement.dataset.path;
-    if (draggedRowName) {
-        const source = pathJoin(pagePath, draggedRowName);
-        const destination = pathJoin(relHomePath, draggedRowName);
+    if (selectedRow) {
+        const selectedRowName = selectedRow.dataset.name;
+        const source = pathJoin(pagePath, selectedRowName);
+        const destination = pathJoin(relHomePath, selectedRowName);
         moveFiles(source, destination);
     } else if (event.dataTransfer.items) {
         uploadItems(relHomePath, event.dataTransfer.items);
