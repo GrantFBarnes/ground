@@ -117,66 +117,67 @@
             <tr>
                 <th
                     colspan="5"
-                    style="text-align: center;"
+                    style="text-align: right;"
                 >
-                    <div class="column-container">
-                        <div
-                            id="selected-action-compress"
-                            hidden
+                    <span
+                        id="selected-action-none"
+                        title="Select a directory/file to see actions"
+                    >
+                        <img
+                            src="/static/symbols/help.svg"
+                            alt="Help Icon"
+                            width="16"
+                            height="16"
                         >
-                            <button>
-                                <img
-                                    src="/static/symbols/compress.svg"
-                                    alt="Compress Icon"
-                                    width="16"
-                                    height="16"
-                                >
-                                Compress Directory
-                            </button>
-                        </div>
-                        <div
-                            id="selected-action-extract"
-                            hidden
+                    </span>
+                    <span
+                        id="selected-action-compress"
+                        title="Compress Directory"
+                        hidden
+                    >
+                        <img
+                            src="/static/symbols/compress.svg"
+                            alt="Compress Icon"
+                            width="16"
+                            height="16"
                         >
-                            <button>
-                                <img
-                                    src="/static/symbols/extract.svg"
-                                    alt="Extract Icon"
-                                    width="16"
-                                    height="16"
-                                >
-                                Extract File
-                            </button>
-                        </div>
-                        <div
-                            id="selected-action-download"
-                            hidden
+                    </span>
+                    <span
+                        id="selected-action-extract"
+                        title="Extract File"
+                        hidden
+                    >
+                        <img
+                            src="/static/symbols/extract.svg"
+                            alt="Extract Icon"
+                            width="16"
+                            height="16"
                         >
-                            <button>
-                                <img
-                                    src="/static/symbols/download.svg"
-                                    alt="Download Icon"
-                                    width="16"
-                                    height="16"
-                                >
-                                Download File
-                            </button>
-                        </div>
-                        <div
-                            id="selected-action-trash"
-                            hidden
+                    </span>
+                    <span
+                        id="selected-action-download"
+                        title="Download File"
+                        hidden
+                    >
+                        <img
+                            src="/static/symbols/download.svg"
+                            alt="Download Icon"
+                            width="16"
+                            height="16"
                         >
-                            <button>
-                                <img
-                                    src="/static/symbols/trash.svg"
-                                    alt="Trash Icon"
-                                    width="16"
-                                    height="16"
-                                >
-                                Move to Trash
-                            </button>
-                        </div>
-                    </div>
+                    </span>
+                    <span
+                        id="selected-action-trash"
+                        title="Move to Trash"
+                        hidden
+                    >
+                        <img
+                            src="/static/symbols/trash.svg"
+                            alt="Trash Icon"
+                            width="16"
+                            height="16"
+                        >
+                    </span>
                 </th>
             </tr>
             <tr>
