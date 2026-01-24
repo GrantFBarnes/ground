@@ -69,12 +69,35 @@ func getSettingsFromArguments() settings {
 	flag.BoolVar(&args.version, "v", false, "Print version")
 	flag.BoolVar(&args.version, "version", false, "Print version")
 	flag.BoolVar(&args.service, "service", false, "Print systemd service intructions")
-	flag.BoolVar(&args.run, "run", false, "Run web server")
-	flag.UintVar(&args.port, "port", 3478, "Define port web server is run on")
-	flag.StringVar(&args.certFile, "cert-file", "", "Define https certificate file path")
-	flag.StringVar(&args.keyFile, "key-file", "", "Define https key file path")
+
+	runCmd := flag.NewFlagSet("run", flag.ExitOnError)
+	runCmd.UintVar(&args.port, "port", 3478, "Define port web server is run on")
+	runCmd.StringVar(&args.certFile, "cert-file", "", "Define https certificate file path")
+	runCmd.StringVar(&args.keyFile, "key-file", "", "Define https key file path")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		fmt.Fprintln(os.Stderr)
+
+		fmt.Fprintln(os.Stderr, "Global Options:")
+		flag.PrintDefaults()
+		fmt.Fprintln(os.Stderr)
+
+		fmt.Fprintln(os.Stderr, "Commands:")
+		fmt.Fprintln(os.Stderr, "  run")
+		fmt.Fprintln(os.Stderr, "        Run the web server")
+		runCmd.PrintDefaults()
+	}
 
 	flag.Parse()
+
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "run":
+			args.run = true
+			runCmd.Parse(os.Args[2:])
+		}
+	}
 
 	return args
 }
@@ -182,7 +205,7 @@ After=network.target
 
 [Service]
 User=root
-ExecStart=%s -run
+ExecStart=%s run
 Restart=always
 
 [Install]
