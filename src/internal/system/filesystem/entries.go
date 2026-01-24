@@ -26,6 +26,7 @@ type TrashEntryData struct {
 	DirName      string
 	IsDir        bool
 	IsCompressed bool
+	IconName     string
 	Name         string
 	Path         string
 	HumanSize    string
@@ -80,85 +81,6 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 	}
 
 	return entry, nil
-}
-
-func getIconName(entry os.DirEntry) string {
-	if entry.IsDir() {
-		return "folder"
-	}
-
-	_, fileExt := getFileExtension(entry.Name())
-	switch fileExt {
-	case ".apng":
-		fallthrough
-	case ".avif":
-		fallthrough
-	case ".gif":
-		fallthrough
-	case ".jpeg":
-		fallthrough
-	case ".jpg":
-		fallthrough
-	case ".png":
-		fallthrough
-	case ".svg":
-		fallthrough
-	case ".webp":
-		return "file-image"
-
-	case ".mp3":
-		fallthrough
-	case ".ogg":
-		fallthrough
-	case ".webm":
-		return "file-audio"
-
-	case ".txt":
-		fallthrough
-	case ".md":
-		return "file-text"
-
-	case ".sh":
-		fallthrough
-	case ".ps1":
-		fallthrough
-	case ".bat":
-		return "file-script"
-
-	case ".html":
-		return "file-html"
-
-	case ".doc":
-		fallthrough
-	case ".docx":
-		fallthrough
-	case ".odt":
-		return "file-document"
-
-	case ".csv":
-		fallthrough
-	case ".xlsx":
-		fallthrough
-	case ".xlsm":
-		fallthrough
-	case ".xlsb":
-		fallthrough
-	case ".xltx":
-		fallthrough
-	case ".xltm":
-		fallthrough
-	case ".xls":
-		fallthrough
-	case ".xlt":
-		return "file-spreadsheet"
-
-	case ".pptx":
-		fallthrough
-	case ".pptm":
-		return "file-slide"
-	}
-
-	return "file"
 }
 
 func (entry DirectoryEntryData) getUrlPath() (string, error) {
@@ -287,6 +209,7 @@ func getTrashEntry(dirEntry os.DirEntry, relTrashPath string) (TrashEntryData, e
 	entry := TrashEntryData{
 		IsDir:        dirEntry.IsDir(),
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
+		IconName:     getIconName(dirEntry),
 		Name:         dirEntry.Name(),
 		Path:         path.Join("/", relTrashPath, dirEntry.Name()),
 		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),

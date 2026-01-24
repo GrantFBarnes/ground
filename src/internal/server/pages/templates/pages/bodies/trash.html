@@ -54,21 +54,12 @@
                 ondblclick="window.location.href='{{.UrlPath}}'"
             >
                 <td class="single-icon-cell">
-                    {{if .IsDir}}
                     <img
-                        src="/static/icons/folder.png"
-                        alt="Folder Icon"
+                        src="/static/icons/{{.IconName}}.png"
+                        alt="Entry Icon"
                         width="16"
                         height="16"
                     >
-                    {{else}}
-                    <img
-                        src="/static/icons/file.png"
-                        alt="File Icon"
-                        width="16"
-                        height="16"
-                    >
-                    {{end}}
                 </td>
                 <td>{{.Name}}</td>
                 <td class="right-align-cell">{{.HumanSize}}</td>
