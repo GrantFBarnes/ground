@@ -45,24 +45,64 @@
             <span
                 class="clickable"
                 onclick="window.location.href='/'"
-            >Home</span>
+            >
+                <img
+                    src="/static/symbols/nav-home.svg"
+                    alt="Home Icon"
+                    width="16"
+                    height="16"
+                >
+                Home
+            </span>
             <span
                 class="clickable"
                 onclick="window.location.href='/files'"
-            >Files</span>
+            >
+                <img
+                    src="/static/symbols/nav-files.svg"
+                    alt="Files Icon"
+                    width="16"
+                    height="16"
+                >
+                Files
+            </span>
             <span
                 class="clickable"
                 onclick="window.location.href='/trash'"
-            >Trash</span>
+            >
+                <img
+                    src="/static/symbols/nav-trash.svg"
+                    alt="Trash Icon"
+                    width="16"
+                    height="16"
+                >
+                Trash
+            </span>
             <span
                 class="clickable"
                 onclick="window.location.href='/user/{{.Username}}'"
-            >Manage</span>
+            >
+                <img
+                    src="/static/symbols/nav-manage.svg"
+                    alt="Manage Icon"
+                    width="16"
+                    height="16"
+                >
+                Manage
+            </span>
             {{if .IsAdmin}}
             <span
                 class="clickable"
                 onclick="window.location.href='/admin'"
-            >Admin</span>
+            >
+                <img
+                    src="/static/symbols/nav-admin.svg"
+                    alt="Admin Icon"
+                    width="16"
+                    height="16"
+                >
+                Admin
+            </span>
             {{end}}
             {{end}}
         </div>
