@@ -172,8 +172,14 @@ button {
     padding: var(--padding-medium);
     width: calc(100vw - (var(--padding-medium)*2) - (var(--notification-gap)*2));
     max-height: 60px;
-    overflow-y: scroll;
     text-align: center;
+    overflow-y: scroll;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.notification::-webkit-scrollbar {
+    display: none;
 }
 
 .clickable {
