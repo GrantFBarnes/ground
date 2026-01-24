@@ -116,19 +116,19 @@ tbody>tr:hover {
 }
 
 #notification-info {
-    background-color: var(--color-aqua0)
+    background-color: var(--color-aqua0);
 }
 
 #notification-error {
-    background-color: var(--color-red0)
+    background-color: var(--color-red0);
 }
 
 .highlighted-normal {
-    background-color: var(--color-bg2)
+    background-color: var(--color-bg2);
 }
 
 .highlighted-extra {
-    background-color: var(--color-blue1)
+    background-color: var(--color-blue1) !important;
 }
 
 .muted {

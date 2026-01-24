@@ -117,7 +117,7 @@ td {
     max-width: 80vw;
     overflow-wrap: break-word;
     text-align: left;
-    padding: var(--padding-small)
+    padding: var(--padding-small);
 }
 
 summary {
