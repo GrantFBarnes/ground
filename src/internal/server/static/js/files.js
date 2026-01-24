@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const selectedClassName = "highlighted-extra";
 const hoverClassName = "highlighted-normal";
-const selectedActionNoneElement = document.getElementById("selected-action-none");
 const selectedActionCompressElement = document.getElementById("selected-action-compress");
 const selectedActionExtractElement = document.getElementById("selected-action-extract");
 const selectedActionDownloadElement = document.getElementById("selected-action-download");
@@ -24,7 +23,6 @@ function selectRow(element) {
     selectedRow = element;
     selectedRow.classList.add(selectedClassName);
 
-    selectedActionNoneElement.hidden = true;
     selectedActionCompressElement.hidden = selectedRow.dataset.isDir != "true";
     selectedActionCompressElement.onclick = () => compressDirectory(selectedRow.dataset.path);
     selectedActionExtractElement.hidden = selectedRow.dataset.isCompressed != "true";
