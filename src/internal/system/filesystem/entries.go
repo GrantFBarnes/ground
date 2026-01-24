@@ -264,6 +264,21 @@ func sortTrashEntries(entries []TrashEntryData) []TrashEntryData {
 
 func getEntryIconName(isDir bool, name string) string {
 	if isDir {
+		switch strings.ToLower(name) {
+		case "desktop":
+			return "folder-desktop"
+		case "documents":
+			return "folder-documents"
+		case "downloads":
+			return "folder-downloads"
+		case "music":
+			return "folder-music"
+		case "pictures":
+			return "folder-pictures"
+		case "videos":
+			return "folder-videos"
+		}
+
 		return "folder"
 	}
 
