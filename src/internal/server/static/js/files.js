@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const selectedClassName = "highlighted-extra";
 const hoverClassName = "highlighted-normal";
+const selectedActionCompressElement = document.getElementById("selected-action-compress");
+const selectedActionExtractElement = document.getElementById("selected-action-extract");
+const selectedActionDownloadElement = document.getElementById("selected-action-download");
+const selectedActionTrashElement = document.getElementById("selected-action-trash");
 const tableContainerElement = document.getElementById("directory-entries-table-container");
 let selectedRow = null;
 
@@ -18,6 +22,15 @@ function selectRow(element) {
     }
     selectedRow = element;
     selectedRow.classList.add(selectedClassName);
+
+    selectedActionCompressElement.hidden = selectedRow.dataset.isDir != "true";
+    selectedActionCompressElement.onclick = () => compressDirectory(selectedRow.dataset.path);
+    selectedActionExtractElement.hidden = selectedRow.dataset.isCompressed != "true";
+    selectedActionExtractElement.onclick = () => extractFile(selectedRow.dataset.path);
+    selectedActionDownloadElement.hidden = selectedRow.dataset.isDir != "false";
+    selectedActionDownloadElement.onclick = () => downloadFile(selectedRow.dataset.path);
+    selectedActionTrashElement.hidden = false;
+    selectedActionTrashElement.onclick = () => moveToTrash(selectedRow.dataset.path);
 }
 
 function handleDirRowDragOver(event) {

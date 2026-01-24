@@ -81,6 +81,39 @@
 
 <br />
 
+<div class="column-container">
+    <div
+        id="selected-action-compress"
+        style="text-align: center;"
+        hidden
+    >
+        <button>Compress Directory</button>
+    </div>
+    <div
+        id="selected-action-extract"
+        style="text-align: center;"
+        hidden
+    >
+        <button>Extract File</button>
+    </div>
+    <div
+        id="selected-action-download"
+        style="text-align: center;"
+        hidden
+    >
+        <button>Download File</button>
+    </div>
+    <div
+        id="selected-action-trash"
+        style="text-align: center;"
+        hidden
+    >
+        <button>Move to Trash</button>
+    </div>
+</div>
+
+<br />
+
 <div
     id="directory-entries-table-container"
     class="table-container"
@@ -111,6 +144,9 @@
                 onclick="selectRow(this)"
                 ondblclick="window.location.href='{{.UrlPath}}'"
                 data-name="{{.Name}}"
+                data-path="{{.Path}}"
+                data-is-dir="{{.IsDir}}"
+                data-is-compressed="{{.IsCompressed}}"
                 draggable="true"
                 ondragstart="selectRow(this)"
                 {{if .IsDir}}
@@ -151,37 +187,6 @@
                 </td>
                 <td class="right-align-cell">{{.HumanSize}}</td>
                 <td class="right-align-cell">{{.LastModified}}</td>
-                <td class="single-icon-cell">
-                    {{if .IsDir}}
-                    <span
-                        title="Compress Directory"
-                        class="clickable"
-                        onclick="compressDirectory('{{.Path}}')"
-                    >&#128476;</span>
-                    {{else if .IsCompressed}}
-                    <span
-                        title="Extract File"
-                        class="clickable"
-                        onclick="extractFile('{{.Path}}')"
-                    >&#128449;</span>
-                    {{end}}
-                </td>
-                <td class="single-icon-cell">
-                    {{if not .IsDir}}
-                    <span
-                        title="Download File"
-                        class="clickable"
-                        onclick="downloadFile('{{.Path}}')"
-                    >&#8681;</span>
-                    {{end}}
-                </td>
-                <td class="single-icon-cell">
-                    <span
-                        title="Move to Trash"
-                        class="clickable"
-                        onclick="moveToTrash('{{.Path}}')"
-                    >&#128465;</span>
-                </td>
             </tr>
             {{end}}
         </tbody>
