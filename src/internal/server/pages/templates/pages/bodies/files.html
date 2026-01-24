@@ -121,15 +121,32 @@
             >
                 <td class="single-icon-cell">
                     {{if .IsDir}}
-                    &#128448;
+                    <img
+                        src="/static/icons/folder.png"
+                        alt="Folder Icon"
+                        width="16"
+                        height="16"
+                    >
                     {{else}}
-                    &#128459;
+                    <img
+                        src="/static/icons/file.png"
+                        alt="File Icon"
+                        width="16"
+                        height="16"
+                    >
                     {{end}}
                 </td>
                 <td>{{.Name}}</td>
                 <td>
                     {{if ne .SymLinkPath ""}}
-                    <span title="{{.SymLinkPath}}">&#128279;</span>
+                    <span title="{{.SymLinkPath}}">
+                        <img
+                            src="/static/icons/symbolic-link.png"
+                            alt="Symbolic Link Icon"
+                            width="16"
+                            height="16"
+                        >
+                    </span>
                     {{end}}
                 </td>
                 <td class="right-align-cell">{{.HumanSize}}</td>
