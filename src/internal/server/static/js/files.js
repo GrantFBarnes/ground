@@ -12,14 +12,12 @@ const hoverClassName = "highlighted-normal";
 const tableContainerElement = document.getElementById("directory-entries-table-container");
 let selectedRow = null;
 
-function handleRowDragStart(event) {
-    event.target.classList.add(selectedClassName);
-    selectedRow = event.target;
-}
-
-function handleRowDragEnd(event) {
-    event.target.classList.remove(selectedClassName);
-    selectedRow = null;
+function selectRow(element) {
+    if (selectedRow) {
+        selectedRow.classList.remove(selectedClassName);
+    }
+    selectedRow = element;
+    selectedRow.classList.add(selectedClassName);
 }
 
 function handleDirRowDragOver(event) {

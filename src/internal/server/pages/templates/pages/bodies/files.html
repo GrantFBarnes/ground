@@ -108,11 +108,11 @@
             {{range .DirectoryEntries}}
             <tr
                 class="clickable"
+                onclick="selectRow(this)"
                 ondblclick="window.location.href='{{.UrlPath}}'"
                 data-name="{{.Name}}"
                 draggable="true"
-                ondragstart="handleRowDragStart(event)"
-                ondragend="handleRowDragEnd(event)"
+                ondragstart="selectRow(this)"
                 {{if .IsDir}}
                 ondragover="handleDirRowDragOver(event)"
                 ondragleave="handleDirRowDragLeave(event)"
