@@ -62,7 +62,6 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 	entry := DirectoryEntryData{
 		IsDir:        dirEntry.IsDir(),
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
-		IconName:     getIconName(dirEntry),
 		Name:         dirEntry.Name(),
 		Path:         path.Join("/", relDirPath, dirEntry.Name()),
 		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
@@ -79,6 +78,8 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 	if isSymLinkDir {
 		entry.IsDir = true
 	}
+
+	entry.IconName = getEntryIconName(entry.IsDir, entry.Name)
 
 	return entry, nil
 }
@@ -209,7 +210,7 @@ func getTrashEntry(dirEntry os.DirEntry, relTrashPath string) (TrashEntryData, e
 	entry := TrashEntryData{
 		IsDir:        dirEntry.IsDir(),
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
-		IconName:     getIconName(dirEntry),
+		IconName:     getEntryIconName(dirEntry.IsDir(), dirEntry.Name()),
 		Name:         dirEntry.Name(),
 		Path:         path.Join("/", relTrashPath, dirEntry.Name()),
 		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
@@ -259,4 +260,83 @@ func sortTrashEntries(entries []TrashEntryData) []TrashEntryData {
 	})
 
 	return entries
+}
+
+func getEntryIconName(isDir bool, name string) string {
+	if isDir {
+		return "folder"
+	}
+
+	_, fileExt := getFileExtension(name)
+	switch fileExt {
+	case ".apng":
+		fallthrough
+	case ".avif":
+		fallthrough
+	case ".gif":
+		fallthrough
+	case ".jpeg":
+		fallthrough
+	case ".jpg":
+		fallthrough
+	case ".png":
+		fallthrough
+	case ".svg":
+		fallthrough
+	case ".webp":
+		return "file-image"
+
+	case ".mp3":
+		fallthrough
+	case ".ogg":
+		fallthrough
+	case ".webm":
+		return "file-audio"
+
+	case ".txt":
+		fallthrough
+	case ".md":
+		return "file-text"
+
+	case ".sh":
+		fallthrough
+	case ".ps1":
+		fallthrough
+	case ".bat":
+		return "file-script"
+
+	case ".html":
+		return "file-html"
+
+	case ".doc":
+		fallthrough
+	case ".docx":
+		fallthrough
+	case ".odt":
+		return "file-document"
+
+	case ".csv":
+		fallthrough
+	case ".xlsx":
+		fallthrough
+	case ".xlsm":
+		fallthrough
+	case ".xlsb":
+		fallthrough
+	case ".xltx":
+		fallthrough
+	case ".xltm":
+		fallthrough
+	case ".xls":
+		fallthrough
+	case ".xlt":
+		return "file-spreadsheet"
+
+	case ".pptx":
+		fallthrough
+	case ".pptm":
+		return "file-slide"
+	}
+
+	return "file"
 }
