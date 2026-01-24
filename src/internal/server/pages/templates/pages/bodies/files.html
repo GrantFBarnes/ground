@@ -81,39 +81,6 @@
 
 <br />
 
-<div class="column-container">
-    <div
-        id="selected-action-compress"
-        style="text-align: center;"
-        hidden
-    >
-        <button>Compress Directory</button>
-    </div>
-    <div
-        id="selected-action-extract"
-        style="text-align: center;"
-        hidden
-    >
-        <button>Extract File</button>
-    </div>
-    <div
-        id="selected-action-download"
-        style="text-align: center;"
-        hidden
-    >
-        <button>Download File</button>
-    </div>
-    <div
-        id="selected-action-trash"
-        style="text-align: center;"
-        hidden
-    >
-        <button>Move to Trash</button>
-    </div>
-</div>
-
-<br />
-
 <div
     id="directory-entries-table-container"
     class="table-container"
@@ -127,14 +94,44 @@
     <table>
         <thead>
             <tr>
+                <th
+                    colspan="5"
+                    style="text-align: center;"
+                >
+                    <div class="column-container">
+                        <div
+                            id="selected-action-compress"
+                            hidden
+                        >
+                            <button>Compress Directory</button>
+                        </div>
+                        <div
+                            id="selected-action-extract"
+                            hidden
+                        >
+                            <button>Extract File</button>
+                        </div>
+                        <div
+                            id="selected-action-download"
+                            hidden
+                        >
+                            <button>Download File</button>
+                        </div>
+                        <div
+                            id="selected-action-trash"
+                            hidden
+                        >
+                            <button>Move to Trash</button>
+                        </div>
+                    </div>
+                </th>
+            </tr>
+            <tr>
                 <th></th>
                 <th>Name</th>
                 <th></th>
                 <th class="right-align-cell">Size</th>
                 <th class="right-align-cell">Last Modified</th>
-                <th></th>
-                <th></th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
