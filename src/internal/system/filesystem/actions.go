@@ -198,6 +198,33 @@ func Move(username string, sourceRelHomePath string, destinationRelHomePath stri
 	return nil
 }
 
+func Rename(username string, relHomePath string, oldName string, newName string) error {
+	parentDirPath := path.Join("/home", username, relHomePath)
+	_, err := os.Stat(parentDirPath)
+	if err != nil {
+		return errors.Join(errors.New("parent dir path not found"), err)
+	}
+
+	oldPath := path.Join(parentDirPath, oldName)
+	_, err = os.Stat(oldPath)
+	if err != nil {
+		return errors.Join(errors.New("old path not found"), err)
+	}
+
+	newPath := path.Join(parentDirPath, newName)
+	_, err = os.Stat(newPath)
+	if err == nil {
+		return errors.Join(errors.New("new path already exists"), err)
+	}
+
+	err = execute.Move(username, oldPath, newPath)
+	if err != nil {
+		return errors.Join(errors.New("failed to move files"), err)
+	}
+
+	return nil
+}
+
 func Trash(username string, relHomePath string) error {
 	rootDirPath := path.Join("/home", username, relHomePath)
 	_, err := os.Stat(rootDirPath)

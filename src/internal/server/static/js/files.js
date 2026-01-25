@@ -12,6 +12,7 @@ const hoverClassName = "highlighted-normal";
 const selectedActionCompressElement = document.getElementById("selected-action-compress");
 const selectedActionExtractElement = document.getElementById("selected-action-extract");
 const selectedActionDownloadElement = document.getElementById("selected-action-download");
+const selectedActionRenameElement = document.getElementById("selected-action-rename");
 const selectedActionTrashElement = document.getElementById("selected-action-trash");
 const tableContainerElement = document.getElementById("directory-entries-table-container");
 let selectedRow = null;
@@ -29,6 +30,8 @@ function selectRow(element) {
     selectedActionExtractElement.onclick = () => extractFile(selectedRow.dataset.path);
     selectedActionDownloadElement.hidden = selectedRow.dataset.isDir != "false";
     selectedActionDownloadElement.onclick = () => downloadFile(selectedRow.dataset.path);
+    selectedActionRenameElement.hidden = false;
+    document.getElementById("rename-file-field-old-name").value = selectedRow.dataset.name;
     selectedActionTrashElement.hidden = false;
     selectedActionTrashElement.onclick = () => moveToTrash(selectedRow.dataset.path);
 }
@@ -235,6 +238,27 @@ document.getElementById("create-directory-form").addEventListener("submit", func
             document.getElementById("create-directory-dialog").close();
             toggleLoading();
             fetch("/api/directory", { method: "POST", body: formData }).then((response) => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    response.text().then((text) => notifyError(text));
+                    toggleLoading();
+                }
+            });
+        }
+    });
+});
+
+document.getElementById("rename-file-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+    const formData = new FormData(this);
+    const oldName = formData.get("oldName");
+    const newName = formData.get("newName");
+    customConfirm(`Are you sure you want to rename '${oldName}' to '${newName}'?`).then(confirmed => {
+        if (confirmed) {
+            document.getElementById("rename-file-dialog").close();
+            toggleLoading();
+            fetch("/api/rename", { method: "POST", body: formData }).then((response) => {
                 if (response.ok) {
                     location.reload();
                 } else {

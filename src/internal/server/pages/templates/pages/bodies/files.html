@@ -38,6 +38,54 @@
     </form>
 </dialog>
 
+<dialog id="rename-file-dialog">
+    <span
+        class="close-button"
+        onclick="document.getElementById('rename-file-dialog').close()"
+    >
+        <img
+            src="/static/symbols/close.svg"
+            alt="Close Icon"
+            width="16"
+            height="16"
+        >
+    </span>
+    <h3>Rename File/Directory</h3>
+    <form id="rename-file-form">
+        <input
+            type="text"
+            name="relHomePath"
+            value="{{.Path}}"
+            hidden
+        >
+        <label for="rename-file-field-old-name">Old Name:</label>
+        <input
+            type="text"
+            id="rename-file-field-old-name"
+            name="oldName"
+            readonly="true"
+        >
+        <br />
+        <br />
+        <label for="rename-file-field-new-name">New Name:</label>
+        <input
+            type="text"
+            id="rename-file-field-new-name"
+            name="newName"
+            maxlength="255"
+            placeholder="Enter New Name"
+            required="required"
+            autocomplete="off"
+        />
+        <br />
+        <br />
+        <input
+            type="submit"
+            value="Rename"
+        />
+    </form>
+</dialog>
+
 <div class="column-container">
     <div style="text-align: left;">
         {{range .FilePathBreadcrumbs}}
@@ -157,6 +205,19 @@
                         <img
                             src="/static/symbols/download.svg"
                             alt="Download Icon"
+                            width="16"
+                            height="16"
+                        >
+                    </button>
+                    <button
+                        id="selected-action-rename"
+                        title="Rename File/Directory"
+                        onclick="document.getElementById('rename-file-dialog').showModal()"
+                        hidden
+                    >
+                        <img
+                            src="/static/symbols/edit.svg"
+                            alt="Edit Icon"
                             width="16"
                             height="16"
                         >

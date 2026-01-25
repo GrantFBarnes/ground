@@ -42,6 +42,7 @@ func Run(port uint, certFile string, keyFile string) {
 	http.Handle("POST /api/compress", api.Middleware(http.HandlerFunc(api.CompressDirectory)))
 	http.Handle("POST /api/extract", api.Middleware(http.HandlerFunc(api.ExtractFile)))
 	http.Handle("POST /api/move", api.Middleware(http.HandlerFunc(api.MoveFiles)))
+	http.Handle("POST /api/rename", api.Middleware(http.HandlerFunc(api.RenameFile)))
 
 	http.Handle("POST /api/trash", api.Middleware(http.HandlerFunc(api.Trash)))
 	http.Handle("POST /api/restore", api.Middleware(http.HandlerFunc(api.Restore)))

@@ -302,6 +302,40 @@ func MoveFiles(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func RenameFile(w http.ResponseWriter, r *http.Request) {
+	requestor := common.GetRequestor(r)
+	relHomePath := r.FormValue("relHomePath")
+	oldName := r.FormValue("oldName")
+	newName := r.FormValue("newName")
+
+	if relHomePath == "" {
+		slog.Warn("directory not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "Directory not provided.", http.StatusBadRequest)
+		return
+	}
+
+	if oldName == "" {
+		slog.Warn("old name not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "Old name not provided.", http.StatusBadRequest)
+		return
+	}
+
+	if newName == "" {
+		slog.Warn("new name not provided", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor)
+		http.Error(w, "New name not provided.", http.StatusBadRequest)
+		return
+	}
+
+	err := filesystem.Rename(requestor, relHomePath, oldName, newName)
+	if err != nil {
+		slog.Error("failed to rename file", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "path", relHomePath, "old", oldName, "new", newName, "error", err)
+		http.Error(w, "Failed to rename file.", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func Trash(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	relHomePath := r.FormValue("relHomePath")
