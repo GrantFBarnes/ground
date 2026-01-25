@@ -158,82 +158,93 @@
     ondragleave="handleTableContainerDragLeave(event)"
     ondrop="handleTableContainerDrop(event)"
 >
-    {{$directoryEntryCount := len .DirectoryEntries}}
-    {{if gt $directoryEntryCount 0}}
     <table>
         <thead>
             <tr>
-                <th
-                    colspan="5"
-                    style="text-align: right;"
-                >
-                    <button style="visibility: hidden;">
-                        <img
-                            width="16"
-                            height="16"
-                        >
-                    </button>
-                    <button
-                        id="selected-action-compress"
-                        title="Compress Directory"
-                        hidden
-                    >
-                        <img
-                            src="/static/symbols/compress.svg"
-                            alt="Compress Icon"
-                            width="16"
-                            height="16"
-                        >
-                    </button>
-                    <button
-                        id="selected-action-extract"
-                        title="Extract File"
-                        hidden
-                    >
-                        <img
-                            src="/static/symbols/extract.svg"
-                            alt="Extract Icon"
-                            width="16"
-                            height="16"
-                        >
-                    </button>
-                    <button
-                        id="selected-action-download"
-                        title="Download File"
-                        hidden
-                    >
-                        <img
-                            src="/static/symbols/download.svg"
-                            alt="Download Icon"
-                            width="16"
-                            height="16"
-                        >
-                    </button>
-                    <button
-                        id="selected-action-rename"
-                        title="Rename File/Directory"
-                        onclick="document.getElementById('rename-file-dialog').showModal()"
-                        hidden
-                    >
-                        <img
-                            src="/static/symbols/edit.svg"
-                            alt="Edit Icon"
-                            width="16"
-                            height="16"
-                        >
-                    </button>
-                    <button
-                        id="selected-action-trash"
-                        title="Move to Trash"
-                        hidden
-                    >
-                        <img
-                            src="/static/symbols/trash.svg"
-                            alt="Trash Icon"
-                            width="16"
-                            height="16"
-                        >
-                    </button>
+                <th colspan="9999">
+                    <div class="column-container">
+                        <div style="text-align: left;">
+                            <form id="search-filter-form">
+                                <input
+                                    id="search-filter-input"
+                                    type="search"
+                                    name="searchFilter"
+                                    placeholder="Search to filter results..."
+                                >
+                                <button type="submit">
+                                    <img
+                                        src="/static/symbols/search.svg"
+                                        alt="Search Icon"
+                                        width="16"
+                                        height="16"
+                                    >
+                                </button>
+                            </form>
+                        </div>
+                        <div style="text-align: right;">
+                            <button
+                                id="selected-action-compress"
+                                title="Compress Directory"
+                                hidden
+                            >
+                                <img
+                                    src="/static/symbols/compress.svg"
+                                    alt="Compress Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                            </button>
+                            <button
+                                id="selected-action-extract"
+                                title="Extract File"
+                                hidden
+                            >
+                                <img
+                                    src="/static/symbols/extract.svg"
+                                    alt="Extract Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                            </button>
+                            <button
+                                id="selected-action-download"
+                                title="Download File"
+                                hidden
+                            >
+                                <img
+                                    src="/static/symbols/download.svg"
+                                    alt="Download Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                            </button>
+                            <button
+                                id="selected-action-rename"
+                                title="Rename File/Directory"
+                                onclick="document.getElementById('rename-file-dialog').showModal()"
+                                hidden
+                            >
+                                <img
+                                    src="/static/symbols/edit.svg"
+                                    alt="Edit Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                            </button>
+                            <button
+                                id="selected-action-trash"
+                                title="Move to Trash"
+                                hidden
+                            >
+                                <img
+                                    src="/static/symbols/trash.svg"
+                                    alt="Trash Icon"
+                                    width="16"
+                                    height="16"
+                                >
+                            </button>
+                        </div>
+                    </div>
                 </th>
             </tr>
             <tr>
@@ -323,7 +334,6 @@
             {{end}}
         </tbody>
     </table>
-    {{end}}
 </div>
 <script>
     const pagePath = "{{.Path}}";

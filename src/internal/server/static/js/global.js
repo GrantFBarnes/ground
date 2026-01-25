@@ -1,4 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+    setTableSortIcons();
+});
+
+function setTableSortIcons() {
     const urlParams = new URLSearchParams(window.location.search);
     if (!urlParams) return;
 
@@ -22,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
     imgElement.width = 16;
     imgElement.height = 16;
     tableSortIconElement.appendChild(imgElement);
-});
+}
 
 function reloadPageWithSortBy(sortBy) {
     const url = new URL(window.location.href);
@@ -31,7 +35,8 @@ function reloadPageWithSortBy(sortBy) {
     url.searchParams.set("sortBy", sortBy);
     if (sortBy == prevSortBy) {
         if (prevSortOrder == "desc") {
-            url.search = "";
+            url.searchParams.delete("sortBy");
+            url.searchParams.delete("sortOrder");
         } else {
             url.searchParams.set("sortOrder", "desc");
         }

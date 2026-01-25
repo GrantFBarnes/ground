@@ -1,11 +1,29 @@
 document.addEventListener("DOMContentLoaded", () => {
+    getDiskUsages();
+    setSearchFilterValue();
+});
+
+function getDiskUsages() {
     const diskUsageElement = document.getElementById("disk-usage");
     if (!diskUsageElement) return;
 
     getDirectoryDiskUsage(pageRootPath).then((diskUsage) => {
         diskUsageElement.innerText = `Disk Usage: ${diskUsage}`;
     });
-});
+}
+
+function setSearchFilterValue() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams) return;
+
+    const searchFilter = urlParams.get("searchFilter");
+    if (!searchFilter) return;
+
+    const searchFilterInputElement = document.getElementById("search-filter-input");
+    if (!searchFilterInputElement) return;
+
+    searchFilterInputElement.value = searchFilter;
+}
 
 const selectedClassName = "highlighted-extra";
 const hoverClassName = "highlighted-normal";
@@ -165,9 +183,7 @@ function traverseFileTree(entry, path = "") {
     });
 }
 
-const formElement = document.getElementById("upload-form");
-
-formElement.addEventListener("submit", (event) => {
+document.getElementById("upload-form").addEventListener("submit", (event) => {
     event.preventDefault();
 
     const fileUploadElement = document.getElementById("file-upload");
@@ -247,6 +263,22 @@ document.getElementById("create-directory-form").addEventListener("submit", func
             });
         }
     });
+});
+
+document.getElementById("search-filter-form").addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const url = new URL(window.location.href);
+    const formData = new FormData(this);
+    let searchFilter = formData.get("searchFilter");
+    if (searchFilter) searchFilter = searchFilter.trim();
+    if (searchFilter) {
+        url.searchParams.set("searchFilter", searchFilter);
+    } else {
+        url.searchParams.delete("searchFilter");
+    }
+
+    window.location.href = url.toString();
 });
 
 document.getElementById("rename-file-form").addEventListener("submit", function (event) {

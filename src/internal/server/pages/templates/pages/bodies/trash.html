@@ -30,8 +30,6 @@
 
 <br />
 
-{{$trashEntryCount := len .TrashEntries}}
-{{if gt $trashEntryCount 0}}
 <div
     class="table-container"
     style="padding-bottom: 200px;"
@@ -110,7 +108,6 @@
         </tbody>
     </table>
 </div>
-{{end}}
 <script>
     const pageRootPath = "{{.RootPath}}";
 </script>

@@ -38,11 +38,13 @@ type TrashEntryData struct {
 	UrlPath      string
 }
 
-func GetDirectoryEntries(relDirPath string, rootDirPath string, sortBy string, sortOrder string) ([]DirectoryEntryData, error) {
+func GetDirectoryEntries(relDirPath string, rootDirPath string, searchFilter string, sortBy string, sortOrder string) ([]DirectoryEntryData, error) {
 	dirEntries, err := os.ReadDir(rootDirPath)
 	if err != nil {
 		return nil, errors.Join(errors.New("failed to read directory"), err)
 	}
+
+	searchFilter = strings.TrimSpace(strings.ToLower(searchFilter))
 
 	var entries []DirectoryEntryData
 	for _, entry := range dirEntries {
@@ -50,6 +52,11 @@ func GetDirectoryEntries(relDirPath string, rootDirPath string, sortBy string, s
 		if err != nil {
 			continue
 		}
+
+		if !strings.Contains(strings.ToLower(entry.Name), searchFilter) {
+			continue
+		}
+
 		entries = append(entries, entry)
 	}
 
