@@ -1,16 +1,10 @@
 # Ground
 
-<div style="text-align: center;">
-    <img
-        src="branding/icon.png"
-        alt="Ground Logo"
-    >
-    <p>A simple down to earth cloud alternative.</p>
-    <img
-        src="https://img.shields.io/github/v/release/grantfbarnes/ground"
-        alt="GitHub Release"
-    >
-</div>
+![Ground Logo](branding/icon.png)
+
+A simple down to earth cloud alternative.
+
+[![GitHub Release](https://img.shields.io/github/v/release/grantfbarnes/ground)](https://github.com/GrantFBarnes/ground/releases)
 
 ## Why is it simple?
 
