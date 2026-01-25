@@ -129,49 +129,49 @@ func sortDirectoryEntries(entries []DirectoryEntryData, sortBy string, sortOrder
 
 		switch strings.ToLower(sortBy) {
 		case "type":
-			res, err = sortDirectoryEntriesType(a, b, sortOrderDesc)
+			res, err = sortEntriesByType(a.IsDir, b.IsDir, sortOrderDesc)
 			if err == nil {
 				return res
 			}
 		case "name":
-			res, err = sortDirectoryEntriesName(a, b, sortOrderDesc)
+			res, err = sortEntriesByName(a.Name, b.Name, sortOrderDesc)
 			if err == nil {
 				return res
 			}
 		case "link":
-			res, err = sortDirectoryEntriesLink(a, b, sortOrderDesc)
+			res, err = sortEntriesByLink(a.SymLinkPath, b.SymLinkPath, sortOrderDesc)
 			if err == nil {
 				return res
 			}
 		case "size":
-			res, err = sortDirectoryEntriesSize(a, b, sortOrderDesc)
+			res, err = sortEntriesBySize(a.size, b.size, a.IsDir, b.IsDir, sortOrderDesc)
 			if err == nil {
 				return res
 			}
 		case "time":
-			res, err = sortDirectoryEntriesTime(a, b, sortOrderDesc)
+			res, err = sortEntriesByTime(a.time, b.time, sortOrderDesc)
 			if err == nil {
 				return res
 			}
 		}
 
-		res, err = sortDirectoryEntriesType(a, b, false)
+		res, err = sortEntriesByType(a.IsDir, b.IsDir, false)
 		if err == nil {
 			return res
 		}
-		res, err = sortDirectoryEntriesName(a, b, false)
+		res, err = sortEntriesByName(a.Name, b.Name, false)
 		if err == nil {
 			return res
 		}
-		res, err = sortDirectoryEntriesTime(a, b, false)
+		res, err = sortEntriesByTime(a.time, b.time, false)
 		if err == nil {
 			return res
 		}
-		res, err = sortDirectoryEntriesSize(a, b, false)
+		res, err = sortEntriesBySize(a.size, b.size, a.IsDir, b.IsDir, false)
 		if err == nil {
 			return res
 		}
-		res, err = sortDirectoryEntriesLink(a, b, false)
+		res, err = sortEntriesByLink(a.SymLinkPath, b.SymLinkPath, false)
 		if err == nil {
 			return res
 		}
@@ -180,89 +180,6 @@ func sortDirectoryEntries(entries []DirectoryEntryData, sortBy string, sortOrder
 	})
 
 	return entries
-}
-
-func sortDirectoryEntriesType(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
-	if a.IsDir == b.IsDir {
-		return false, errors.New("same value")
-	}
-
-	if desc {
-		return b.IsDir, nil
-	} else {
-		return a.IsDir, nil
-	}
-}
-
-func sortDirectoryEntriesName(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
-	aLower := strings.ToLower(a.Name)
-	bLower := strings.ToLower(b.Name)
-	if aLower == bLower {
-		return false, errors.New("same value")
-	}
-
-	aDot := strings.HasPrefix(aLower, ".")
-	bDot := strings.HasPrefix(bLower, ".")
-	if aDot != bDot {
-		if desc {
-			return aDot, nil
-		} else {
-			return bDot, nil
-		}
-	}
-
-	if desc {
-		return aLower > bLower, nil
-	} else {
-		return aLower < bLower, nil
-	}
-}
-
-func sortDirectoryEntriesLink(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
-	aLink := a.SymLinkPath != ""
-	bLink := b.SymLinkPath != ""
-	if aLink == bLink {
-		return false, errors.New("same value")
-	}
-
-	if desc {
-		return bLink, nil
-	} else {
-		return aLink, nil
-	}
-}
-
-func sortDirectoryEntriesSize(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
-	aSize := a.size
-	bSize := b.size
-	if a.IsDir {
-		aSize = 0
-	}
-	if b.IsDir {
-		bSize = 0
-	}
-
-	if aSize == bSize {
-		return false, errors.New("same value")
-	}
-
-	if desc {
-		return aSize < bSize, nil
-	} else {
-		return aSize > bSize, nil
-	}
-}
-
-func sortDirectoryEntriesTime(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
-	if a.time.Equal(b.time) {
-		return false, errors.New("same value")
-	}
-
-	if desc {
-		return a.time.Before(b.time), nil
-	} else {
-		return a.time.After(b.time), nil
-	}
 }
 
 func GetTrashEntries(username string, relTrashPath string) ([]TrashEntryData, error) {
@@ -497,4 +414,85 @@ func getEntryIconName(isDir bool, name string) string {
 	}
 
 	return "file"
+}
+
+func sortEntriesByType(aIsDir bool, bIsDir bool, desc bool) (bool, error) {
+	if aIsDir == bIsDir {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return bIsDir, nil
+	} else {
+		return aIsDir, nil
+	}
+}
+
+func sortEntriesByName(aName string, bName string, desc bool) (bool, error) {
+	aLower := strings.ToLower(aName)
+	bLower := strings.ToLower(bName)
+	if aLower == bLower {
+		return false, errors.New("same value")
+	}
+
+	aDot := strings.HasPrefix(aLower, ".")
+	bDot := strings.HasPrefix(bLower, ".")
+	if aDot != bDot {
+		if desc {
+			return aDot, nil
+		} else {
+			return bDot, nil
+		}
+	}
+
+	if desc {
+		return aLower > bLower, nil
+	} else {
+		return aLower < bLower, nil
+	}
+}
+
+func sortEntriesByLink(aSymLinkPath string, bSymLinkPath string, desc bool) (bool, error) {
+	aLink := aSymLinkPath != ""
+	bLink := bSymLinkPath != ""
+	if aLink == bLink {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return bLink, nil
+	} else {
+		return aLink, nil
+	}
+}
+
+func sortEntriesBySize(aSize int64, bSize int64, aIsDir bool, bIsDir bool, desc bool) (bool, error) {
+	if aIsDir {
+		aSize = 0
+	}
+	if bIsDir {
+		bSize = 0
+	}
+
+	if aSize == bSize {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return aSize < bSize, nil
+	} else {
+		return aSize > bSize, nil
+	}
+}
+
+func sortEntriesByTime(aTime time.Time, bTime time.Time, desc bool) (bool, error) {
+	if aTime.Equal(bTime) {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return aTime.Before(bTime), nil
+	} else {
+		return aTime.After(bTime), nil
+	}
 }
