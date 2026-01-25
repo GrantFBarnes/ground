@@ -1,3 +1,29 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams) return;
+
+    let sortBy = urlParams.get("sortBy");
+    if (!sortBy) return;
+    sortBy = sortBy.toLowerCase();
+
+    const options = ["type", "name", "link", "size", "time"];
+    if (options.indexOf(sortBy) < 0) return;
+
+    const tableSortIconElement = document.getElementById(`table-sort-icon-${sortBy}`);
+    if (!tableSortIconElement) return;
+
+    const imgElement = document.createElement("img");
+    if (urlParams.get("sortOrder") == "desc") {
+        imgElement.src = "/static/symbols/sort-desc.svg";
+    } else {
+        imgElement.src = "/static/symbols/sort-asc.svg";
+    }
+    imgElement.alt = "Sort Icon"
+    imgElement.width = 16;
+    imgElement.height = 16;
+    tableSortIconElement.appendChild(imgElement);
+});
+
 function reloadPageWithSortBy(sortBy) {
     const url = new URL(window.location.href);
     const prevSortBy = url.searchParams.get("sortBy");
