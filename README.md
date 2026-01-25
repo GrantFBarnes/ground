@@ -1,11 +1,21 @@
 # Ground
 
-A simple down to earth cloud alternative.
+<div style="text-align: center;">
+    <img
+        src="branding/icon.png"
+        alt="Ground Logo"
+    >
+    <p>A simple down to earth cloud alternative.</p>
+    <img
+        src="https://img.shields.io/github/v/release/grantfbarnes/ground"
+        alt="GitHub Release"
+    >
+</div>
 
 ## Why is it simple?
 
 - No database
-- No external dependencies
+- No external code dependencies
 - Single binary with embedded files
 - Just a frontend for a linux file server
 
