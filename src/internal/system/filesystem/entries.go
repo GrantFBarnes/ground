@@ -31,6 +31,7 @@ type TrashEntryData struct {
 	IconName     string
 	Name         string
 	Path         string
+	size         int64
 	HumanSize    string
 	trashedTime  time.Time
 	TrashedOn    string
@@ -182,7 +183,7 @@ func sortDirectoryEntries(entries []DirectoryEntryData, sortBy string, sortOrder
 	return entries
 }
 
-func GetTrashEntries(username string, relTrashPath string) ([]TrashEntryData, error) {
+func GetTrashEntries(username string, relTrashPath string, sortBy string, sortOrder string) ([]TrashEntryData, error) {
 	var entries []TrashEntryData
 	var err error
 
@@ -206,7 +207,7 @@ func GetTrashEntries(username string, relTrashPath string) ([]TrashEntryData, er
 		}
 	}
 
-	return sortTrashEntries(entries), err
+	return sortTrashEntries(entries, sortBy, sortOrder), err
 }
 
 func getTrashPathEntries(username string, relTrashPath string) ([]TrashEntryData, error) {
@@ -260,6 +261,7 @@ func getTrashEntry(dirEntry os.DirEntry, relTrashPath string) (TrashEntryData, e
 		IconName:     getEntryIconName(dirEntry.IsDir(), dirEntry.Name()),
 		Name:         dirEntry.Name(),
 		Path:         path.Join("/", relTrashPath, dirEntry.Name()),
+		size:         entryInfo.Size(),
 		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
 	}
 
@@ -285,25 +287,55 @@ func (entry TrashEntryData) getUrlPath() (string, error) {
 	}
 }
 
-func sortTrashEntries(entries []TrashEntryData) []TrashEntryData {
+func sortTrashEntries(entries []TrashEntryData, sortBy string, sortOrder string) []TrashEntryData {
+	sortOrderDesc := strings.ToLower(sortOrder) == "desc"
 	sort.Slice(entries, func(i, j int) bool {
 		a, b := entries[i], entries[j]
 
-		if a.TrashedOn != b.TrashedOn {
-			return a.trashedTime.After(b.trashedTime)
+		var res bool
+		var err error
+
+		switch strings.ToLower(sortBy) {
+		case "type":
+			res, err = sortEntriesByType(a.IsDir, b.IsDir, sortOrderDesc)
+			if err == nil {
+				return res
+			}
+		case "name":
+			res, err = sortEntriesByName(a.Name, b.Name, sortOrderDesc)
+			if err == nil {
+				return res
+			}
+		case "size":
+			res, err = sortEntriesBySize(a.size, b.size, a.IsDir, b.IsDir, sortOrderDesc)
+			if err == nil {
+				return res
+			}
+		case "time":
+			res, err = sortEntriesByTime(a.trashedTime, b.trashedTime, sortOrderDesc)
+			if err == nil {
+				return res
+			}
 		}
 
-		if a.IsDir != b.IsDir {
-			return a.IsDir
+		res, err = sortEntriesByTime(a.trashedTime, b.trashedTime, false)
+		if err == nil {
+			return res
+		}
+		res, err = sortEntriesByType(a.IsDir, b.IsDir, false)
+		if err == nil {
+			return res
+		}
+		res, err = sortEntriesByName(a.Name, b.Name, false)
+		if err == nil {
+			return res
+		}
+		res, err = sortEntriesBySize(a.size, b.size, a.IsDir, b.IsDir, false)
+		if err == nil {
+			return res
 		}
 
-		aDot := strings.HasPrefix(a.Name, ".")
-		bDot := strings.HasPrefix(b.Name, ".")
-		if aDot != bDot {
-			return bDot
-		}
-
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+		return false
 	})
 
 	return entries

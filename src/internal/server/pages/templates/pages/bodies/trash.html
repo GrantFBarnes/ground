@@ -39,10 +39,37 @@
     <table>
         <thead>
             <tr>
-                <th></th>
-                <th>Name</th>
-                <th class="right-align-cell">Size</th>
-                <th class="right-align-cell">Trashed On</th>
+                <th
+                    class="clickable"
+                    title="Sort By Type"
+                    onclick="reloadPageWithSortBy('type')"
+                >
+                    <span id="table-sort-icon-type"></span>
+                </th>
+                <th
+                    class="clickable"
+                    title="Sort By Name"
+                    onclick="reloadPageWithSortBy('name')"
+                >
+                    Name
+                    <span id="table-sort-icon-name"></span>
+                </th>
+                <th
+                    class="clickable right-align-cell"
+                    title="Sort By Size"
+                    onclick="reloadPageWithSortBy('size')"
+                >
+                    <span id="table-sort-icon-size"></span>
+                    Size
+                </th>
+                <th
+                    class="clickable right-align-cell"
+                    title="Sort By Time"
+                    onclick="reloadPageWithSortBy('time')"
+                >
+                    <span id="table-sort-icon-time"></span>
+                    Trashed On
+                </th>
                 <th></th>
             </tr>
         </thead>

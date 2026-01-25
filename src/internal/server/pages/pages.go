@@ -192,6 +192,8 @@ func File(w http.ResponseWriter, r *http.Request) {
 func Trash(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/trash")
+	sortBy := r.URL.Query().Get("sortBy")
+	sortOrder := r.URL.Query().Get("sortOrder")
 
 	homePath := path.Join("/home", requestor, filesystem.TRASH_HOME_PATH)
 	urlRootPath := path.Join(homePath, urlRelativePath)
@@ -209,7 +211,7 @@ func Trash(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	trashEntries, err := filesystem.GetTrashEntries(requestor, urlRelativePath)
+	trashEntries, err := filesystem.GetTrashEntries(requestor, urlRelativePath, sortBy, sortOrder)
 	if err != nil {
 		slog.Error("failed to get trash entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		getProblemPage(w, r, "There was a problem getting the trash entries for this requested file path.")
