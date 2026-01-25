@@ -61,15 +61,15 @@ function selectRow(element) {
     selectedRow.classList.add(selectedClassName);
 
     selectedActionCompressElement.hidden = selectedRow.dataset.isDir != "true";
-    selectedActionCompressElement.onclick = () => compressDirectory(selectedRow.dataset.path);
+    selectedActionCompressElement.onclick = () => compressDirectory(selectedRow.dataset.name, selectedRow.dataset.path);
     selectedActionExtractElement.hidden = selectedRow.dataset.isCompressed != "true";
-    selectedActionExtractElement.onclick = () => extractFile(selectedRow.dataset.path);
+    selectedActionExtractElement.onclick = () => extractFile(selectedRow.dataset.name, selectedRow.dataset.path);
     selectedActionDownloadElement.hidden = selectedRow.dataset.isDir != "false";
     selectedActionDownloadElement.onclick = () => downloadFile(selectedRow.dataset.path);
     selectedActionRenameElement.hidden = false;
     document.getElementById("rename-file-field-old-name").value = selectedRow.dataset.name;
     selectedActionTrashElement.hidden = false;
-    selectedActionTrashElement.onclick = () => moveToTrash(selectedRow.dataset.path);
+    selectedActionTrashElement.onclick = () => moveToTrash(selectedRow.dataset.name, selectedRow.dataset.path);
 }
 
 function handleDirRowDragOver(event) {
@@ -353,16 +353,16 @@ function moveFiles(source, destination) {
     });
 }
 
-function compressDirectory(relHomePath) {
-    customConfirm("Are you sure you want to compress this directory?").then(confirmed => {
+function compressDirectory(name, relHomePath) {
+    customConfirm(`Are you sure you want to compress '${name}'?`).then(confirmed => {
         if (confirmed) {
             callFileApi("compress", relHomePath);
         }
     });
 }
 
-function extractFile(relHomePath) {
-    customConfirm("Are you sure you want to extract this file?").then(confirmed => {
+function extractFile(name, relHomePath) {
+    customConfirm(`Are you sure you want to extract '${name}'?`).then(confirmed => {
         if (confirmed) {
             callFileApi("extract", relHomePath);
         }
@@ -377,8 +377,8 @@ function downloadFile(filePath) {
     a.remove();
 }
 
-function moveToTrash(relHomePath) {
-    customConfirm("Are you sure you want to move this file/directory to the trash?").then(confirmed => {
+function moveToTrash(name, relHomePath) {
+    customConfirm(`Are you sure you want to move '${name}' to the trash?`).then(confirmed => {
         if (confirmed) {
             callFileApi("trash", relHomePath);
         }

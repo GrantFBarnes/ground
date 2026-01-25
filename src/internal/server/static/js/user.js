@@ -56,7 +56,7 @@ function deleteSshKeyLine(index) {
 }
 
 function resetPassword() {
-    customConfirm(`Are you sure you want to reset this user's password?`).then(confirmed => {
+    customConfirm("Are you sure you want to reset this user's password?").then(confirmed => {
         if (confirmed) {
             toggleLoading();
             const formData = new FormData();
@@ -79,7 +79,7 @@ function resetPassword() {
 }
 
 function deleteUser() {
-    customConfirm(`Are you sure you want to delete this user?`).then(confirmed => {
+    customConfirm("Are you sure you want to delete this user?").then(confirmed => {
         if (confirmed) {
             toggleLoading();
             const formData = new FormData();
