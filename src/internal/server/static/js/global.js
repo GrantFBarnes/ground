@@ -1,3 +1,16 @@
+function reloadPageWithSortBy(sortBy) {
+    const url = new URL(window.location.href);
+    const prevSortBy = url.searchParams.get("sortBy");
+    const prevSortOrder = url.searchParams.get("sortOrder");
+    url.searchParams.set("sortBy", sortBy);
+    if (sortBy == prevSortBy) {
+        url.searchParams.set("sortOrder", prevSortOrder == "asc" ? "desc" : "asc");
+    } else {
+        url.searchParams.set("sortOrder", "asc");
+    }
+    window.location.href = url.toString();
+}
+
 function toggleLoading() {
     let overlayElement = document.getElementById("overlay");
     let loadingWheelElement = document.getElementById("loading-wheel");

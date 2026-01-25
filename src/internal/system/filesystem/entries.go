@@ -16,7 +16,9 @@ type DirectoryEntryData struct {
 	IconName     string
 	Name         string
 	Path         string
+	size         int64
 	HumanSize    string
+	time         time.Time
 	LastModified string
 	SymLinkPath  string
 	UrlPath      string
@@ -35,7 +37,7 @@ type TrashEntryData struct {
 	UrlPath      string
 }
 
-func GetDirectoryEntries(relDirPath string, rootDirPath string) ([]DirectoryEntryData, error) {
+func GetDirectoryEntries(relDirPath string, rootDirPath string, sortBy string, sortOrder string) ([]DirectoryEntryData, error) {
 	dirEntries, err := os.ReadDir(rootDirPath)
 	if err != nil {
 		return nil, errors.Join(errors.New("failed to read directory"), err)
@@ -50,7 +52,7 @@ func GetDirectoryEntries(relDirPath string, rootDirPath string) ([]DirectoryEntr
 		entries = append(entries, entry)
 	}
 
-	return sortDirectoryEntries(entries), nil
+	return sortDirectoryEntries(entries, sortBy, sortOrder), nil
 }
 
 func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath string) (DirectoryEntryData, error) {
@@ -64,7 +66,9 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 		IsCompressed: strings.HasSuffix(dirEntry.Name(), ".tar.gz"),
 		Name:         dirEntry.Name(),
 		Path:         path.Join("/", relDirPath, dirEntry.Name()),
+		size:         entryInfo.Size(),
 		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
+		time:         entryInfo.ModTime(),
 		LastModified: entryInfo.ModTime().Format(displayTimeLayout),
 	}
 
@@ -115,24 +119,150 @@ func (entry DirectoryEntryData) getSymLinkInfo(rootPath string) (string, bool) {
 	return strings.TrimPrefix(linkPath, rootPath), linkInfo.IsDir()
 }
 
-func sortDirectoryEntries(entries []DirectoryEntryData) []DirectoryEntryData {
+func sortDirectoryEntries(entries []DirectoryEntryData, sortBy string, sortOrder string) []DirectoryEntryData {
+	sortOrderDesc := strings.ToLower(sortOrder) == "desc"
 	sort.Slice(entries, func(i, j int) bool {
 		a, b := entries[i], entries[j]
 
-		if a.IsDir != b.IsDir {
-			return a.IsDir
+		var res bool
+		var err error
+
+		switch strings.ToLower(sortBy) {
+		case "type":
+			res, err = sortDirectoryEntriesType(a, b, sortOrderDesc)
+			if err == nil {
+				return res
+			}
+		case "name":
+			res, err = sortDirectoryEntriesName(a, b, sortOrderDesc)
+			if err == nil {
+				return res
+			}
+		case "link":
+			res, err = sortDirectoryEntriesLink(a, b, sortOrderDesc)
+			if err == nil {
+				return res
+			}
+		case "size":
+			res, err = sortDirectoryEntriesSize(a, b, sortOrderDesc)
+			if err == nil {
+				return res
+			}
+		case "time":
+			res, err = sortDirectoryEntriesTime(a, b, sortOrderDesc)
+			if err == nil {
+				return res
+			}
 		}
 
-		aDot := strings.HasPrefix(a.Name, ".")
-		bDot := strings.HasPrefix(b.Name, ".")
-		if aDot != bDot {
-			return bDot
+		res, err = sortDirectoryEntriesType(a, b, false)
+		if err == nil {
+			return res
+		}
+		res, err = sortDirectoryEntriesName(a, b, false)
+		if err == nil {
+			return res
+		}
+		res, err = sortDirectoryEntriesTime(a, b, false)
+		if err == nil {
+			return res
+		}
+		res, err = sortDirectoryEntriesSize(a, b, false)
+		if err == nil {
+			return res
+		}
+		res, err = sortDirectoryEntriesLink(a, b, false)
+		if err == nil {
+			return res
 		}
 
-		return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+		return false
 	})
 
 	return entries
+}
+
+func sortDirectoryEntriesType(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
+	if a.IsDir == b.IsDir {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return b.IsDir, nil
+	} else {
+		return a.IsDir, nil
+	}
+}
+
+func sortDirectoryEntriesName(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
+	aLower := strings.ToLower(a.Name)
+	bLower := strings.ToLower(b.Name)
+	if aLower == bLower {
+		return false, errors.New("same value")
+	}
+
+	aDot := strings.HasPrefix(aLower, ".")
+	bDot := strings.HasPrefix(bLower, ".")
+	if aDot != bDot {
+		if desc {
+			return aDot, nil
+		} else {
+			return bDot, nil
+		}
+	}
+
+	if desc {
+		return aLower > bLower, nil
+	} else {
+		return aLower < bLower, nil
+	}
+}
+
+func sortDirectoryEntriesLink(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
+	aLink := a.SymLinkPath != ""
+	bLink := b.SymLinkPath != ""
+	if aLink == bLink {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return bLink, nil
+	} else {
+		return aLink, nil
+	}
+}
+
+func sortDirectoryEntriesSize(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
+	aSize := a.size
+	bSize := b.size
+	if a.IsDir {
+		aSize = 0
+	}
+	if b.IsDir {
+		bSize = 0
+	}
+
+	if aSize == bSize {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return aSize < bSize, nil
+	} else {
+		return aSize > bSize, nil
+	}
+}
+
+func sortDirectoryEntriesTime(a DirectoryEntryData, b DirectoryEntryData, desc bool) (bool, error) {
+	if a.time.Equal(b.time) {
+		return false, errors.New("same value")
+	}
+
+	if desc {
+		return a.time.Before(b.time), nil
+	} else {
+		return a.time.After(b.time), nil
+	}
 }
 
 func GetTrashEntries(username string, relTrashPath string) ([]TrashEntryData, error) {

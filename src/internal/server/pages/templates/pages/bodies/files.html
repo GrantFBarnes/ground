@@ -237,11 +237,41 @@
                 </th>
             </tr>
             <tr>
-                <th></th>
-                <th>Name</th>
-                <th></th>
-                <th class="right-align-cell">Size</th>
-                <th class="right-align-cell">Last Modified</th>
+                <th
+                    class="clickable"
+                    title="Sort By Type"
+                    onclick="reloadPageWithSortBy('type')"
+                >
+                    Type
+                </th>
+                <th
+                    class="clickable"
+                    title="Sort By Name"
+                    onclick="reloadPageWithSortBy('name')"
+                >
+                    Name
+                </th>
+                <th
+                    class="clickable"
+                    title="Sort By Symbolic Link"
+                    onclick="reloadPageWithSortBy('link')"
+                >
+                    Link
+                </th>
+                <th
+                    class="clickable right-align-cell"
+                    title="Sort By Size"
+                    onclick="reloadPageWithSortBy('size')"
+                >
+                    Size
+                </th>
+                <th
+                    class="clickable right-align-cell"
+                    title="Sort By Time"
+                    onclick="reloadPageWithSortBy('time')"
+                >
+                    Last Modified
+                </th>
             </tr>
         </thead>
         <tbody>
