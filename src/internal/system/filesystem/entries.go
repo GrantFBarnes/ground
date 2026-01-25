@@ -48,12 +48,12 @@ func GetDirectoryEntries(relDirPath string, rootDirPath string, searchFilter str
 
 	var entries []DirectoryEntryData
 	for _, entry := range dirEntries {
-		entry, err := getDirectoryEntry(entry, relDirPath, rootDirPath)
-		if err != nil {
+		if !strings.Contains(strings.ToLower(entry.Name()), searchFilter) {
 			continue
 		}
 
-		if !strings.Contains(strings.ToLower(entry.Name), searchFilter) {
+		entry, err := getDirectoryEntry(entry, relDirPath, rootDirPath)
+		if err != nil {
 			continue
 		}
 
