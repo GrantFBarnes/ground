@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     getDiskUsages();
     setSearchFilterValue();
+    setShowDotfiles();
 });
 
 function getDiskUsages() {
@@ -23,6 +24,23 @@ function setSearchFilterValue() {
     if (!searchFilterInputElement) return;
 
     searchFilterInputElement.value = searchFilter;
+}
+
+function setShowDotfiles() {
+    const revealButtonElement = document.getElementById("dotfiles-reveal-button");
+    if (!revealButtonElement) return;
+
+    const concealButtonElement = document.getElementById("dotfiles-conceal-button");
+    if (!concealButtonElement) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (!urlParams) return;
+
+    const showDotfiles = urlParams.get("showDotfiles");
+    if (showDotfiles && showDotfiles != "0" && showDotfiles != "false") {
+        revealButtonElement.hidden = true;
+        concealButtonElement.hidden = false;
+    }
 }
 
 const selectedClassName = "highlighted-extra";
@@ -280,6 +298,20 @@ document.getElementById("search-filter-form").addEventListener("submit", functio
 
     window.location.href = url.toString();
 });
+
+function showDotfiles(event) {
+    event.preventDefault();
+    const url = new URL(window.location.href);
+    url.searchParams.set("showDotfiles", "true");
+    window.location.href = url.toString();
+}
+
+function hideDotfiles(event) {
+    event.preventDefault();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("showDotfiles");
+    window.location.href = url.toString();
+}
 
 document.getElementById("rename-file-form").addEventListener("submit", function (event) {
     event.preventDefault();

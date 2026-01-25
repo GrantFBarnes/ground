@@ -94,6 +94,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 	requestor := common.GetRequestor(r)
 	urlRelativePath := strings.TrimPrefix(r.URL.Path, "/files")
 	searchFilter := r.URL.Query().Get("searchFilter")
+	showDotfiles := r.URL.Query().Get("showDotfiles")
 	sortBy := r.URL.Query().Get("sortBy")
 	sortOrder := r.URL.Query().Get("sortOrder")
 
@@ -124,7 +125,7 @@ func Files(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, searchFilter, sortBy, sortOrder)
+	directoryEntries, err := filesystem.GetDirectoryEntries(urlRelativePath, urlRootPath, searchFilter, showDotfiles, sortBy, sortOrder)
 	if err != nil {
 		slog.Error("failed to get directory entries", "ip", r.RemoteAddr, "request", r.URL.Path, "requestor", requestor, "error", err)
 		getProblemPage(w, r, "There was a problem getting the directory entries for this requested file path.")
