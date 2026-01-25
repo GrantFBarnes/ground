@@ -68,7 +68,6 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 		Name:         dirEntry.Name(),
 		Path:         path.Join("/", relDirPath, dirEntry.Name()),
 		size:         entryInfo.Size(),
-		HumanSize:    getHumanSize(dirEntry.IsDir(), entryInfo.Size()),
 		time:         entryInfo.ModTime(),
 		LastModified: entryInfo.ModTime().Format(displayTimeLayout),
 	}
@@ -84,6 +83,7 @@ func getDirectoryEntry(dirEntry os.DirEntry, relDirPath string, rootDirPath stri
 		entry.IsDir = true
 	}
 
+	entry.HumanSize = getHumanSize(entry.IsDir, entry.size)
 	entry.IconName = getEntryIconName(entry.IsDir, entry.Name)
 
 	return entry, nil
