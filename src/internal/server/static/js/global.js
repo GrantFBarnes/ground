@@ -30,7 +30,11 @@ function reloadPageWithSortBy(sortBy) {
     const prevSortOrder = url.searchParams.get("sortOrder");
     url.searchParams.set("sortBy", sortBy);
     if (sortBy == prevSortBy) {
-        url.searchParams.set("sortOrder", prevSortOrder == "asc" ? "desc" : "asc");
+        if (prevSortOrder == "desc") {
+            url.search = "";
+        } else {
+            url.searchParams.set("sortOrder", "desc");
+        }
     } else {
         url.searchParams.set("sortOrder", "asc");
     }
