@@ -55,7 +55,7 @@
                     <span id="table-sort-icon-name"></span>
                 </th>
                 <th
-                    class="clickable right-align-cell"
+                    class="clickable hide-priority-2 right-align-cell"
                     title="Sort By Size"
                     onclick="reloadPageWithSortBy('size')"
                 >
@@ -63,7 +63,7 @@
                     Size
                 </th>
                 <th
-                    class="clickable right-align-cell"
+                    class="clickable hide-priority-3 right-align-cell"
                     title="Sort By Time"
                     onclick="reloadPageWithSortBy('time')"
                 >
@@ -89,8 +89,8 @@
                     >
                 </td>
                 <td>{{.Name}}</td>
-                <td class="right-align-cell">{{.HumanSize}}</td>
-                <td class="right-align-cell">{{.TrashedOn}}</td>
+                <td class="hide-priority-2 right-align-cell">{{.HumanSize}}</td>
+                <td class="hide-priority-3 right-align-cell">{{.TrashedOn}}</td>
                 <td class="single-icon-cell">
                     <span
                         title="Restore trash directory back to files"

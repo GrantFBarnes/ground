@@ -120,6 +120,24 @@ td {
     padding: var(--padding-small);
 }
 
+@media screen and (max-width: 880px) {
+    .hide-priority-1 {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 680px) {
+    .hide-priority-2 {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .hide-priority-3 {
+        display: none;
+    }
+}
+
 summary {
     cursor: pointer;
 }

@@ -253,7 +253,7 @@
                     <span id="table-sort-icon-name"></span>
                 </th>
                 <th
-                    class="clickable"
+                    class="clickable hide-priority-1"
                     title="Sort By Symbolic Link"
                     onclick="reloadPageWithSortBy('link')"
                 >
@@ -261,7 +261,7 @@
                     <span id="table-sort-icon-link"></span>
                 </th>
                 <th
-                    class="clickable right-align-cell"
+                    class="clickable hide-priority-2 right-align-cell"
                     title="Sort By Size"
                     onclick="reloadPageWithSortBy('size')"
                 >
@@ -269,7 +269,7 @@
                     Size
                 </th>
                 <th
-                    class="clickable right-align-cell"
+                    class="clickable hide-priority-3 right-align-cell"
                     title="Sort By Time"
                     onclick="reloadPageWithSortBy('time')"
                 >
@@ -305,7 +305,7 @@
                     >
                 </td>
                 <td>{{.Name}}</td>
-                <td>
+                <td class="hide-priority-1">
                     {{if ne .SymLinkPath ""}}
                     <span title="{{.SymLinkPath}}">
                         <img
@@ -317,8 +317,8 @@
                     </span>
                     {{end}}
                 </td>
-                <td class="right-align-cell">{{.HumanSize}}</td>
-                <td class="right-align-cell">{{.LastModified}}</td>
+                <td class="hide-priority-2 right-align-cell">{{.HumanSize}}</td>
+                <td class="hide-priority-3 right-align-cell">{{.LastModified}}</td>
             </tr>
             {{end}}
         </tbody>
