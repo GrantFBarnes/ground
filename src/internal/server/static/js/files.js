@@ -66,9 +66,9 @@ function selectRow(element) {
     selectedActionExtractElement.onclick = () => extractFile(selectedRow.dataset.name, selectedRow.dataset.path);
     selectedActionDownloadElement.hidden = selectedRow.dataset.isDir != "false";
     selectedActionDownloadElement.onclick = () => downloadFile(selectedRow.dataset.path);
-    selectedActionRenameElement.hidden = false;
+    selectedActionRenameElement.disabled = false;
     document.getElementById("rename-file-field-old-name").value = selectedRow.dataset.name;
-    selectedActionTrashElement.hidden = false;
+    selectedActionTrashElement.disabled = false;
     selectedActionTrashElement.onclick = () => moveToTrash(selectedRow.dataset.name, selectedRow.dataset.path);
 }
 
