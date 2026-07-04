@@ -210,7 +210,15 @@ button {
 
 .column-container {
     display: grid;
-    grid-auto-flow: column
+    grid-auto-flow: column;
+}
+
+@media screen and (max-width: 480px) {
+    .column-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--padding-medium);
+    }
 }
 
 .column-container>div {
